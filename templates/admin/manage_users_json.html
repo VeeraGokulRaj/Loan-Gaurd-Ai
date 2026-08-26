@@ -1,0 +1,204 @@
+{# djlint:off #}
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+{% block title %}Manage users.json | {{ site_title|default:_("Django site admin") }}{% endblock %}
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_user_changelist' %}">{% translate 'Users' %}</a>
+        &rsaquo; {% translate 'Manage users.json' %}
+    </div>
+{% endblock %}
+{% block content %}
+    <div id="content-main">
+        <h1>
+            Manage Mock Users Directory (<code>{{ user_mock_file_path|default:"files/users.json" }}</code>)
+        </h1>
+        <!-- System & Database Statistics (Default Django Admin Module Table) -->
+        <div class="module">
+            <h2>Current System & Database Statistics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Total Seeded Users</th>
+                        <th>Data Operators (Category 1)</th>
+                        <th>Reviewers (Category 2)</th>
+                        <th>Data Consumers (Category 3)</th>
+                        <th>Users in JSON Payload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <strong>{{ total_users }}</strong>
+                        </td>
+                        <td>{{ operator_count }}</td>
+                        <td>{{ reviewer_count }}</td>
+                        <td>{{ consumer_count }}</td>
+                        <td>{{ file_user_count }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Required Data Schema Reference Table (Default Django Admin Style) -->
+        <div class="module">
+            <h2>Required Schema Fields & Validation Specifications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>JSON Key</th>
+                        <th>Requirement</th>
+                        <th>Unique Constraint</th>
+                        <th>Description & Allowed Role Values</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <code>username</code>
+                        </td>
+                        <td>Required</td>
+                        <td>
+                            <strong>MUST BE UNIQUE</strong>
+                        </td>
+                        <td>
+                            User's unique login handle (e.g. <code>op_murugan</code>, <code>rev_priya</code>).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>first_name</code>
+                        </td>
+                        <td>Required</td>
+                        <td>No</td>
+                        <td>Given name (e.g. Murugan, Priya, Vignesh).</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>last_name</code>
+                        </td>
+                        <td>Required</td>
+                        <td>No</td>
+                        <td>Surname / Family name (e.g. Raman, Dharshini).</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>email</code>
+                        </td>
+                        <td>Required</td>
+                        <td>No</td>
+                        <td>
+                            Valid email address (e.g. <code>murugan.operator@loanguard.tn</code>).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>mobile</code> / <code>phone</code>
+                        </td>
+                        <td>Required</td>
+                        <td>No</td>
+                        <td>
+                            10-digit mobile contact number (e.g. <code>9840112341</code>).
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>password</code>
+                        </td>
+                        <td>Required</td>
+                        <td>No</td>
+                        <td>
+                            Login password (e.g. <code>pass123</code>). Auto-hashed upon database save.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <code>role</code>
+                        </td>
+                        <td>
+                            Optional (Defaults to <code>Data Consumer</code>)
+                        </td>
+                        <td>No</td>
+                        <td>
+                            Role Category. Must be EXACTLY one of:
+                            <ul>
+                                <li>
+                                    <code>Data Operator</code> (Ingests CSV tapes, views import summaries)
+                                </li>
+                                <li>
+                                    <code>Reviewer</code> (Inspects exception queues, approves AI recommendations)
+                                </li>
+                                <li>
+                                    <code>Data Consumer</code> (Inspects verified records & audit trails)
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- System Rules & Behavior Notes Block -->
+        <div class="module">
+            <h2>💡 Key Highlights & How It Works</h2>
+            <div style="padding: 12px 15px; font-size: 13px; line-height: 1.6;">
+                <h3 style="margin-top: 4px; font-size: 14px; font-weight: bold;">1. Automatic Account Updates</h3>
+                <p style="margin-bottom: 12px;">
+                    Updating an existing username will cleanly refresh that user's profile details (name, email, phone, role, password) without creating duplicate accounts or database errors.
+                </p>
+                <h3 style="font-size: 14px; font-weight: bold;">2. Flexible Custom Fields</h3>
+                <p style="margin-bottom: 12px;">
+                    If your JSON data includes extra details (like <code>"department"</code> or <code>"notes"</code>), the system safely accepts them and saves your file smoothly.
+                </p>
+                <h3 style="font-size: 14px; font-weight: bold;">3. Smart Error Detection</h3>
+                <p style="margin-bottom: 12px;">
+                    Missing required details (like empty names or passwords) or invalid email formats are automatically flagged with helpful error messages so you can fix them easily.
+                </p>
+                <h3 style="font-size: 14px; font-weight: bold;">4. Default Role Assignment</h3>
+                <p style="margin-bottom: 4px;">
+                    If a user's role is left blank or unrecognized, the system automatically assigns them the <strong>Data Consumer</strong> role for safe default access.
+                </p>
+            </div>
+        </div>
+        <!-- Action Form -->
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <fieldset class="module aligned">
+                <h2>Upload JSON File or Edit Content Directly</h2>
+                <div class="form-row">
+                    <div>
+                        <label for="id_json_file">Upload New JSON File:</label>
+                        <input type="file" name="json_file" id="id_json_file" accept=".json">
+                        <div class="help"
+                             style="margin-top: 4px;
+                                    font-weight: bold;
+                                    color: #1e40af">
+                            📌 How to Upload: Click "Choose File" to select your .json file, then click the "Save & Sync Users" button below to upload, validate, and update the database.
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label for="id_json_content">
+                            <code>{{ user_mock_file_path|default:"files/users.json" }}</code> Content Editor:
+                        </label>
+                        <textarea name="json_content"
+                                  id="id_json_content"
+                                  rows="18"
+                                  style="width: 100%;
+                                         font-family: monospace;
+                                         box-sizing: border-box;
+                                         padding: 6px">{{ json_content }}</textarea>
+                        <div class="help">Edit the JSON array directly above and click "Save & Sync Users" below.</div>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="submit-row">
+                <input type="submit" name="action" value="Save & Sync Users" class="default">
+                <input type="submit" name="action" value="Reload File" class="button">
+                <a href="{% url 'admin:app_user_changelist' %}"
+                   class="button cancel-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{# djlint:on #}

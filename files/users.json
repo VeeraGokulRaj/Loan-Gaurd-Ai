@@ -1,0 +1,56 @@
+[
+  {
+    "username": "op_murugan",
+    "first_name": "Murugan",
+    "last_name": "Raman",
+    "email": "murugan.operator@loanguard.tn",
+    "mobile": "9840112341",
+    "password": "pass123",
+    "role": "Data Operator"
+  },
+  {
+    "username": "op_karthik",
+    "first_name": "Karthik",
+    "last_name": "Vijay",
+    "email": "karthik.operator@loanguard.tn",
+    "mobile": "9840112342",
+    "password": "pass123",
+    "role": "Data Operator"
+  },
+  {
+    "username": "rev_priya",
+    "first_name": "Priya",
+    "last_name": "Dharshini",
+    "email": "priya.reviewer@loanguard.tn",
+    "mobile": "9840223451",
+    "password": "pass123",
+    "role": "Reviewer"
+  },
+  {
+    "username": "rev_vignesh",
+    "first_name": "Vignesh",
+    "last_name": "Kumar",
+    "email": "vignesh.reviewer@loanguard.tn",
+    "mobile": "9840223452",
+    "password": "pass123",
+    "role": "Reviewer"
+  },
+  {
+    "username": "con_meena",
+    "first_name": "Meena",
+    "last_name": "Sundaram",
+    "email": "meena.consumer@loanguard.tn",
+    "mobile": "9840334561",
+    "password": "pass123",
+    "role": "Data Consumer"
+  },
+  {
+    "username": "con_senthil",
+    "first_name": "Senthil",
+    "last_name": "Nathan",
+    "email": "senthil.consumer@loanguard.tn",
+    "mobile": "9840334562",
+    "password": "pass123",
+    "role": "Data Consumer"
+  }
+]

@@ -1,3 +1,23 @@
+"""
+User Model & Role Permission Specification for LoanGuard AI.
+
+Users schema & users.json specification:
+- Required Fields per User:
+    * `username` (str, UNIQUE, 150 chars max) - Primary login identifier.
+    * `first_name` (str) - User's given name (e.g. Tamil Nadu touch: Murugan, Priya).
+    * `last_name` (str) - User's surname/family name (e.g. Raman, Dharshini).
+    * `email` (str) - Valid email address.
+    * `mobile` / `phone` (str) - 10-digit mobile contact number.
+    * `password` (str) - Password for initial setup (e.g. 'pass123').
+    * `role` (str) - Exactly one of:
+        1. "Data Operator" (Category integer value 1)
+        2. "Reviewer"      (Category integer value 2)
+        3. "Data Consumer" (Category integer value 3)
+
+- Unique Constraints:
+    * `username` MUST be unique across all user entries.
+"""
+
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -7,6 +27,21 @@ from .base import BaseModel
 
 
 class User(AbstractUser, BaseModel):
+    """
+    Custom LoanGuard AI User Model enforcing Category-based Role Isolation.
+
+    Attributes:
+        username (CharField): Unique identifier for user login. (UNIQUE)
+        first_name (CharField): First name of the user. (REQUIRED in users.json)
+        last_name (CharField): Last name of the user. (REQUIRED in users.json)
+        email (EmailField): Contact email address. (REQUIRED in users.json)
+        phone (CharField): Contact mobile phone number. (REQUIRED in users.json)
+        category (IntegerField): User category role mapping:
+            - DATA_OPERATOR (1): Uploads raw CSV files, views ingestion summaries.
+            - REVIEWER (2): Resolves loan exceptions, accepts/rejects AI recommendations.
+            - DATA_CONSUMER (3): Inspects verified datasets, audit logs, and data quality scores.
+    """
+
     class Category(models.IntegerChoices):
         DATA_OPERATOR = 1, _("Data Operator")
         REVIEWER = 2, _("Reviewer")
