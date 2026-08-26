@@ -1,0 +1,49 @@
+[project]
+name = "loanguard-ai"
+version = "0.1.0"
+description = "LoanGuard AI - Modern Django Project Skeleton"
+readme = "SETUP.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.1.0",
+    "django-environ>=0.11.0",
+    "django-filter>=24.3",
+    "django-htmx>=1.21.0",
+    "django-model-utils>=5.0.0",
+    "django-widget-tweaks>=1.5.0",
+    "gunicorn>=23.0.0",
+    "whitenoise>=6.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.6.0",
+    "django-browser-reload>=1.17.0",
+    "django-debug-toolbar>=4.4.0",
+    "django-extensions>=3.2.0",
+    "ipython>=8.27.0",
+    "pre-commit>=4.0.0",
+    "pytest>=8.3.0",
+    "pytest-django>=4.9.0",
+    "pytest-xdist>=3.6.0",
+    "ruff>=0.8.0",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.local"
+pythonpath = ["."]
+addopts = ["--reuse-db"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".venv",
+    "migrations",
+    "staticfiles",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

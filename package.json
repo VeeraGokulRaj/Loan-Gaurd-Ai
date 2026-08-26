@@ -1,0 +1,18 @@
+{
+  "name": "loanguard-ai",
+  "version": "0.1.0",
+  "description": "Tailwind CSS, Preline UI, and HTMX integration for LoanGuard AI Django project",
+  "scripts": {
+    "build:css": "npx @tailwindcss/cli -i ./static/src/input.css -o ./static/dist/css/output.css --minify",
+    "dev:css": "npx @tailwindcss/cli -i ./static/src/input.css -o ./static/dist/css/output.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "@tailwindcss/forms": "^0.5.10",
+    "autoprefixer": "^10.4.20",
+    "htmx.org": "^2.0.4",
+    "postcss": "^8.5.1",
+    "preline": "^2.7.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
