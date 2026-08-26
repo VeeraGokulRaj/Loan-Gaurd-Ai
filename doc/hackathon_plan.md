@@ -135,11 +135,12 @@ from django.utils import timezone
 # 1. INGESTION & RAW DATA MODELS
 # ==========================================
 
-class UploadBatch(models.Model):
+class UploadBatch(TimeStampedModel):
     class SourceType(models.IntegerChoices):
         LOAN_TAPE = 1, 'Primary Loan Tape'
         SERVICER_UPDATE = 2, 'Servicer Update File'
         DOCUMENT_MANIFEST = 3, 'Document Manifest Ledger'
+
 
     class BatchStatus(models.IntegerChoices):
         PROCESSING = 1, 'Processing'
@@ -147,53 +148,52 @@ class UploadBatch(models.Model):
         PARTIAL_SUCCESS = 3, 'Partial Success'
         FAILED = 4, 'Failed'
 
-    file_name = models.CharField(max_length=255)
-    source_type = models.IntegerField(choices=SourceType.choices, default=SourceType.LOAN_TAPE)
-    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    file_name = models.CharField(max_length=255, null=True, blank=True, help_text="Original filename of the uploaded CSV file.")
+    source_type = models.IntegerField(choices=SourceType.choices, default=SourceType.LOAN_TAPE, null=True, blank=True, help_text="Type/category of the uploaded source file.")
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='upload_batches', help_text="User (Data Operator) who uploaded this batch.")
 
-    total_records = models.IntegerField(default=0)
-    successful_records = models.IntegerField(default=0)
-    failed_records = models.IntegerField(default=0)
-    status = models.IntegerField(choices=BatchStatus.choices, default=BatchStatus.PROCESSING)
+    total_records = models.IntegerField(default=0, null=True, blank=True, help_text="Total number of data rows present in the CSV file.")
+    successful_records = models.IntegerField(default=0, null=True, blank=True, help_text="Count of rows successfully parsed and stored.")
+    failed_records = models.IntegerField(default=0, null=True, blank=True, help_text="Count of rows that failed initial CSV parsing.")
+    status = models.IntegerField(choices=BatchStatus.choices, default=BatchStatus.PROCESSING, null=True, blank=True, help_text="Execution status of the upload batch.")
 
     def __str__(self):
-        return f"Batch #{self.id} - {self.file_name} ({self.get_source_type_display()})"
+        return f"Batch #{self.id} - {self.file_name or 'Unnamed'} ({self.get_source_type_display() if self.source_type else 'Unknown'})"
 
 
-class RawLoanRecord(models.Model):
-    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, related_name='raw_records')
-    row_number = models.IntegerField(help_text="Exact line number in original CSV for lineage")
-    raw_data = models.JSONField(help_text="Uncleaned string key-value payload")
-    source_system = models.CharField(max_length=100, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class RawLoanRecord(TimeStampedModel):
+    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='raw_records', help_text="Associated upload batch.")
+    row_number = models.IntegerField(null=True, blank=True, help_text="Exact line number in original CSV for lineage")
+    raw_data = models.JSONField(default=dict, null=True, blank=True, help_text="Uncleaned string key-value payload preserving 100% of original CSV columns.")
+    source_system = models.CharField(max_length=100, null=True, blank=True, help_text="Source system or file discriminator.")
 
 
-class FailedImportRow(models.Model):
-    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, related_name='failed_rows')
-    row_number = models.IntegerField()
-    raw_line = models.TextField()
-    failure_reason = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+class FailedImportRow(TimeStampedModel):
+    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='failed_rows', help_text="Associated upload batch.")
+    row_number = models.IntegerField(null=True, blank=True, help_text="Line number in source CSV where parsing failed.")
+    raw_line = models.TextField(null=True, blank=True, help_text="Unparsed raw text of the failing CSV line.")
+    failure_reason = models.TextField(null=True, blank=True, help_text="Detailed error message explaining failure reason.")
 
 
-class ServicerUpdateRecord(models.Model):
-    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE)
-    loan_id = models.CharField(max_length=100, db_index=True)
-    updated_current_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True)
-    updated_payment_status = models.CharField(max_length=50, blank=True)
-    updated_days_past_due = models.IntegerField(null=True)
-    last_payment_date = models.DateField(null=True)
-    servicer_as_of_date = models.DateField(null=True)
+class ServicerUpdateRecord(TimeStampedModel):
+    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='servicer_records', help_text="Associated upload batch.")
+    loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True, help_text="Unique loan identifier matching primary loan tape.")
+    updated_current_balance = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, help_text="Latest current balance reported by servicer.")
+    updated_payment_status = models.CharField(max_length=50, null=True, blank=True, help_text="Payment status reported by servicer.")
+    updated_days_past_due = models.IntegerField(null=True, blank=True, help_text="Days past due counter reported by servicer.")
+    last_payment_date = models.DateField(null=True, blank=True, help_text="Date of last recorded payment.")
+    servicer_as_of_date = models.DateField(null=True, blank=True, help_text="As-of date of servicer update.")
 
 
-class DocumentManifestRecord(models.Model):
-    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE)
-    loan_id = models.CharField(max_length=100, db_index=True)
-    promissory_note_present = models.BooleanField(default=False)
-    id_proof_present = models.BooleanField(default=False)
-    income_verification_present = models.BooleanField(default=False)
-    document_verification_status = models.CharField(max_length=50, default='MISSING')
+class DocumentManifestRecord(TimeStampedModel):
+    batch = models.ForeignKey(UploadBatch, on_delete=models.CASCADE, null=True, blank=True, related_name='document_manifest_records', help_text="Associated upload batch.")
+    loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True, help_text="Unique loan identifier matching primary loan tape.")
+    promissory_note_present = models.BooleanField(default=False, null=True, blank=True, help_text="Flag indicating if Promissory Note is present.")
+    id_proof_present = models.BooleanField(default=False, null=True, blank=True, help_text="Flag indicating if identity proof is present.")
+    income_verification_present = models.BooleanField(default=False, null=True, blank=True, help_text="Flag indicating if income proof is present.")
+    document_verification_status = models.CharField(max_length=50, default='MISSING', null=True, blank=True, help_text="Overall document verification status.")
+
+
 
 
 # ==========================================
@@ -330,6 +330,11 @@ Ingest messy `loan_tape.csv`, `servicer_update.csv`, and `document_manifest.csv`
 - **Show Upload Summary:** Displays total rows uploaded, successfully ingested count, failed import count, execution time, and batch status (`INGESTED`, `PARTIAL_SUCCESS`, `FAILED`).
 - **Identify Failed Import Rows:** Detects malformed rows (unescaped quotes, corrupt encodings, empty lines, missing column counts) and logs them into `FailedImportRow` with line numbers and reasons.
 - **Preserve Source-File Lineage:** Links every raw record and verified record to `batch_id`, `file_name`, `source_system`, and exact CSV `row_number`.
+- **Handle Missing Required Fields:** Uses `null=True, blank=True` on model fields to allow non-blocking DB saves for incomplete rows, while Module B validation rules (`VR-001`, `VR-002`, `VR-005`, `VR-008`) generate exceptions.
+- **Handle Unhandled / Unexpected Extra Columns:** Retains 100% of unmapped CSV columns in `RawLoanRecord.raw_data` (`JSONField`), preserving complete raw payload lineage without duplicating data on domain models.
+
+- **Handle Unmentioned / Unexpected Document File Types:** Assigns `SourceType.UNKNOWN` (4) and `BatchStatus.FAILED` upon file signature mismatch, creating audit entries via `AuditEvent.log_event("FILE_UPLOAD_REJECTED", ...)`.
+
 
 #### Implementation Plan (`app/domain/ingestion.py`):
 1. `UploadBatch` model records file upload metadata and aggregated summary counts.
