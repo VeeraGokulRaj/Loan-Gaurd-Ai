@@ -1,0 +1,42 @@
+name: 🧪 Test Suite
+
+on:
+  push:
+    branches: ["main", "master"]
+
+  pull_request:
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: 🐍 Python 3.12 • Pytest
+    runs-on: ubuntu-latest
+
+    env:
+      SECRET_KEY: test-secret-key-loanguard-ai
+      SITE_URL: http://127.0.0.1:8000
+      ALLOWED_HOSTS: 127.0.0.1,localhost
+      DJANGO_SETTINGS_MODULE: config.settings.local
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set Up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: ⚡ Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: 📦 Install Dependencies
+        run: uv sync --dev
+
+      - name: 🧪 Run Test Suite
+        run: uv run pytest tests/ -n auto --disable-warnings

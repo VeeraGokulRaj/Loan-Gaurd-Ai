@@ -36,11 +36,14 @@ THIRD_PARTY_APPS = [
     "ordered_model",
     "import_export",
     "rest_framework",
+    "safedelete",
 ]
 
 LOCAL_APPS = [
     "app.apps.LoanGuardAIConfig",
 ]
+
+AUTH_USER_MODEL = "app.User"
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
@@ -103,7 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 USE_I18N = True
 USE_TZ = True
 
