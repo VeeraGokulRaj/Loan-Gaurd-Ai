@@ -277,6 +277,19 @@ wheels = [
 ]
 
 [[package]]
+name = "django-safedelete"
+version = "1.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0f/e6/6f33b2399269b204d5b220a825e81c64aef05aec5fc4e806dc67fd37301d/django_safedelete-1.5.0.tar.gz", hash = "sha256:d696c0186556083f979675160da67b688c737c344f38939e34c6a4cbd406fee3", size = 36523, upload-time = "2026-08-17T09:00:58.033Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b4/3f/cc820f3420a3057cab6a5d5ecd04bbda00db4c5ea16078723dab246db0a6/django_safedelete-1.5.0-py3-none-any.whl", hash = "sha256:3d8e3244821abd3975cb3d45b6f479432b3d5eec8a47f087bd8a76c7a6fcfd90", size = 48812, upload-time = "2026-08-17T09:00:56.604Z" },
+]
+
+[[package]]
 name = "django-simple-history"
 version = "3.13.0"
 source = { registry = "https://pypi.org/simple" }
@@ -328,6 +341,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/cc/28/c14e053b6762b1044f34a13aab6859bbf40456d37d23aa286ac24cfd9a5d/executing-2.2.1.tar.gz", hash = "sha256:3632cc370565f6648cc328b32435bd120a1e4ebb20c77e3fdde9a13cd1e533c4", size = 1129488, upload-time = "2025-09-01T09:48:10.866Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/ea/53f2148663b321f21b5a606bd5f191517cf40b7072c0497d3c92c4a13b1e/executing-2.2.1-py2.py3-none-any.whl", hash = "sha256:760643d3452b4d777d295bb167ccc74c64a81df23fb5e08eff250c425a4b2017", size = 28317, upload-time = "2025-09-01T09:48:08.5Z" },
+]
+
+[[package]]
+name = "faker"
+version = "40.37.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f6/fb/35acc76128d5ee8983d940da871cc8eba876e7b0e9e6bd402ecd7104dcdc/faker-40.37.0.tar.gz", hash = "sha256:a92dff7f310e61fb544c61720e15edb2e7448bc33d15a321a99e9ab7b94abf54", size = 2025920, upload-time = "2026-08-21T16:33:16.261Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/22/bf589b6b2c7527047f55450358fbe5961aeaadf168d6b51a1a1c67da497f/faker-40.37.0-py3-none-any.whl", hash = "sha256:ddbafa55c94d5b69c08ced3a7f202614204a02e07ba6548c729b8d18acc0b490", size = 2062853, upload-time = "2026-08-21T16:33:14.516Z" },
 ]
 
 [[package]]
@@ -423,6 +448,7 @@ dependencies = [
     { name = "django-import-export" },
     { name = "django-model-utils" },
     { name = "django-ordered-model" },
+    { name = "django-safedelete" },
     { name = "django-simple-history" },
     { name = "django-widget-tweaks" },
     { name = "djangorestframework" },
@@ -436,6 +462,7 @@ dev = [
     { name = "django-browser-reload" },
     { name = "django-debug-toolbar" },
     { name = "django-extensions" },
+    { name = "faker" },
     { name = "ipython" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -453,6 +480,7 @@ requires-dist = [
     { name = "django-import-export", specifier = ">=4.4.1" },
     { name = "django-model-utils", specifier = ">=5.0.0" },
     { name = "django-ordered-model", specifier = ">=3.7.4" },
+    { name = "django-safedelete", specifier = ">=1.5.0" },
     { name = "django-simple-history", specifier = ">=3.13.0" },
     { name = "django-widget-tweaks", specifier = ">=1.5.0" },
     { name = "djangorestframework", specifier = ">=3.18.0" },
@@ -466,6 +494,7 @@ dev = [
     { name = "django-browser-reload", specifier = ">=1.17.0" },
     { name = "django-debug-toolbar", specifier = ">=4.4.0" },
     { name = "django-extensions", specifier = ">=3.2.0" },
+    { name = "faker", specifier = ">=40.37.0" },
     { name = "ipython", specifier = ">=8.27.0" },
     { name = "pre-commit", specifier = ">=4.0.0" },
     { name = "pytest", specifier = ">=8.3.0" },
