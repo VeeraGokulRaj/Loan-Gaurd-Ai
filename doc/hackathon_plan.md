@@ -1,9 +1,9 @@
 # Intain Campus FinTech Challenge 2026: Loan Data Verification Copilot
 ## Master Implementation Architecture & Hackathon Execution Plan
 
-**Author:** 20+ Year Senior Python/Django Full-Stack Architect  
-**Target File:** `hackathon_plan.md`  
-**Status:** Approved for Development  
+**Author:** 20+ Year Senior Python/Django Full-Stack Architect
+**Target File:** `hackathon_plan.md`
+**Status:** Approved for Development
 
 ---
 
@@ -151,7 +151,7 @@ class UploadBatch(models.Model):
     source_type = models.IntegerField(choices=SourceType.choices, default=SourceType.LOAN_TAPE)
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    
+
     total_records = models.IntegerField(default=0)
     successful_records = models.IntegerField(default=0)
     failed_records = models.IntegerField(default=0)
@@ -231,7 +231,7 @@ class LoanException(models.Model):
     severity = models.IntegerField(choices=ValidationSeverity.choices, default=ValidationSeverity.MEDIUM)
     description = models.TextField()
     status = models.IntegerField(choices=ExceptionStatus.choices, default=ExceptionStatus.OPEN)
-    
+
     reviewer_comment = models.TextField(blank=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -252,7 +252,7 @@ class AIRecommendation(models.Model):
     suggested_value = models.CharField(max_length=255)
     explanation = models.TextField()
     confidence_score = models.FloatField(default=0.0)
-    
+
     prompt_text = models.TextField()
     model_name = models.CharField(max_length=100, default='gemini-2.5-flash')
     raw_response = models.TextField()
@@ -268,11 +268,11 @@ class VerifiedLoanRecord(models.Model):
     raw_record = models.OneToOneField(RawLoanRecord, on_delete=models.CASCADE, related_name='verified_record')
     ai_recommendation_used = models.ForeignKey(AIRecommendation, on_delete=models.SET_NULL, null=True, blank=True)
     verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    
+
     loan_id = models.CharField(max_length=100, db_index=True, unique=True)
     borrower_id = models.CharField(max_length=100, db_index=True)
     canonical_data = models.JSONField(help_text="Cleaned, standardized loan JSON payload")
-    
+
     record_hash = models.CharField(max_length=64, help_text="SHA-256 hash over canonical payload + timestamp")
     verified_at = models.DateTimeField(default=timezone.now)
 
@@ -287,16 +287,16 @@ class AuditEvent(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(default=timezone.now, db_index=True)
-    
+
     loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True)
     batch_id = models.IntegerField(null=True, blank=True)
-    
+
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     actor_role = models.IntegerField(choices=ActorRole.choices, default=ActorRole.SYSTEM)
-    
+
     event_type = models.CharField(max_length=100, db_index=True)
     payload = models.JSONField(default=dict)
-    
+
     prev_hash = models.CharField(max_length=64)
     event_hash = models.CharField(max_length=64)
 ```
@@ -355,13 +355,13 @@ class IngestionService:
             source_type=source_type,
             status="PROCESSING"
         )
-        
+
         decoded_file = file_obj.read().decode('utf-8-sig', errors='replace').splitlines()
         reader = csv.DictReader(decoded_file)
-        
+
         raw_records = []
         failed_rows = []
-        
+
         for row_idx, row in enumerate(reader, start=2): # Header is line 1
             try:
                 if not row or all(v is None or v.strip() == "" for v in row.values()):
@@ -384,10 +384,10 @@ class IngestionService:
                     batch=batch, row_number=row_idx, raw_line=str(row),
                     reason=f"Parsing Exception: {str(e)}"
                 ))
-        
+
         RawLoanRecord.objects.bulk_create(raw_records)
         FailedImportRow.objects.bulk_create(failed_rows)
-        
+
         # Summary Calculation
         batch.total_records = len(decoded_file) - 1
         batch.successful_records = len(raw_records)
@@ -405,7 +405,7 @@ class IngestionService:
                 "failed": batch.failed_records
             }
         )
-        
+
         return {
             "summary": {
                 "batch_id": batch.id,
@@ -469,12 +469,12 @@ class RuleResult:
 
 class MaturityAfterOriginationRule:
     rule_code = "VAL_005"
-    
+
     def validate(self, raw_record: RawLoanRecord) -> RuleResult:
         data = raw_record.raw_data
         orig_str = data.get("origination_date")
         mat_str = data.get("maturity_date")
-        
+
         try:
             orig_date = datetime.strptime(orig_str, "%Y-%m-%d")
             mat_date = datetime.strptime(mat_str, "%Y-%m-%d")
@@ -483,17 +483,17 @@ class MaturityAfterOriginationRule:
                                   f"Maturity date ({mat_str}) is on or before origination date ({orig_str}).")
         except Exception:
             return RuleResult(False, "maturity_date", "VAL_004", "HIGH", "Invalid date format.")
-            
+
         return RuleResult(True, "", "", "", "")
 
 class ClosedLoanPositiveBalanceRule:
     rule_code = "VAL_015"
-    
+
     def validate(self, raw_record: RawLoanRecord) -> RuleResult:
         data = raw_record.raw_data
         status = str(data.get("payment_status", "")).upper()
         balance = float(data.get("current_balance", 0) or 0)
-        
+
         if status == "CLOSED" and balance > 0:
             return RuleResult(False, "current_balance", self.rule_code, "CRITICAL",
                               f"Loan is marked CLOSED but retains positive balance (${balance:,.2f}).")
@@ -505,12 +505,12 @@ class ValidationEngine:
         ClosedLoanPositiveBalanceRule(),
         # ... Other rules 1 through 15 ...
     ]
-    
+
     @classmethod
     def validate_batch(cls, batch):
         exceptions_to_create = []
         raw_records = RawLoanRecord.objects.filter(batch=batch)
-        
+
         for record in raw_records:
             for rule in cls.RULES:
                 res = rule.validate(record)
@@ -558,21 +558,21 @@ class ExceptionWorkflowService:
     def resolve_exception(cls, exception_id: int, reviewer, decision: str, edited_fields: dict, comment: str):
         exc = LoanException.objects.select_for_update().get(id=exception_id)
         raw_record = exc.raw_record
-        
+
         # Track before state for audit trail
         before_state = dict(raw_record.raw_data)
-        
+
         if edited_fields:
             # Apply allowed edits to raw record copy
             for field, val in edited_fields.items():
                 raw_record.raw_data[field] = val
             raw_record.save()
-            
+
         exc.status = f"RESOLVED_{decision.upper()}"
         exc.reviewer_comment = comment
         exc.resolved_by = reviewer
         exc.save()
-        
+
         # Log audit trail
         AuditEvent.log_event(
             event_type="EXCEPTION_RESOLVED",
@@ -629,16 +629,16 @@ class AIAssistantService:
         3. "confidence_score": Float between 0.0 and 1.0.
         4. "reasoning": Step-by-step logic used.
         """
-        
+
         client = genai.Client()
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=prompt,
             config={'response_mime_type': 'application/json'}
         )
-        
+
         result_json = json.loads(response.text)
-        
+
         rec = AIRecommendation.objects.create(
             exception=exception,
             suggested_value=str(result_json.get("suggested_value")),
@@ -649,13 +649,13 @@ class AIAssistantService:
             raw_response=response.text,
             status="PENDING"
         )
-        
+
         AuditEvent.log_event(
             event_type="AI_RECOMMENDATION_GENERATED",
             actor=None, # System AI
             payload={"recommendation_id": rec.id, "model": "gemini-2.5-flash"}
         )
-        
+
         return rec
 ```
 
@@ -668,7 +668,7 @@ Convert approved/resolved loan records into immutable canonical `VerifiedLoanRec
 
 #### Key Features:
 - Canonical schema enforcement.
-- SHA-256 `record_hash` generated over ordered JSON payload:  
+- SHA-256 `record_hash` generated over ordered JSON payload:
   `SHA256(loan_id + borrower_id + current_balance + origination_date + verification_timestamp)`
 - Lineage linking: `RawLoanRecord` -> `LoanException` -> `AIRecommendation` -> `VerifiedLoanRecord`.
 
@@ -695,7 +695,7 @@ class VerifiedRecordService:
         data = raw_record.raw_data
         now = timezone.now()
         now_iso = now.isoformat()
-        
+
         canonical_data = {
             "loan_id": data.get("loan_id"),
             "borrower_id": data.get("borrower_id"),
@@ -706,9 +706,9 @@ class VerifiedRecordService:
             "origination_date": data.get("origination_date"),
             "maturity_date": data.get("maturity_date")
         }
-        
+
         rec_hash = cls.generate_record_hash(canonical_data, now_iso)
-        
+
         verified = VerifiedLoanRecord.objects.create(
             raw_record=raw_record,
             loan_id=canonical_data["loan_id"],
@@ -718,7 +718,7 @@ class VerifiedRecordService:
             ai_recommendation_used=ai_rec,
             record_hash=rec_hash
         )
-        
+
         AuditEvent.log_event(
             event_type="VERIFIED_RECORD_CREATED",
             actor=reviewer,
@@ -762,21 +762,21 @@ from django.utils import timezone
 class AuditEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(default=timezone.now, db_index=True)
-    
+
     # Target Loan & Batch Context
     loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True)
     batch_id = models.IntegerField(null=True, blank=True)
-    
+
     # Actor / Role Identity
     actor = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL)
     actor_role = models.CharField(max_length=50, default="SYSTEM") # DATA_OPERATOR, REVIEWER, AI_ASSISTANT, DATA_CONSUMER, SYSTEM
-    
+
     # Event Taxonomy
     event_type = models.CharField(max_length=100, db_index=True)
-    
+
     # JSON Payload (Structured Context, AI Metadata, Diff)
     payload = models.JSONField(default=dict)
-    
+
     # Cryptographic Lineage (Prev Hash -> Event Hash)
     prev_hash = models.CharField(max_length=64)
     event_hash = models.CharField(max_length=64)
@@ -786,15 +786,15 @@ class AuditEvent(models.Model):
         payload = payload or {}
         last_event = cls.objects.order_by('-timestamp', '-id').first()
         prev_hash = last_event.event_hash if last_event else "0" * 64
-        
+
         ts_str = timezone.now().isoformat()
         actor_name = actor.username if actor else actor_role
-        
+
         # Build SHA-256 Cryptographic Hash Input
         payload_str = json.dumps(payload, sort_keys=True)
         hash_input = f"{prev_hash}|{ts_str}|{event_type}|{actor_name}|{loan_id}|{payload_str}".encode('utf-8')
         event_hash = hashlib.sha256(hash_input).hexdigest()
-        
+
         return cls.objects.create(
             event_type=event_type,
             actor=actor,

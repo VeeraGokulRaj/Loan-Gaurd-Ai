@@ -23,7 +23,7 @@
 ## 1. Challenge Overview & Context
 
 ### What is it?
-Financial institutions depend on loan-level records (loan tapes) to evaluate portfolios. However, raw loan data arrives messy, inconsistent, and fragmented across legacy origination systems, servicing CSV exports, third-party APIs, and spreadsheets. 
+Financial institutions depend on loan-level records (loan tapes) to evaluate portfolios. However, raw loan data arrives messy, inconsistent, and fragmented across legacy origination systems, servicing CSV exports, third-party APIs, and spreadsheets.
 
 The **Loan Data Verification Copilot** is an AI-assisted full-stack console that ingests messy loan records, executes validation checks, uses AI to explain errors and resolve multi-source conflicts, enables human reviewer overrides, creates tamper-evident verified datasets with SHA-256 hashes, and maintains an immutable audit trail.
 
@@ -176,7 +176,7 @@ class UploadBatch(models.Model):
     source_type = models.IntegerField(choices=SourceType.choices, default=SourceType.LOAN_TAPE)
     uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-    
+
     total_records = models.IntegerField(default=0)
     successful_records = models.IntegerField(default=0)
     failed_records = models.IntegerField(default=0)
@@ -250,7 +250,7 @@ class LoanException(models.Model):
     severity = models.IntegerField(choices=ValidationSeverity.choices, default=ValidationSeverity.MEDIUM)
     description = models.TextField()
     status = models.IntegerField(choices=ExceptionStatus.choices, default=ExceptionStatus.OPEN)
-    
+
     reviewer_comment = models.TextField(blank=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -268,7 +268,7 @@ class AIRecommendation(models.Model):
     suggested_value = models.CharField(max_length=255)
     explanation = models.TextField()
     confidence_score = models.FloatField(default=0.0)
-    
+
     prompt_text = models.TextField()
     model_name = models.CharField(max_length=100, default='gemini-2.5-flash')
     raw_response = models.TextField()
@@ -281,11 +281,11 @@ class VerifiedLoanRecord(models.Model):
     raw_record = models.OneToOneField(RawLoanRecord, on_delete=models.CASCADE, related_name='verified_record')
     ai_recommendation_used = models.ForeignKey(AIRecommendation, on_delete=models.SET_NULL, null=True, blank=True)
     verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    
+
     loan_id = models.CharField(max_length=100, db_index=True, unique=True)
     borrower_id = models.CharField(max_length=100, db_index=True)
     canonical_data = models.JSONField(help_text="Cleaned, standardized loan JSON payload")
-    
+
     record_hash = models.CharField(max_length=64, help_text="SHA-256 hash over canonical payload + timestamp")
     verified_at = models.DateTimeField(default=timezone.now)
 
@@ -300,16 +300,16 @@ class AuditEvent(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(default=timezone.now, db_index=True)
-    
+
     loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True)
     batch_id = models.IntegerField(null=True, blank=True)
-    
+
     actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     actor_role = models.IntegerField(choices=ActorRole.choices, default=ActorRole.SYSTEM)
-    
+
     event_type = models.CharField(max_length=100, db_index=True)
     payload = models.JSONField(default=dict)
-    
+
     prev_hash = models.CharField(max_length=64)
     event_hash = models.CharField(max_length=64)
 ```
@@ -531,13 +531,13 @@ class IngestionService:
             source_system=source_system,
             status="PROCESSING"
         )
-        
+
         lines = file_obj.read().decode('utf-8-sig', errors='replace').splitlines()
         reader = csv.DictReader(lines)
-        
+
         successful_records = []
         failed_rows = []
-        
+
         for row_idx, row in enumerate(reader, start=2): # Line 1 is header
             try:
                 # Validate minimal row structure
@@ -547,7 +547,7 @@ class IngestionService:
                         failure_reason="Empty row or missing values across all columns"
                     ))
                     continue
-                
+
                 successful_records.append(RawLoanRecord(
                     batch=batch,
                     row_number=row_idx, # Lineage: Line number in source CSV
@@ -563,7 +563,7 @@ class IngestionService:
         # Bulk persistence
         RawLoanRecord.objects.bulk_create(successful_records)
         FailedImportRow.objects.bulk_create(failed_rows)
-        
+
         # Update Upload Summary Metrics
         batch.total_records = len(lines) - 1
         batch.successful_records = len(successful_records)
@@ -592,7 +592,7 @@ class IngestionService:
 
 ### Module B: Configurable Validation Engine
 - **What is it:** Automated rule execution framework that scans ingested records against configurable rules loaded into `ValidationRule` ORM model and populates the `LoanException` model.
-- **Why use BOTH `ValidationRule` (DB Model) AND Python Strategy Classes?**  
+- **Why use BOTH `ValidationRule` (DB Model) AND Python Strategy Classes?**
   This is an intentional enterprise design pattern (**Strategy Pattern + Dynamic Metadata Registry**):
   - **`ValidationRule` (DB Model):** Holds configurable metadata (`rule_code`, `field_name`, `severity`, `is_active`, `description`). This allows administrators or hackathon judges to toggle rules on/off or change severity thresholds (`CRITICAL` vs `HIGH`) dynamically in the UI/Admin without redeploying code.
   - **Strategy Classes (`app/domain/validation.py`):** Encapsulates the actual Python code execution for complex checks (e.g. date arithmetic, DPD vs status logic, multi-file servicer reconciliation).
@@ -635,7 +635,7 @@ class ValidationEngine:
                 db_rule = active_db_rules.get(rule_code)
                 if not db_rule:
                     continue # Skip if rule was disabled in DB/UI
-                
+
                 res = strategy.validate(record)
                 if res and not res.is_valid:
                     exceptions_to_create.append(
@@ -705,7 +705,7 @@ def compute_record_hash(canonical_data: dict, verified_at_iso: str) -> str:
 ### Module F: Audit Trail Engine & Event Ledger
 
 #### Simple Model History vs. Unified Audit Event Ledger:
-- **Is Django `HistoricalModel` / simple history optimal?**  
+- **Is Django `HistoricalModel` / simple history optimal?**
   **NO.** Standard model history (`django-simple-history`) creates separate historical tables per model (`HistoricalRawRecord`, `HistoricalLoanException`). This approach is **sub-optimal** for FinTech verification because:
   1. **Fragmented Logs:** Querying a loan's history requires joining across 5 separate tables.
   2. **Lacks Context:** Model history only logs raw DB field changes (`old_val` vs `new_val`); it cannot capture AI prompts, model metadata (`gemini-2.5-flash`), confidence scores, batch IDs, or reviewer comments.
@@ -742,21 +742,21 @@ from django.utils import timezone
 class AuditEvent(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     timestamp = models.DateTimeField(default=timezone.now, db_index=True)
-    
+
     # Traceability Identifiers
     loan_id = models.CharField(max_length=100, db_index=True, null=True, blank=True)
     batch_id = models.IntegerField(null=True, blank=True)
-    
+
     # Identity & Actor Role
     actor = models.ForeignKey('auth.User', null=True, blank=True, on_delete=models.SET_NULL)
     actor_role = models.CharField(max_length=50, default="SYSTEM") # OPERATOR, REVIEWER, AI_COPILOT, SYSTEM
-    
+
     # Event Category
     event_type = models.CharField(max_length=100, db_index=True)
-    
+
     # Rich Context & AI Metadata
     payload = models.JSONField(default=dict)
-    
+
     # Cryptographic Chain
     prev_hash = models.CharField(max_length=64)
     event_hash = models.CharField(max_length=64)
@@ -766,15 +766,15 @@ class AuditEvent(models.Model):
         payload = payload or {}
         last_event = cls.objects.order_by('-timestamp', '-id').first()
         prev_hash = last_event.event_hash if last_event else "0" * 64
-        
+
         ts_str = timezone.now().isoformat()
         actor_name = actor.username if actor else actor_role
-        
+
         # Build SHA-256 Hash Input
         payload_str = json.dumps(payload, sort_keys=True)
         hash_input = f"{prev_hash}|{ts_str}|{event_type}|{actor_name}|{loan_id}|{payload_str}".encode('utf-8')
         event_hash = hashlib.sha256(hash_input).hexdigest()
-        
+
         return cls.objects.create(
             event_type=event_type,
             actor=actor,
@@ -941,4 +941,3 @@ To prevent scope creep during the hackathon, the following features are **explic
 - Real credit scoring models or underwriting algorithms
 - Live payment gateway workflows
 - Production-grade regulatory compliance engines
-
