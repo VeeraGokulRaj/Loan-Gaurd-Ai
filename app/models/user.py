@@ -63,6 +63,20 @@ class User(AbstractUser, BaseModel):
     def is_data_consumer(self) -> bool:
         return not self.is_superuser and self.category == self.Category.DATA_CONSUMER
 
+    def get_category_permissions(self) -> list[str]:
+        """Dynamically returns permission codenames assigned to the user's Category."""
+        if self.is_superuser or not self.category:
+            return []
+        from app.domain.roles import get_all_permissions_for_category
+
+        return get_all_permissions_for_category(self.category)
+
+    def has_category_perm(self, perm: str) -> bool:
+        """Checks if the user possesses a specific category permission without superuser bypass."""
+        if self.is_superuser or not self.category:
+            return False
+        return perm in self.get_category_permissions()
+
     def __str__(self) -> str:
         if self.category is not None:
             return f"{self.username} ({self.get_category_display()})"
