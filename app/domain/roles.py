@@ -81,3 +81,20 @@ def get_all_permissions_for_category(category: int) -> list[str]:
     """Returns all string permission codenames assigned to a given Category choice."""
     perms = ROLE_PERMISSIONS.get(category, [])
     return [perm.value for perm in perms]
+
+
+def sync_category_permissions() -> int:
+    """
+    Clears legacy static user_permissions rows for category users
+    to enforce dynamic AppPermission and ROLE_PERMISSIONS resolution.
+    """
+    covered_codenames = AppPermission.values
+    deleted_count, _ = User.user_permissions.through.objects.filter(
+        user__category__in=[
+            User.Category.DATA_OPERATOR,
+            User.Category.REVIEWER,
+            User.Category.DATA_CONSUMER,
+        ],
+        permission__codename__in=covered_codenames,
+    ).delete()
+    return deleted_count
