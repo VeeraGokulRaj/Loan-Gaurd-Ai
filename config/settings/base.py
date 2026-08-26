@@ -30,6 +30,11 @@ THIRD_PARTY_APPS = [
     "django_htmx",
     "django_filters",
     "widget_tweaks",
+    "django_extensions",
+    "simple_history",
+    "ordered_model",
+    "import_export",
+    "rest_framework",
 ]
 
 LOCAL_APPS = [
