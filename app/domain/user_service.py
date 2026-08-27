@@ -28,8 +28,10 @@ from pathlib import Path
 from typing import Any
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db import transaction
 
 User = get_user_model()
 
@@ -168,6 +170,7 @@ class UserJsonValidator:
 class UserSeederService:
     """
     Database Seeder & JSON Persister Service.
+    Optimized for high-performance bulk user seeding operations.
     """
 
     @classmethod
@@ -175,50 +178,87 @@ class UserSeederService:
         """
         Synchronizes valid user dict list into Django Database User records.
 
+        Optimizations applied:
+        1. Bulk pre-fetching of existing users to eliminate N+1 queries.
+        2. Hashed password caching in memory to avoid redundant expensive PBKDF2 key stretching.
+        3. Atomic database transaction batching.
+
         Args:
             users_data (List[Dict[str, Any]]): List of validated user objects.
 
         Returns:
             Tuple[int, int]: (created_count, updated_count)
         """
+        if not users_data:
+            return 0, 0
+
         created_count = 0
         updated_count = 0
 
-        for info in users_data:
-            username = str(info["username"]).strip()
-            email = str(info.get("email", "")).strip()
-            first_name = str(info.get("first_name", "")).strip()
-            last_name = str(info.get("last_name", "")).strip()
-            phone = str(info.get("mobile") or info.get("phone", "")).strip()
-            role_name = str(info.get("role", "Data Consumer")).strip()
-            password = str(info.get("password", "pass123"))
+        # Pre-fetch existing users in a single query
+        target_usernames = [
+            str(info.get("username", "")).strip() for info in users_data if info.get("username")
+        ]
+        existing_users_map = {
+            user.username: user for user in User.objects.filter(username__in=target_usernames)
+        }
 
-            # Fallback to DATA_CONSUMER if role is not recognized
-            category = ALLOWED_ROLES.get(role_name, User.Category.DATA_CONSUMER)
+        # Cache hashed passwords to avoid expensive repeated PBKDF2/Argon2 hashing
+        password_hash_cache: dict[str, str] = {}
 
-            user = User.objects.filter(username=username).first()
-            created = False
-            if not user:
-                user = User(username=username)
-                created = True
+        with transaction.atomic():
+            for info in users_data:
+                username = str(info["username"]).strip()
+                if not username:
+                    continue
 
-            user.first_name = first_name
-            user.last_name = last_name
-            user.email = email
-            user.phone = phone
-            user.category = category
-            user.set_password(password)
-            user.save()
+                email = str(info.get("email", "")).strip()
+                first_name = str(info.get("first_name", "")).strip()
+                last_name = str(info.get("last_name", "")).strip()
+                phone = str(info.get("mobile") or info.get("phone", "")).strip()
+                role_name = str(info.get("role", "Data Consumer")).strip()
+                raw_password = str(info.get("password", "pass123"))
 
-            if created:
-                created_count += 1
-            else:
-                updated_count += 1
+                category = ALLOWED_ROLES.get(role_name, User.Category.DATA_CONSUMER)
 
-        # Automatically trigger permission sync after seeding data
-        from app.domain.roles import sync_category_permissions
+                # Pre-hash raw password once per unique raw password string
+                if raw_password not in password_hash_cache:
+                    password_hash_cache[raw_password] = make_password(raw_password)
+                hashed_password = password_hash_cache[raw_password]
 
-        sync_category_permissions()
+                user = existing_users_map.get(username)
+                created = False
+
+                if not user:
+                    user = User(
+                        username=username,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        phone=phone,
+                        category=category,
+                        password=hashed_password,
+                    )
+                    created = True
+                else:
+                    user.first_name = first_name
+                    user.last_name = last_name
+                    user.email = email
+                    user.phone = phone
+                    user.category = category
+                    user.password = hashed_password
+
+                user.save()
+
+                if created:
+                    created_count += 1
+                else:
+                    updated_count += 1
+
+            # Automatically trigger permission sync after seeding data
+            from app.domain.roles import sync_category_permissions
+
+            sync_category_permissions()
 
         return created_count, updated_count
 
