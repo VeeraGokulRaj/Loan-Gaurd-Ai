@@ -8,9 +8,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 from app.views import login_view, logout_view
+from app.views.dashboard import dashboard_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("", dashboard_view, name="dashboard"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
 ]

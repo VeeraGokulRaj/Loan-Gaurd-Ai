@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}
+    Data Operator Workspace - LoanGuard AI
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Include Header Component -->
+        {% include "dashboard/operator/includes/header.html" %}
+        <!-- Main Workspace Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Messages Banner -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="rounded-xl bg-indigo-500/10 border border-indigo-500/20 p-4 text-sm text-indigo-300 flex items-center justify-between backdrop-blur-md">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-indigo-400 shrink-0"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                                </path>
+                            </svg>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <!-- Include Stat Cards Grid Component -->
+            {% include "dashboard/operator/includes/stat_cards.html" %}
+            <!-- Include Clean Sub-Header Tabs Navigation Component -->
+            {% include "dashboard/operator/includes/tabs_nav.html" %}
+            <!-- Include Tab 1: Upload Dropzones & Dynamic Ingestion Session Summary Component -->
+            {% include "dashboard/operator/includes/upload_tab.html" %}
+            <!-- Include Tab 2: Batch Database Component -->
+            {% include "dashboard/operator/includes/batches_tab.html" %}
+            <!-- Include Tab 3: Failed Rows Component -->
+            {% include "dashboard/operator/includes/failed_tab.html" %}
+        </main>
+        <!-- Footer -->
+        <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div>LoanGuard AI &copy; 2026. Data Operator Workspace.</div>
+            </div>
+        </footer>
+    </div>
+    <script>
+    /**
+     * Flicker-Free Unified Tab Switcher Controller
+     * Toggles visibility of tab content containers and manages non-flickering active button states.
+     */
+    function switchTab(tabId) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.add('hidden');
+            tab.classList.remove('block');
+        });
+
+        // Show target tab content
+        const target = document.getElementById(tabId);
+        if (target) {
+            target.classList.remove('hidden');
+            target.classList.add('block');
+        }
+
+        // Subnav tab button styling update
+        document.querySelectorAll('.subtab-btn').forEach(btn => {
+            btn.classList.remove('border-indigo-500', 'text-white');
+            btn.classList.add('border-transparent', 'text-slate-400');
+        });
+        const activeSubnav = document.getElementById('subnav-' + tabId);
+        if (activeSubnav) {
+            activeSubnav.classList.add('border-indigo-500', 'text-white');
+            activeSubnav.classList.remove('border-transparent', 'text-slate-400');
+        }
+
+        // Top Header nav button styling update
+        document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+            btn.classList.remove('bg-slate-800', 'text-white', 'border-slate-700');
+            btn.classList.add('text-slate-400', 'border-transparent');
+        });
+        const activeHeaderNav = document.getElementById('nav-' + tabId);
+        if (activeHeaderNav) {
+            activeHeaderNav.classList.add('bg-slate-800', 'text-white', 'border-slate-700');
+            activeHeaderNav.classList.remove('text-slate-400', 'border-transparent');
+        }
+    }
+
+    function onStartPipelineSubmit(e) {
+        e.preventDefault();
+        // Reveal dynamic Ingestion Session Summary panel upon pipeline start
+        const summaryPanel = document.getElementById('dynamicSessionSummary');
+        if (summaryPanel) {
+            summaryPanel.classList.remove('hidden');
+            summaryPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function runValidationDemo() {
+        const box = document.getElementById('validationResultBox');
+        if (box) {
+            box.classList.remove('hidden');
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    function updateFileSlotLabel(slotKey, input) {
+        const labelEl = document.getElementById('label_' + slotKey);
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const kbSize = (file.size / 1024).toFixed(1);
+            labelEl.textContent = `✓ ${file.name} (${kbSize} KB)`;
+            labelEl.classList.remove('text-slate-500');
+            labelEl.classList.add('text-emerald-400', 'font-semibold');
+        } else {
+            labelEl.textContent = 'No file selected';
+            labelEl.classList.remove('text-emerald-400', 'font-semibold');
+            labelEl.classList.add('text-slate-500');
+        }
+    }
+
+    function filterBatchesTable() {
+        const query = document.getElementById('batchSearchInput').value.toLowerCase();
+        const sourceType = document.getElementById('sourceTypeFilter').value;
+        const status = document.getElementById('batchStatusFilter').value;
+        const rows = document.querySelectorAll('.batch-row');
+
+        rows.forEach(row => {
+            const filename = (row.getAttribute('data-filename') || '').toLowerCase();
+            const batchId = (row.getAttribute('data-batchid') || '').toLowerCase();
+            const rowSource = row.getAttribute('data-sourcetype') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+
+            const matchesSearch = !query || filename.includes(query) || batchId.includes(query);
+            const matchesSource = !sourceType || rowSource === sourceType;
+            const matchesStatus = !status || rowStatus === status;
+
+            if (matchesSearch && matchesSource && matchesStatus) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+
+    function filterFailedTable() {
+        const query = document.getElementById('failedSearchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('.failed-row');
+
+        rows.forEach(row => {
+            const batch = (row.getAttribute('data-batch') || '').toLowerCase();
+            const reason = (row.getAttribute('data-reason') || '').toLowerCase();
+            const content = (row.getAttribute('data-content') || '').toLowerCase();
+
+            const matches = !query || batch.includes(query) || reason.includes(query) || content.includes(query);
+            if (matches) {
+                row.classList.remove('hidden');
+            } else {
+                row.classList.add('hidden');
+            }
+        });
+    }
+    </script>
+{% endblock content %}
