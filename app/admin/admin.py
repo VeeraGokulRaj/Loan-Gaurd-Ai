@@ -18,6 +18,7 @@ from app.models.ingestion import (
     ServicerUpdateRecord,
     UploadBatch,
 )
+from app.models.validation import LoanException, ValidationRule, ValidationSeverity
 
 
 @admin.register(UploadBatch)
@@ -262,3 +263,122 @@ class AuditEventAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None) -> bool:
         """Audit events are append-only; standard deletion disabled in admin interface."""
         return request.user.is_superuser
+
+
+@admin.register(ValidationRule)
+class ValidationRuleAdmin(admin.ModelAdmin):
+    """Admin configuration for ValidationRule model with severity badges & autocomplete support."""
+
+    list_display = (
+        "id",
+        "rule_code",
+        "strategy_key",
+        "rule_name",
+        "field_name",
+        "get_severity_badge",
+        "get_active_badge",
+        "created",
+    )
+    list_filter = ("severity", "is_active", "created")
+    search_fields = ("rule_code", "strategy_key", "rule_name", "field_name", "description")
+    ordering = ("rule_code",)
+    readonly_fields = ("created", "modified")
+
+    def get_severity_badge(self, obj: ValidationRule) -> str:
+        """Returns colored badge for validation severity level."""
+        colors = {
+            ValidationSeverity.LOW: "#2563eb",  # Blue
+            ValidationSeverity.MEDIUM: "#d97706",  # Amber
+            ValidationSeverity.HIGH: "#ea580c",  # Orange
+            ValidationSeverity.CRITICAL: "#dc2626",  # Red
+        }
+        color = colors.get(obj.severity, "#6b7280")
+        label = obj.get_severity_display() if obj.severity else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_severity_badge.short_description = _("Severity")
+
+    def get_active_badge(self, obj: ValidationRule) -> str:
+        """Returns colored badge for active/disabled status."""
+        if obj.is_active:
+            return format_html(
+                '<span style="background-color: #059669; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">ACTIVE</span>'
+            )
+        return format_html(
+            '<span style="background-color: #6b7280; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">DISABLED</span>'
+        )
+
+    get_active_badge.short_description = _("Is Active")
+
+
+@admin.register(LoanException)
+class LoanExceptionAdmin(admin.ModelAdmin):
+    """Admin configuration for LoanException model with list_select_related & autocomplete support."""
+
+    list_display = (
+        "id",
+        "rule_code",
+        "field_name",
+        "batch",
+        "raw_record",
+        "get_severity_badge",
+        "get_status_badge",
+        "resolved_by",
+        "created",
+    )
+    list_filter = ("severity", "status", "created")
+    search_fields = (
+        "rule_code",
+        "field_name",
+        "description",
+        "override_value",
+        "reviewer_comment",
+        "batch__file_name",
+    )
+    ordering = ("-severity", "-created")
+    readonly_fields = ("created", "modified")
+
+    # Performance & UX Optimizations
+    list_select_related = ("batch", "raw_record", "rule", "resolved_by")
+    autocomplete_fields = ("batch", "raw_record", "rule", "resolved_by")
+
+    def get_severity_badge(self, obj: LoanException) -> str:
+        """Returns colored badge for exception severity level."""
+        colors = {
+            ValidationSeverity.LOW: "#2563eb",  # Blue
+            ValidationSeverity.MEDIUM: "#d97706",  # Amber
+            ValidationSeverity.HIGH: "#ea580c",  # Orange
+            ValidationSeverity.CRITICAL: "#dc2626",  # Red
+        }
+        color = colors.get(obj.severity, "#6b7280")
+        label = obj.get_severity_display() if obj.severity else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_severity_badge.short_description = _("Severity")
+
+    def get_status_badge(self, obj: LoanException) -> str:
+        """Returns colored badge for exception status."""
+        status_colors = {
+            LoanException.ExceptionStatus.OPEN: "#dc2626",  # Red
+            LoanException.ExceptionStatus.UNDER_REVIEW: "#d97706",  # Amber
+            LoanException.ExceptionStatus.RESOLVED_ACCEPTED: "#059669",  # Emerald
+            LoanException.ExceptionStatus.RESOLVED_EDITED: "#7c3aed",  # Purple
+            LoanException.ExceptionStatus.REJECTED: "#4b5563",  # Gray
+        }
+        color = status_colors.get(obj.status, "#6b7280")
+        label = obj.get_status_display() if obj.status else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_status_badge.short_description = _("Exception Status")
