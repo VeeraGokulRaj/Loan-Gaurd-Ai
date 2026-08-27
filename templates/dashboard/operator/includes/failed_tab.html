@@ -1,0 +1,95 @@
+<!-- TAB 3: ACTIONABLE FAILED IMPORT ROWS WITH SEARCH & FILTER -->
+<div id="failedTab" class="tab-content hidden">
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-400"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                    Failed Import Rows Isolation & Error Log
+                </h2>
+                <p class="text-xs text-slate-400">Inspect and search malformed rows across all upload batches.</p>
+            </div>
+            <!-- Search Input -->
+            <div>
+                <input type="text"
+                       id="failedSearchInput"
+                       onkeyup="filterFailedTable()"
+                       placeholder="Search failure reason or snippet..."
+                       class="w-64 px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs">
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300" id="failedTable">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Batch ID</th>
+                        <th class="px-4 py-3 font-semibold">CSV Line #</th>
+                        <th class="px-4 py-3 font-semibold">Raw Line Content</th>
+                        <th class="px-4 py-3 font-semibold">Failure Reason</th>
+                        <th class="px-4 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60" id="failedTbody">
+                    {% if failed_rows %}
+                        {% for row in failed_rows %}
+                            <tr class="hover:bg-slate-800/40 transition-colors failed-row"
+                                data-batch="#{{ row.batch_id }}"
+                                data-reason="{{ row.failure_reason }}"
+                                data-content="{{ row.raw_line }}">
+                                <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#{{ row.batch_id }}</td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line {{ row.row_number }}</td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">{{ row.raw_line }}</td>
+                                <td class="px-4 py-3.5 text-xs text-red-400 font-medium">{{ row.failure_reason }}</td>
+                                <td class="px-4 py-3.5 text-right">
+                                    <button type="button"
+                                            class="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-colors">
+                                        Inspect Line
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr class="hover:bg-slate-800/40 transition-colors failed-row"
+                            data-batch="#101"
+                            data-reason="Unescaped quote character in CSV field string"
+                            data-content="LN-992, Murugan, CLOSED">
+                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#101</td>
+                            <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line 142</td>
+                            <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">
+                                LN-992, "Murugan", "CLOSED, 45000.00, "Unescaped Quote
+                            </td>
+                            <td class="px-4 py-3.5 text-xs text-red-400 font-medium">Unescaped quote character in CSV field string</td>
+                            <td class="px-4 py-3.5 text-right">
+                                <button type="button"
+                                        class="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                    Inspect Line
+                                </button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-800/40 transition-colors failed-row"
+                            data-batch="#101"
+                            data-reason="Empty CSV line across all columns"
+                            data-content=",,,,,,,,,,">
+                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#101</td>
+                            <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line 289</td>
+                            <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">,,,,,,,,,,</td>
+                            <td class="px-4 py-3.5 text-red-400 font-medium text-xs">Empty CSV line across all columns</td>
+                            <td class="px-4 py-3.5 text-right">
+                                <button type="button"
+                                        class="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
+                                    Inspect Line
+                                </button>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
