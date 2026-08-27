@@ -7,11 +7,10 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from app.views import home, login_view, logout_view
+from app.views import login_view, logout_view
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("home/", home, name="home"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
 ]
