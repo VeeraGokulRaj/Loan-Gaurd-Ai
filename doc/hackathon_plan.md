@@ -208,12 +208,14 @@ class ValidationSeverity(models.IntegerChoices):
 
 
 class ValidationRule(models.Model):
-    rule_code = models.CharField(max_length=50, unique=True)
+    rule_code = models.CharField(max_length=50, unique=True, help_text="Display identifier e.g. VAL_001 or VL-0001")
+    strategy_key = models.CharField(max_length=50, db_index=True, blank=True, help_text="Explicit strategy handler key e.g. MISSING_LOAN_ID")
     rule_name = models.CharField(max_length=255)
     field_name = models.CharField(max_length=100)
     description = models.TextField()
     severity = models.IntegerField(choices=ValidationSeverity.choices, default=ValidationSeverity.MEDIUM)
     is_active = models.BooleanField(default=True)
+    parameters = models.JSONField(default=dict, blank=True, help_text="Configurable rule threshold parameters")
 
 
 class LoanException(models.Model):
@@ -430,31 +432,30 @@ class IngestionService:
 #### Goal:
 Detect all 15 intentional data quality issues specified in the problem statement using configurable rules loaded from `validation_rules.json` into the `ValidationRule` ORM model, executed via Python Strategy Pattern classes.
 
-#### Architectural Rationale: Why BOTH `ValidationRule` (DB Model) AND Rule Classes (Strategy Pattern)?
-This is an intentional **Strategy Pattern + Dynamic Metadata Registry** enterprise design:
-1. **`ValidationRule` (DB Model):** Stores configurable metadata (`rule_code`, `field_name`, `severity`, `is_active`, `description`). This allows judges or admins to toggle rules on/off or change severities dynamically in the UI/Admin without redeploying code.
-2. **Rule Strategy Classes (`app/domain/validation.py`):** Encapsulates the execution logic for complex rules (e.g., date math, status vs DPD logic, cross-file servicer reconciliation).
-3. **The Connection (`ValidationEngine`):** `ValidationEngine` queries active rules from DB (`ValidationRule.objects.filter(is_active=True)`), executes the corresponding strategy class, and attaches the DB-configured severity to generated `LoanException` entries.
+#### Architectural Rationale: Why BOTH `ValidationRule` (DB Model) AND Rule 1. **`ValidationRule` (DB Model):** Stores configurable metadata (`rule_code`, `strategy_key`, `field_name`, `severity`, `is_active`, `description`, `parameters`). Decouples `rule_code` (e.g. `VAL_001` or `VL-0001`) from internal execution logic, allowing admins or judges to customize rule codes, toggle rules ON/OFF, or change severities/parameters dynamically without redeploying code.
+2. **Rule Strategy Classes (`app/domain/validation.py`):** Encapsulates the execution logic for complex rules (e.g., date math, status vs DPD logic, cross-file servicer reconciliation) keyed by `strategy_key` (e.g., `MISSING_LOAN_ID`, `MATURITY_BEFORE_ORIGINATION`, `CLOSED_LOAN_POSITIVE_BALANCE`).
+3. **The Connection (`ValidationEngine`):** `ValidationEngine` queries active rules from DB (`ValidationRule.objects.filter(is_active=True)`), looks up strategy handlers directly via `strategy_key`, falls back to `GenericExpressionRule` for unknown/custom rules, and applies DB-configured severity and parameters to generated `LoanException` entries.
 
 #### Targeted Data Issues (Section 7 Compliance):
-1. Missing loan IDs
-2. Duplicate loan IDs
-3. Duplicate borrower + loan amount + origination date combinations
-4. Invalid date formats
-5. Maturity date before origination date
-6. Negative principal balance
-7. Current balance greater than original principal
-8. Interest rate outside expected range (e.g. < 0% or > 35%)
-9. Payment status inconsistent with days past due (e.g. Current but DPD > 30)
-10. Missing document status (reconciled against `document_manifest.csv`)
-11. Conflicting values between `loan_tape.csv` and `servicer_update.csv`
-12. Stale records based on `last_updated_at` (e.g. > 180 days old)
-13. Invalid state codes (e.g. not standard 2-letter US state code)
-14. Suspiciously repeated borrower records
-15. Loans marked closed but still showing positive balance (`current_balance > 0` AND `payment_status == 'CLOSED'`)
+1. Missing loan IDs (`MISSING_LOAN_ID`)
+2. Duplicate loan IDs (`DUPLICATE_LOAN_ID`)
+3. Duplicate borrower + loan amount + origination date combinations (`DUPLICATE_BORROWER_TRIPLET`)
+4. Invalid date formats (`INVALID_DATE_FORMAT`)
+5. Maturity date before origination date (`MATURITY_BEFORE_ORIGINATION`)
+6. Negative principal balance (`NEGATIVE_BALANCE`)
+7. Current balance greater than original principal (`BALANCE_EXCEEDS_PRINCIPAL`)
+8. Interest rate outside expected range (e.g. < 0% or > 35%) (`OUT_OF_RANGE_INTEREST_RATE`)
+9. Payment status inconsistent with days past due (e.g. Current but DPD > 30) (`STATUS_VS_DPD_INCONSISTENCY`)
+10. Missing document status (reconciled against `document_manifest.csv`) (`MISSING_DOCUMENT_STATUS`)
+11. Conflicting values between `loan_tape.csv` and `servicer_update.csv` (`SERVICER_BALANCE_CONFLICT`)
+12. Stale records based on `last_updated_at` (e.g. > 180 days old) (`STALE_RECORD`)
+13. Invalid state codes (e.g. not standard 2-letter US state code) (`INVALID_STATE_CODE`)
+14. Suspiciously repeated borrower records (`SUSPICIOUS_BORROWER_DUPLICATION`)
+15. Loans marked closed but still showing positive balance (`CLOSED_LOAN_POSITIVE_BALANCE`)
 
 #### Implementation Plan (`app/domain/validation.py`):
 - Implement extensible Strategy Pattern where each Rule is a class extending `BaseValidationRule`.
+- Direct `strategy_key` dictionary lookup in `ValidationEngine` with `GenericExpressionRule` fallback.
 - Execute validation on all `RawLoanRecord` instances for a batch.
 - Flag exceptions and insert into `LoanException` model.
 
@@ -462,6 +463,7 @@ This is an intentional **Strategy Pattern + Dynamic Metadata Registry** enterpri
 ```python
 # app/domain/validation.py
 from datetime import datetime
+from typing import Optional
 from app.models import LoanException, RawLoanRecord, ValidationRule
 
 class RuleResult:
@@ -473,9 +475,9 @@ class RuleResult:
         self.message = message
 
 class MaturityAfterOriginationRule:
-    rule_code = "VAL_005"
+    strategy_key = "MATURITY_BEFORE_ORIGINATION"
 
-    def validate(self, raw_record: RawLoanRecord) -> RuleResult:
+    def validate(self, raw_record: RawLoanRecord, db_rule: ValidationRule) -> Optional[RuleResult]:
         data = raw_record.raw_data
         orig_str = data.get("origination_date")
         mat_str = data.get("maturity_date")
@@ -484,51 +486,73 @@ class MaturityAfterOriginationRule:
             orig_date = datetime.strptime(orig_str, "%Y-%m-%d")
             mat_date = datetime.strptime(mat_str, "%Y-%m-%d")
             if mat_date <= orig_date:
-                return RuleResult(False, "maturity_date", self.rule_code, "HIGH",
+                return RuleResult(False, "maturity_date", db_rule.rule_code, db_rule.severity,
                                   f"Maturity date ({mat_str}) is on or before origination date ({orig_str}).")
         except Exception:
-            return RuleResult(False, "maturity_date", "VAL_004", "HIGH", "Invalid date format.")
+            return RuleResult(False, "maturity_date", db_rule.rule_code, db_rule.severity, "Invalid date format.")
 
-        return RuleResult(True, "", "", "", "")
+        return None
 
 class ClosedLoanPositiveBalanceRule:
-    rule_code = "VAL_015"
+    strategy_key = "CLOSED_LOAN_POSITIVE_BALANCE"
 
-    def validate(self, raw_record: RawLoanRecord) -> RuleResult:
+    def validate(self, raw_record: RawLoanRecord, db_rule: ValidationRule) -> Optional[RuleResult]:
         data = raw_record.raw_data
         status = str(data.get("payment_status", "")).upper()
         balance = float(data.get("current_balance", 0) or 0)
 
         if status == "CLOSED" and balance > 0:
-            return RuleResult(False, "current_balance", self.rule_code, "CRITICAL",
-                              f"Loan is marked CLOSED but retains positive balance (${balance:,.2f}).")
-        return RuleResult(True, "", "", "", "")
+            return RuleResult(False, "current_balance", db_rule.rule_code, db_rule.severity,
+                               f"Loan is marked CLOSED but retains positive balance (${balance:,.2f}).")
+        return None
+
+class GenericExpressionRule:
+    """Evaluates generic conditions like field IS_NULL, field > max, field == value."""
+    def validate(self, raw_record: RawLoanRecord, db_rule: ValidationRule) -> Optional[RuleResult]:
+        data = raw_record.raw_data
+        field = db_rule.field_name
+        op = db_rule.parameters.get("operator")
+        val = data.get(field)
+        if op == "IS_NULL" and (val is None or str(val).strip() == ""):
+            return RuleResult(False, field, db_rule.rule_code, db_rule.severity, f"Field '{field}' is missing or empty.")
+        return None
 
 class ValidationEngine:
-    RULES = [
-        MaturityAfterOriginationRule(),
-        ClosedLoanPositiveBalanceRule(),
-        # ... Other rules 1 through 15 ...
-    ]
+    STRATEGY_MAP = {
+        "MATURITY_BEFORE_ORIGINATION": MaturityAfterOriginationRule(),
+        "CLOSED_LOAN_POSITIVE_BALANCE": ClosedLoanPositiveBalanceRule(),
+        # ... Remaining 13 strategies ...
+    }
+
+    @classmethod
+    def get_strategy(cls, db_rule: ValidationRule):
+        # Direct lookup by strategy_key from JSON/DB!
+        strategy = cls.STRATEGY_MAP.get(db_rule.strategy_key)
+        return strategy if strategy else GenericExpressionRule()
 
     @classmethod
     def validate_batch(cls, batch):
         exceptions_to_create = []
         raw_records = RawLoanRecord.objects.filter(batch=batch)
+        active_db_rules = ValidationRule.objects.filter(is_active=True)
 
         for record in raw_records:
-            for rule in cls.RULES:
-                res = rule.validate(record)
-                if not res.is_valid:
+            for db_rule in active_db_rules:
+                strategy = cls.get_strategy(db_rule)
+                res = strategy.validate(record, db_rule)
+                if res and not res.is_valid:
                     exceptions_to_create.append(
                         LoanException(
                             batch=batch,
                             raw_record=record,
                             field_name=res.field_name,
-                            rule_code=res.rule_code,
-                            severity=res.severity,
+                            rule_code=db_rule.rule_code,
+                            severity=db_rule.severity,
                             description=res.message,
                             status="OPEN"
+                        )
+                    )
+        LoanException.objects.bulk_create(exceptions_to_create)="OPEN"
                         )
                     )
         LoanException.objects.bulk_create(exceptions_to_create)

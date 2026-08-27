@@ -227,12 +227,14 @@ class ValidationSeverity(models.IntegerChoices):
 
 
 class ValidationRule(models.Model):
-    rule_code = models.CharField(max_length=50, unique=True)
+    rule_code = models.CharField(max_length=50, unique=True, help_text="Display identifier e.g. VAL_001 or VL-0001")
+    strategy_key = models.CharField(max_length=50, db_index=True, blank=True, help_text="Explicit strategy handler key e.g. MISSING_LOAN_ID")
     rule_name = models.CharField(max_length=255)
     field_name = models.CharField(max_length=100)
     description = models.TextField()
     severity = models.IntegerField(choices=ValidationSeverity.choices, default=ValidationSeverity.MEDIUM)
     is_active = models.BooleanField(default=True)
+    parameters = models.JSONField(default=dict, blank=True, help_text="Configurable rule threshold parameters")
 
 
 class LoanException(models.Model):
@@ -375,6 +377,7 @@ LN-1003,FALSE,FALSE,FALSE,MISSING,2022-11-02
 [
   {
     "rule_code": "VAL_001",
+    "strategy_key": "MISSING_LOAN_ID",
     "rule_name": "Missing Loan ID",
     "field": "loan_id",
     "severity": "CRITICAL",
@@ -382,6 +385,7 @@ LN-1003,FALSE,FALSE,FALSE,MISSING,2022-11-02
   },
   {
     "rule_code": "VAL_005",
+    "strategy_key": "MATURITY_BEFORE_ORIGINATION",
     "rule_name": "Maturity Before Origination",
     "field": "maturity_date",
     "severity": "HIGH",
@@ -389,6 +393,7 @@ LN-1003,FALSE,FALSE,FALSE,MISSING,2022-11-02
   },
   {
     "rule_code": "VAL_007",
+    "strategy_key": "BALANCE_EXCEEDS_PRINCIPAL",
     "rule_name": "Balance Exceeds Principal",
     "field": "current_balance",
     "severity": "HIGH",
@@ -396,6 +401,7 @@ LN-1003,FALSE,FALSE,FALSE,MISSING,2022-11-02
   },
   {
     "rule_code": "VAL_015",
+    "strategy_key": "CLOSED_LOAN_POSITIVE_BALANCE",
     "rule_name": "Closed Loan Positive Balance",
     "field": "payment_status",
     "severity": "CRITICAL",
