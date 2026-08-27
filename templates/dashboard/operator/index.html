@@ -40,7 +40,7 @@
         <!-- Footer -->
         <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">
             <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
-                <div>LoanGuard AI &copy; 2026. Data Operator Workspace.</div>
+                <div>LoanGuard AI © 2026. Data Operator Workspace.</div>
             </div>
         </footer>
     </div>
@@ -104,7 +104,55 @@
         }
     }
 
+    function onIngestionStart() {
+        const btn = document.getElementById('startPipelineBtn');
+        const icon = document.getElementById('startPipelineIcon');
+        const btnText = document.getElementById('startPipelineBtnText');
+        const container = document.getElementById('dynamicSessionSummaryContainer');
+
+        if (container) {
+            container.innerHTML = '';
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-wait');
+        }
+        if (icon) {
+            icon.className = 'w-4 h-4 text-white animate-spin';
+        }
+        if (btnText) {
+            btnText.textContent = 'Processing Pipeline...';
+        }
+    }
+
+    function onIngestionComplete() {
+        const btn = document.getElementById('startPipelineBtn');
+        const icon = document.getElementById('startPipelineIcon');
+        const btnText = document.getElementById('startPipelineBtnText');
+        const container = document.getElementById('dynamicSessionSummaryContainer');
+
+        if (btn) {
+            btn.classList.remove('opacity-75', 'cursor-wait');
+        }
+        if (icon) {
+            icon.className = 'w-4 h-4 text-white';
+        }
+        if (btnText) {
+            btnText.textContent = 'Start Ingestion Pipeline';
+        }
+        checkAllFilesSelected();
+
+        if (container) {
+            container.scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
     function updateFileSlotLabel(slotKey, input) {
+        onFileSlotChange(slotKey, input);
+    }
+
+    function onFileSlotChange(slotKey, input) {
         const labelEl = document.getElementById('label_' + slotKey);
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -116,6 +164,41 @@
             labelEl.textContent = 'No file selected';
             labelEl.classList.remove('text-emerald-400', 'font-semibold');
             labelEl.classList.add('text-slate-500');
+        }
+        checkAllFilesSelected();
+    }
+
+    function checkAllFilesSelected() {
+        const fileTape = document.getElementById('file_loan_tape');
+        const fileServicer = document.getElementById('file_servicer_update');
+        const fileManifest = document.getElementById('file_document_manifest');
+
+        const btn = document.getElementById('startPipelineBtn');
+        const icon = document.getElementById('startPipelineIcon');
+        const hint = document.getElementById('pipelineValidationHint');
+
+        if (!btn) return;
+
+        const hasTape = fileTape && fileTape.files && fileTape.files.length > 0;
+        const hasServicer = fileServicer && fileServicer.files && fileServicer.files.length > 0;
+        const hasManifest = fileManifest && fileManifest.files && fileManifest.files.length > 0;
+
+        if (hasTape && hasServicer && hasManifest) {
+            btn.disabled = false;
+            btn.className = 'py-3.5 px-8 bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm flex items-center gap-2 cursor-pointer opacity-100';
+            if (icon) icon.className = 'w-4 h-4 text-white';
+            if (hint) {
+                hint.className = 'text-xs text-emerald-400 font-medium flex items-center gap-1.5';
+                hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ All 3 required CSV files selected. Pipeline unlocked!</span>';
+            }
+        } else {
+            btn.disabled = true;
+            btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
+            if (icon) icon.className = 'w-4 h-4 text-slate-500';
+            if (hint) {
+                hint.className = 'text-xs text-amber-400 font-medium flex items-center gap-1.5';
+                hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Select all 3 required CSV files to enable pipeline execution</span>';
+            }
         }
     }
 
