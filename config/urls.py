@@ -7,7 +7,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from app.views import login_view, logout_view
+from app.views import ingest_pipeline_view, login_view, logout_view
 from app.views.dashboard import dashboard_view
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path("", dashboard_view, name="dashboard"),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
+    path("ingest/pipeline/", ingest_pipeline_view, name="ingest_pipeline"),
 ]
 
 if settings.DEBUG:

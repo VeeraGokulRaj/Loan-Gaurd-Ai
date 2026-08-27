@@ -19,6 +19,15 @@
         <link rel="stylesheet" href="{% static 'dist/css/output.css' %}">
         <!-- HTMX -->
         <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+        <style>
+            .htmx-indicator {
+                display: none !important;
+            }
+            .htmx-request .htmx-indicator,
+            .htmx-request.htmx-indicator {
+                display: block !important;
+            }
+        </style>
     </head>
     <body class="h-full bg-slate-900 text-slate-100 font-sans antialiased">
         {% block header %}

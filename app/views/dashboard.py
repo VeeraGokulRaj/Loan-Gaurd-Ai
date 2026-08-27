@@ -5,6 +5,8 @@ Implements single dashboard entrypoint `/` that routes users based on their logg
 role category (Data Operator, Reviewer, Data Consumer).
 """
 
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum
 from django.shortcuts import render
@@ -67,7 +69,9 @@ def operator_dashboard_view(request):
     )
 
     if total_attempted_records > 0:
-        success_rate = round((total_ingested_records / total_attempted_records) * 100, 1)
+        success_rate = (
+            Decimal(total_ingested_records) / Decimal(total_attempted_records) * Decimal("100")
+        ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     else:
         success_rate = 100.0
 
