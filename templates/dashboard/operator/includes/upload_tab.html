@@ -21,14 +21,15 @@
               hx-target="#dynamicSessionSummaryContainer"
               hx-swap="innerHTML"
               hx-indicator="#pipelineLoader"
-              hx-on::before-request="onIngestionStart()"
+              hx-on::before-request="if(!onIngestionStart(event)) event.preventDefault()"
               hx-on::after-request="onIngestionComplete()"
               class="space-y-6">
             {% csrf_token %}
             <!-- 3 Category Upload Slots -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Primary Loan Tape Slot -->
-                <div class="bg-slate-950/80 border border-slate-800 hover:border-sky-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+                <div onclick="document.getElementById('file_loan_tape').click()"
+                     class="bg-slate-950/60 border-2 border-dashed border-slate-800 hover:border-sky-500/50 rounded-xl p-5 flex flex-col justify-between transition-all group cursor-pointer hover:bg-slate-900/50">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="px-2.5 py-1 text-[10px] font-bold rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">LOAN_TAPE *</span>
@@ -38,8 +39,7 @@
                             Original origination tape containing borrower credit scores, DTI, LTV, interest rates & balances.
                         </p>
                     </div>
-                    <div onclick="document.getElementById('file_loan_tape').click()"
-                         class="border-2 border-dashed border-slate-800 hover:border-sky-500/60 bg-slate-900/60 rounded-xl p-5 text-center cursor-pointer transition-all">
+                    <div class="text-center pt-2">
                         <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mx-auto mb-2 group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
@@ -53,12 +53,14 @@
                                id="file_loan_tape"
                                name="loan_tape_file"
                                accept=".csv"
+                               required
                                class="hidden"
                                onchange="onFileSlotChange('loan_tape', this)">
                     </div>
                 </div>
                 <!-- Servicer Update Slot -->
-                <div class="bg-slate-950/80 border border-slate-800 hover:border-purple-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+                <div onclick="document.getElementById('file_servicer_update').click()"
+                     class="bg-slate-950/60 border-2 border-dashed border-slate-800 hover:border-purple-500/50 rounded-xl p-5 flex flex-col justify-between transition-all group cursor-pointer hover:bg-slate-900/50">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="px-2.5 py-1 text-[10px] font-bold rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">SERVICER_UPDATE *</span>
@@ -68,8 +70,7 @@
                             Servicing ledger updates for current balance, delinquency DPD counter & payment history.
                         </p>
                     </div>
-                    <div onclick="document.getElementById('file_servicer_update').click()"
-                         class="border-2 border-dashed border-slate-800 hover:border-purple-500/60 bg-slate-900/60 rounded-xl p-5 text-center cursor-pointer transition-all">
+                    <div class="text-center pt-2">
                         <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mx-auto mb-2 group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
@@ -83,12 +84,14 @@
                                id="file_servicer_update"
                                name="servicer_update_file"
                                accept=".csv"
+                               required
                                class="hidden"
                                onchange="onFileSlotChange('servicer_update', this)">
                     </div>
                 </div>
                 <!-- Document Manifest Slot -->
-                <div class="bg-slate-950/80 border border-slate-800 hover:border-emerald-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group">
+                <div onclick="document.getElementById('file_document_manifest').click()"
+                     class="bg-slate-950/60 border-2 border-dashed border-slate-800 hover:border-emerald-500/50 rounded-xl p-5 flex flex-col justify-between transition-all group cursor-pointer hover:bg-slate-900/50">
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <span class="px-2.5 py-1 text-[10px] font-bold rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">DOCUMENT_MANIFEST *</span>
@@ -98,8 +101,7 @@
                             Document completeness checklist flags for Promissory Note, ID proof & Income verification.
                         </p>
                     </div>
-                    <div onclick="document.getElementById('file_document_manifest').click()"
-                         class="border-2 border-dashed border-slate-800 hover:border-emerald-500/60 bg-slate-900/60 rounded-xl p-5 text-center cursor-pointer transition-all">
+                    <div class="text-center pt-2">
                         <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto mb-2 group-hover:scale-105 transition-transform">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 0115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
@@ -113,6 +115,7 @@
                                id="file_document_manifest"
                                name="document_manifest_file"
                                accept=".csv"
+                               required
                                class="hidden"
                                onchange="onFileSlotChange('document_manifest', this)">
                     </div>

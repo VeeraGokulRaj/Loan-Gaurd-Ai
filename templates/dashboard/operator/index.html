@@ -104,7 +104,12 @@
         }
     }
 
-    function onIngestionStart() {
+    function onIngestionStart(evt) {
+        if (!checkAllFilesSelected()) {
+            if (evt && evt.preventDefault) evt.preventDefault();
+            return false;
+        }
+
         const btn = document.getElementById('startPipelineBtn');
         const icon = document.getElementById('startPipelineIcon');
         const btnText = document.getElementById('startPipelineBtnText');
@@ -124,6 +129,7 @@
         if (btnText) {
             btnText.textContent = 'Processing Pipeline...';
         }
+        return true;
     }
 
     function onIngestionComplete() {
@@ -177,30 +183,38 @@
         const icon = document.getElementById('startPipelineIcon');
         const hint = document.getElementById('pipelineValidationHint');
 
-        if (!btn) return;
+        const hasTape = fileTape && fileTape.files && fileTape.files.length > 0 && fileTape.files[0].name.length > 0;
+        const hasServicer = fileServicer && fileServicer.files && fileServicer.files.length > 0 && fileServicer.files[0].name.length > 0;
+        const hasManifest = fileManifest && fileManifest.files && fileManifest.files.length > 0 && fileManifest.files[0].name.length > 0;
 
-        const hasTape = fileTape && fileTape.files && fileTape.files.length > 0;
-        const hasServicer = fileServicer && fileServicer.files && fileServicer.files.length > 0;
-        const hasManifest = fileManifest && fileManifest.files && fileManifest.files.length > 0;
+        const allSelected = hasTape && hasServicer && hasManifest;
 
-        if (hasTape && hasServicer && hasManifest) {
-            btn.disabled = false;
-            btn.className = 'py-3.5 px-8 bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm flex items-center gap-2 cursor-pointer opacity-100';
-            if (icon) icon.className = 'w-4 h-4 text-white';
-            if (hint) {
-                hint.className = 'text-xs text-emerald-400 font-medium flex items-center gap-1.5';
-                hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ All 3 required CSV files selected. Pipeline unlocked!</span>';
-            }
-        } else {
-            btn.disabled = true;
-            btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
-            if (icon) icon.className = 'w-4 h-4 text-slate-500';
-            if (hint) {
-                hint.className = 'text-xs text-amber-400 font-medium flex items-center gap-1.5';
-                hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Select all 3 required CSV files to enable pipeline execution</span>';
+        if (btn) {
+            if (allSelected) {
+                btn.disabled = false;
+                btn.className = 'py-3.5 px-8 bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm flex items-center gap-2 cursor-pointer opacity-100';
+                if (icon) icon.className = 'w-4 h-4 text-white';
+                if (hint) {
+                    hint.className = 'text-xs text-emerald-400 font-medium flex items-center gap-1.5';
+                    hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ All 3 required CSV files selected. Pipeline unlocked!</span>';
+                }
+            } else {
+                btn.disabled = true;
+                btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
+                if (icon) icon.className = 'w-4 h-4 text-slate-500';
+                if (hint) {
+                    hint.className = 'text-xs text-amber-400 font-medium flex items-center gap-1.5';
+                    hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Select all 3 required CSV files to enable pipeline execution</span>';
+                }
             }
         }
+
+        return allSelected;
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        checkAllFilesSelected();
+    });
 
     function filterBatchesTable() {
         const query = document.getElementById('batchSearchInput').value.toLowerCase();
