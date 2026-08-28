@@ -1,0 +1,114 @@
+{% load humanize %}
+<!-- TAB 1: LOAN EXCEPTIONS QUEUE TABLE WITH SEARCH, FILTER & PAGINATION -->
+<div id="exceptionsTab"
+     class="tab-content {% if tab_visible %}block{% else %}hidden{% endif %}">
+    <div id="exceptionsTableContainer"
+         class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+        <!-- Search & Filter Controls Header Form -->
+        <form hx-get="{% url 'loan_exceptions_list' %}"
+              hx-target="#exceptionsTab"
+              hx-swap="outerHTML"
+              hx-trigger="submit, change from:select, keyup changed delay:300ms from:#reviewerSearchInput"
+              class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+            <div>
+                <h2 class="text-lg font-bold text-white flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                        </path>
+                    </svg>
+                    Loan Exception Inspection Queue
+                </h2>
+                <p class="text-xs text-slate-400">
+                    Inspect validation discrepancies, analyze error details, AI suggestions, and resolve exceptions.
+                </p>
+            </div>
+            <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Reusable Searchbar Widget Component with HTMX Loading Spinner -->
+                {% include "includes/searchbar.html" with id="reviewerSearchInput" name="q" value=filter.data.q placeholder="Search rule code, field, description..." accent_color="indigo" %}
+                <!-- Reusable Severity Filter Dropdown Widget -->
+                {% include "includes/dropdown.html" with name="severity" id="severityFilter" options=severity_choices selected_value=filter.data.severity default_label="All Severities" accent_color="indigo" %}
+                <!-- Reusable Status Filter Dropdown Widget -->
+                {% include "includes/dropdown.html" with name="status" id="statusFilter" options=status_choices selected_value=filter.data.status default_label="All Statuses" accent_color="indigo" %}
+            </div>
+        </form>
+        <!-- Exceptions Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Exception ID</th>
+                        <th class="px-4 py-3 font-semibold">Severity</th>
+                        <th class="px-4 py-3 font-semibold">Rule Code</th>
+                        <th class="px-4 py-3 font-semibold">Target Field</th>
+                        <th class="px-4 py-3 font-semibold">Description</th>
+                        <th class="px-4 py-3 font-semibold">Status</th>
+                        <th class="px-4 py-3 font-semibold">Batch</th>
+                        <th class="px-4 py-3 font-semibold">Flagged At</th>
+                        <th class="px-4 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    {% if exceptions %}
+                        {% for exc in exceptions %}
+                            <tr class="hover:bg-slate-800/40 transition-colors">
+                                <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#EXP-{{ exc.id }}</td>
+                                <td class="px-4 py-3.5">
+                                    {% if exc.severity == 4 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-400 border border-red-500/20">CRITICAL</span>
+                                    {% elif exc.severity == 3 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">HIGH</span>
+                                    {% elif exc.severity == 2 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-md bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">MEDIUM</span>
+                                    {% else %}
+                                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">LOW</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3.5 font-mono text-xs font-bold text-white">{{ exc.rule_code }}</td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-slate-300">{{ exc.field_name }}</td>
+                                <td class="px-4 py-3.5 text-xs text-slate-300 max-w-md truncate"
+                                    title="{{ exc.description }}">{{ exc.description }}</td>
+                                <td class="px-4 py-3.5">
+                                    {% if exc.status == 1 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20">OPEN</span>
+                                    {% elif exc.status == 2 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">UNDER REVIEW</span>
+                                    {% elif exc.status == 3 or exc.status == 4 %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">RESOLVED</span>
+                                    {% else %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-slate-700 text-slate-400">REJECTED</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-indigo-400">#{{ exc.batch_id }}</td>
+                                <td class="px-4 py-3.5 text-xs text-slate-400">{{ exc.created|date:"M d, H:i" }}</td>
+                                <td class="px-4 py-3.5 text-right">
+                                    <button type="button"
+                                            class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
+                                        Inspect
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="px-4 py-12 text-center text-slate-500 text-sm">
+                                <div class="w-12 h-12 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <span>No loan exceptions found matching your criteria in the queue.</span>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Reusable HTMX Pagination Widget Component with Page Jump Input & HTMX Loading Indicator -->
+        {% include "includes/pagination.html" with page_obj=exceptions_page target_id="#exceptionsTab" url_name="loan_exceptions_list" search_query=filter.data.q param1_name="severity" param1_value=filter.data.severity param2_name="status" param2_value=filter.data.status accent_color="indigo" item_label="exceptions" %}
+    </div>
+</div>

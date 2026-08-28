@@ -1,0 +1,76 @@
+{% load humanize %}
+<!-- Header Summary Banner -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div>
+        <h1 class="text-2xl font-extrabold text-white tracking-tight flex items-center gap-3">
+            <span>Loan Exception Inspection Queue</span>
+            <span class="px-3 py-1 rounded-full text-xs font-mono font-bold bg-indigo-500/10 text-indigo-300 border border-indigo-500/30">
+                {{ total_exceptions|default:0|intcomma }} Items
+            </span>
+        </h1>
+        <p class="text-xs text-slate-400 mt-1">
+            Inspect validation discrepancies flagged by the Validation Engine. Analyze error details, AI suggestions, and resolve exceptions.
+        </p>
+    </div>
+</div>
+<!-- Overview Metrics Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div class="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-xl shadow-xl">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Total Exceptions</span>
+        <span class="text-2xl font-bold font-mono text-white mt-1 block">{{ total_exceptions|default:0|intcomma }}</span>
+    </div>
+    <div class="p-5 rounded-2xl bg-slate-900/80 border border-amber-500/30 backdrop-blur-xl shadow-xl">
+        <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider block">Open Queue</span>
+        <span class="text-2xl font-bold font-mono text-amber-300 mt-1 block">{{ open_exceptions|default:0|intcomma }}</span>
+    </div>
+    <div class="p-5 rounded-2xl bg-slate-900/80 border border-indigo-500/30 backdrop-blur-xl shadow-xl">
+        <span class="text-xs font-semibold text-indigo-400 uppercase tracking-wider block">Under Review</span>
+        <span class="text-2xl font-bold font-mono text-indigo-300 mt-1 block">{{ under_review_exceptions|default:0|intcomma }}</span>
+    </div>
+    <div class="p-5 rounded-2xl bg-slate-900/80 border border-emerald-500/30 backdrop-blur-xl shadow-xl">
+        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider block">Resolved</span>
+        <span class="text-2xl font-bold font-mono text-emerald-300 mt-1 block">{{ resolved_exceptions|default:0|intcomma }}</span>
+    </div>
+</div>
+<!-- Severity Breakdown Metrics Bar -->
+<div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Severity Filter Breakdown:</span>
+    <div class="flex flex-wrap items-center gap-3">
+        <a href="?severity=4"
+           hx-get="{% url 'loan_exceptions_list' %}?severity=4"
+           hx-target="#exceptionsTab"
+           hx-swap="outerHTML"
+           class="px-3 py-1.5 rounded-xl bg-red-500/10 border border-red-500/30 text-xs font-semibold text-red-300 hover:bg-red-500/20 transition-all flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <span>Critical:</span>
+            <span class="font-mono font-bold">{{ critical_count|default:0 }}</span>
+        </a>
+        <a href="?severity=3"
+           hx-get="{% url 'loan_exceptions_list' %}?severity=3"
+           hx-target="#exceptionsTab"
+           hx-swap="outerHTML"
+           class="px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-semibold text-amber-300 hover:bg-amber-500/20 transition-all flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>High:</span>
+            <span class="font-mono font-bold">{{ high_count|default:0 }}</span>
+        </a>
+        <a href="?severity=2"
+           hx-get="{% url 'loan_exceptions_list' %}?severity=2"
+           hx-target="#exceptionsTab"
+           hx-swap="outerHTML"
+           class="px-3 py-1.5 rounded-xl bg-yellow-500/10 border border-yellow-500/30 text-xs font-semibold text-yellow-300 hover:bg-yellow-500/20 transition-all flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+            <span>Medium:</span>
+            <span class="font-mono font-bold">{{ medium_count|default:0 }}</span>
+        </a>
+        <a href="?severity=1"
+           hx-get="{% url 'loan_exceptions_list' %}?severity=1"
+           hx-target="#exceptionsTab"
+           hx-swap="outerHTML"
+           class="px-3 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs font-semibold text-blue-300 hover:bg-blue-500/20 transition-all flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+            <span>Low:</span>
+            <span class="font-mono font-bold">{{ low_count|default:0 }}</span>
+        </a>
+    </div>
+</div>
