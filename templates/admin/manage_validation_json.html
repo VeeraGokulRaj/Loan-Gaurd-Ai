@@ -1,0 +1,139 @@
+{# djlint:off #}
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block title %}Manage validation.json | {{ site_title|default:_("Django site admin") }}{% endblock %}
+
+{% block breadcrumbs %}
+    <div class="breadcrumbs">
+        <a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+        &rsaquo; <a href="{% url 'admin:app_validationrule_changelist' %}">{% translate 'Validation Rules' %}</a>
+        &rsaquo; {% translate 'Manage validation.json' %}
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <h1>
+            Manage Validation Rules JSON (<code>{{ validation_file_path|default:"files/validation.json" }}</code>)
+        </h1>
+
+        <!-- System & Database Statistics Table -->
+        <div class="module">
+            <h2>Current Validation Rules Database Statistics</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Total DB Rules</th>
+                        <th>Active Rules</th>
+                        <th>Critical</th>
+                        <th>High</th>
+                        <th>Medium</th>
+                        <th>Low</th>
+                        <th>Rules in JSON Payload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>{{ total_rules }}</strong></td>
+                        <td>{{ active_rules }}</td>
+                        <td>{{ critical_count }}</td>
+                        <td>{{ high_count }}</td>
+                        <td>{{ medium_count }}</td>
+                        <td>{{ low_count }}</td>
+                        <td><strong>{{ file_rule_count }}</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Required Schema Specifications Reference Table -->
+        <div class="module">
+            <h2>Required Schema Fields & Validation Specifications</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>JSON Key</th>
+                        <th>Requirement</th>
+                        <th>Description & Allowed Values</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>rule_code</code></td>
+                        <td>Required (Unique)</td>
+                        <td>Rule identifier (e.g. <code>VAL_001</code>, <code>VAL_008</code>, <code>VAL_015</code>).</td>
+                    </tr>
+                    <tr>
+                        <td><code>strategy_key</code></td>
+                        <td>Required</td>
+                        <td>Internal strategy handler key (e.g. <code>MISSING_LOAN_ID</code>).</td>
+                    </tr>
+                    <tr>
+                        <td><code>rule_name</code></td>
+                        <td>Required</td>
+                        <td>Human-readable display title (e.g. Missing Loan ID).</td>
+                    </tr>
+                    <tr>
+                        <td><code>field_name</code></td>
+                        <td>Required</td>
+                        <td>Target dataset field evaluated (e.g. <code>loan_id</code>, <code>current_balance</code>).</td>
+                    </tr>
+                    <tr>
+                        <td><code>description</code></td>
+                        <td>Required</td>
+                        <td>Detailed business logic explanation of the validation check.</td>
+                    </tr>
+                    <tr>
+                        <td><code>severity</code></td>
+                        <td>Required</td>
+                        <td>Must be one of: <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_active</code></td>
+                        <td>Required</td>
+                        <td>Toggle execution: <code>true</code> or <code>false</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>parameters</code></td>
+                        <td>Required</td>
+                        <td>Configurable parameters object (e.g. <code>{"max_rate": 35.0}</code> or <code>{}</code>).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Standard Action Form -->
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <fieldset class="module aligned">
+                <h2>Edit Raw JSON Payload / Upload Updated File</h2>
+                <div class="form-row">
+                    <div>
+                        <label for="id_json_file">Upload New JSON File:</label>
+                        <input type="file" name="json_file" id="id_json_file" accept=".json">
+                        <div class="help">Select a local .json file to upload, validate, and sync into the database.</div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div>
+                        <label for="id_json_content">
+                            <code>{{ validation_file_path|default:"files/validation.json" }}</code> Content Editor:
+                        </label>
+                        <textarea name="json_content"
+                                  id="id_json_content"
+                                  rows="20"
+                                  style="width: 100%; font-family: monospace; box-sizing: border-box; padding: 6px;">{{ json_content }}</textarea>
+                        <div class="help">Edit the JSON array directly above and click "Save & Sync Rules" below.</div>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="submit-row">
+                <input type="submit" name="action" value="Save & Sync Rules" class="default">
+                <input type="submit" name="action" value="Reload File" class="button">
+                <a href="{% url 'admin:app_validationrule_changelist' %}" class="button cancel-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+{# djlint:on #}
