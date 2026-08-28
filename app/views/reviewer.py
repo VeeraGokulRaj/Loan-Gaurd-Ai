@@ -32,7 +32,7 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, List
     model = LoanException
     template_name = "dashboard/reviewer/index.html"
     context_object_name = "exceptions"
-    paginate_by = 25
+    paginate_by = 10
     permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
 
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
