@@ -34,7 +34,6 @@ class ValidationRule(BaseModel):
 
     rule_code = models.CharField(
         max_length=50,
-        unique=True,
         db_index=True,
         help_text=_("Display identifier for the rule (e.g., VAL_001 or VL-0001)."),
     )
@@ -90,6 +89,13 @@ class ValidationRule(BaseModel):
         verbose_name = _("Validation Rule")
         verbose_name_plural = _("Validation Rules")
         ordering = ["rule_code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["rule_code"],
+                condition=models.Q(deleted__isnull=True),
+                name="unique_active_validation_rule_code",
+            )
+        ]
 
     def __str__(self) -> str:
         return f"{self.rule_code} - {self.rule_name} ({self.get_severity_display()})"
