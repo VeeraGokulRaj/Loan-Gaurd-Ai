@@ -15,7 +15,7 @@ from app.views.data_operator import (
     FailedRowListView,
     IngestPipelineView,
 )
-from app.views.reviewer import ReviewerDashboardView
+from app.views.reviewer import LoanExceptionListView, ReviewerDashboardView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -31,6 +31,11 @@ urlpatterns = [
         name="execute_validation",
     ),
     path("reviewer/", ReviewerDashboardView.as_view(), name="reviewer_dashboard"),
+    path(
+        "reviewer/exceptions/",
+        LoanExceptionListView.as_view(),
+        name="loan_exceptions_list",
+    ),
 ]
 
 if settings.DEBUG:
