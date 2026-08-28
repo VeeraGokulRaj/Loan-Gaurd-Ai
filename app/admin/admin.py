@@ -6,10 +6,12 @@ DocumentManifestRecord, and AuditEvent in Django Admin with list_select_related
 query optimizations and autocomplete_fields.
 """
 
+from django import forms
 from django.contrib import admin, messages
 from django.shortcuts import redirect, render
 from django.urls import path
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
 from app.domain.validation_service import (
@@ -272,10 +274,49 @@ class AuditEventAdmin(admin.ModelAdmin):
         return request.user.is_superuser
 
 
+class ValidationRuleAdminForm(forms.ModelForm):
+    """Custom ModelForm for ValidationRule with strategy key datalist choices and warning callout."""
+
+    class Meta:
+        model = ValidationRule
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if "strategy_key" in self.fields:
+            strategy_choices_html = """
+            <div style="margin-top: 10px; margin-bottom: 15px; padding: 12px 16px; background-color: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-left: 4px solid #d97706; border-radius: 6px; font-size: 13px; line-height: 1.5;">
+                <strong style="color: #d97706;">ℹ️ Built-in Python Strategy Keys:</strong><br/>
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MISSING_LOAN_ID</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">DUPLICATE_LOAN_ID</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">DUPLICATE_BORROWER_TRIPLET</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">INVALID_DATE_FORMAT</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MATURITY_BEFORE_ORIGINATION</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">NEGATIVE_PRINCIPAL_BALANCE</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">BALANCE_EXCEEDS_PRINCIPAL</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">OUT_OF_RANGE_INTEREST_RATE</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">STATUS_DPD_INCONSISTENCY</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MISSING_DOCUMENT_STATUS</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">SERVICER_UPDATE_CONFLICT</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">STALE_RECORD</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">INVALID_STATE_CODE</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">SUSPICIOUS_BORROWER_DUPLICATION</code>,
+                <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">CLOSED_LOAN_POSITIVE_BALANCE</code>
+                <br/><br/>
+                <strong style="color: #d97706;">⚠️ Warning:</strong> If an unknown or custom key name is added, the system will automatically perform generic mathematical validation using <code>GenericExpressionRule</code> based on the rule parameters (e.g. <code>IS_NULL</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>).
+            </div>
+            """
+            existing_help = self.fields["strategy_key"].help_text or ""
+            self.fields["strategy_key"].help_text = mark_safe(
+                f"{existing_help}{strategy_choices_html}"
+            )
+
+
 @admin.register(ValidationRule)
 class ValidationRuleAdmin(admin.ModelAdmin):
     """Admin configuration for ValidationRule model with severity badges & JSON management support."""
 
+    form = ValidationRuleAdminForm
     list_display = (
         "id",
         "rule_code",
@@ -290,6 +331,37 @@ class ValidationRuleAdmin(admin.ModelAdmin):
     search_fields = ("rule_code", "strategy_key", "rule_name", "field_name", "description")
     ordering = ("rule_code",)
     readonly_fields = ("created", "modified")
+    fieldsets = (
+        (
+            _("Rule Identification & Strategy Handler"),
+            {
+                "fields": (
+                    "rule_code",
+                    "strategy_key",
+                    "rule_name",
+                    "field_name",
+                    "severity",
+                    "is_active",
+                ),
+                "description": _(
+                    "Select a standard strategy key for built-in Python handlers or enter a custom key for GenericExpressionRule evaluation."
+                ),
+            },
+        ),
+        (
+            _("Rule Description & Parameters"),
+            {
+                "fields": ("description", "parameters"),
+            },
+        ),
+        (
+            _("Audit Timestamps"),
+            {
+                "fields": ("created", "modified"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
     actions = ["sync_database_from_validation_json"]
 
     def get_urls(self):
