@@ -103,8 +103,32 @@
             </table>
         </div>
 
+        <!-- Strategy Key Reference & Generic Execution Warning Callout -->
+        <div style="margin-top: 10px; margin-bottom: 20px; padding: 12px 16px; background-color: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-left: 4px solid #d97706; border-radius: 6px; font-size: 13px; line-height: 1.5;">
+            <strong style="color: #d97706;">ℹ️ Built-in Python Strategy Keys:</strong><br/>
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MISSING_LOAN_ID</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">DUPLICATE_LOAN_ID</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">DUPLICATE_BORROWER_TRIPLET</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">INVALID_DATE_FORMAT</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MATURITY_BEFORE_ORIGINATION</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">NEGATIVE_PRINCIPAL_BALANCE</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">BALANCE_EXCEEDS_PRINCIPAL</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">OUT_OF_RANGE_INTEREST_RATE</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">STATUS_DPD_INCONSISTENCY</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">MISSING_DOCUMENT_STATUS</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">SERVICER_UPDATE_CONFLICT</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">STALE_RECORD</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">INVALID_STATE_CODE</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">SUSPICIOUS_BORROWER_DUPLICATION</code>,
+            <code style="padding: 2px 5px; border-radius: 4px; font-size: 11px;">CLOSED_LOAN_POSITIVE_BALANCE</code>.
+            <br/><br/>
+            <strong style="color: #d97706;">⚠️ Warning:</strong> If an unknown or custom key name is added, the system will automatically perform generic mathematical validation using <code>GenericExpressionRule</code> based on the rule parameters (e.g. <code>IS_NULL</code>, <code>&gt;</code>, <code>&lt;</code>, <code>==</code>, <code>!=</code>).
+        </div>
+
+
         <!-- Standard Action Form -->
         <form method="post" enctype="multipart/form-data">
+
             {% csrf_token %}
             <fieldset class="module aligned">
                 <h2>Edit Raw JSON Payload / Upload Updated File</h2>
