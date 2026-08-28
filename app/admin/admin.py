@@ -6,10 +6,17 @@ DocumentManifestRecord, and AuditEvent in Django Admin with list_select_related
 query optimizations and autocomplete_fields.
 """
 
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.shortcuts import redirect, render
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from app.domain.validation_service import (
+    DEFAULT_VALIDATION_FILE_PATH,
+    ValidationRuleJsonService,
+    get_validation_json_path,
+)
 from app.models.audit import AuditEvent
 from app.models.ingestion import (
     DocumentManifestRecord,
@@ -267,7 +274,7 @@ class AuditEventAdmin(admin.ModelAdmin):
 
 @admin.register(ValidationRule)
 class ValidationRuleAdmin(admin.ModelAdmin):
-    """Admin configuration for ValidationRule model with severity badges & autocomplete support."""
+    """Admin configuration for ValidationRule model with severity badges & JSON management support."""
 
     list_display = (
         "id",
@@ -283,6 +290,146 @@ class ValidationRuleAdmin(admin.ModelAdmin):
     search_fields = ("rule_code", "strategy_key", "rule_name", "field_name", "description")
     ordering = ("rule_code",)
     readonly_fields = ("created", "modified")
+    actions = ["sync_database_from_validation_json"]
+
+    def get_urls(self):
+        """Adds custom URL route for managing validation.json in Django Admin."""
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                "manage-validation-json/",
+                self.admin_site.admin_view(self.manage_validation_json_view),
+                name="app_validationrule_manage_validation_json",
+            ),
+        ]
+        return custom_urls + urls
+
+    def _get_context(self, request, json_content: str):
+        """Helper to construct rich context for manage_validation_json template."""
+        total_rules = ValidationRule.objects.count()
+        active_rules = ValidationRule.objects.filter(is_active=True).count()
+        critical_count = ValidationRule.objects.filter(severity=ValidationSeverity.CRITICAL).count()
+        high_count = ValidationRule.objects.filter(severity=ValidationSeverity.HIGH).count()
+        medium_count = ValidationRule.objects.filter(severity=ValidationSeverity.MEDIUM).count()
+        low_count = ValidationRule.objects.filter(severity=ValidationSeverity.LOW).count()
+
+        file_rule_count = 0
+        try:
+            import json
+
+            data = json.loads(json_content)
+            if isinstance(data, list):
+                file_rule_count = len(data)
+        except Exception:
+            file_rule_count = 0
+
+        return {
+            **self.admin_site.each_context(request),
+            "title": _("Manage Validation Rules JSON (validation.json)"),
+            "json_content": json_content,
+            "total_rules": total_rules,
+            "active_rules": active_rules,
+            "critical_count": critical_count,
+            "high_count": high_count,
+            "medium_count": medium_count,
+            "low_count": low_count,
+            "file_rule_count": file_rule_count,
+            "validation_file_path": DEFAULT_VALIDATION_FILE_PATH,
+            "opts": self.model._meta,
+        }
+
+    def manage_validation_json_view(self, request):
+        """
+        Admin view to inspect, upload, edit, validate, and persist validation.json.
+
+        Handles validation gracefully and reports invalid JSON syntax, missing fields,
+        or duplicate rule codes via Django messages framework.
+        """
+        json_file_path = get_validation_json_path()
+
+        if request.method == "POST":
+            action = request.POST.get("action")
+
+            if action in ["reload_file", "Reload File"]:
+                messages.info(request, f"Reloaded {json_file_path.name} content from disk.")
+                return redirect("admin:app_validationrule_manage_validation_json")
+
+            raw_json = ""
+            if request.FILES.get("json_file"):
+                uploaded_file = request.FILES["json_file"]
+                try:
+                    raw_json = uploaded_file.read().decode("utf-8")
+                except Exception as exc:
+                    messages.error(request, f"Error reading uploaded file: {str(exc)}")
+                    return redirect("admin:app_validationrule_manage_validation_json")
+            else:
+                raw_json = request.POST.get("json_content", "")
+
+            valid_rules, errors = ValidationRuleJsonService.validate_raw_json(raw_json)
+
+            if errors:
+                for err in errors:
+                    messages.error(request, f"Validation Error: {err}")
+                return render(
+                    request,
+                    "admin/manage_validation_json.html",
+                    self._get_context(request, raw_json),
+                )
+
+            try:
+                saved_path = ValidationRuleJsonService.save_to_file(valid_rules)
+                created_cnt, updated_cnt = ValidationRuleJsonService.seed_database(valid_rules)
+
+                messages.success(
+                    request,
+                    f"Successfully validated & saved {len(valid_rules)} rules to {saved_path.as_posix()}! "
+                    f"Database updated: {created_cnt} created, {updated_cnt} updated.",
+                )
+                return redirect("admin:app_validationrule_changelist")
+            except Exception as exc:
+                messages.error(request, f"Failed to persist validation rules: {str(exc)}")
+                return render(
+                    request,
+                    "admin/manage_validation_json.html",
+                    self._get_context(request, raw_json),
+                )
+
+        initial_json = ""
+        if json_file_path.exists():
+            with open(json_file_path, encoding="utf-8") as f:
+                initial_json = f.read()
+
+        return render(
+            request,
+            "admin/manage_validation_json.html",
+            self._get_context(request, initial_json),
+        )
+
+    def sync_database_from_validation_json(self, request, queryset):
+        """Admin action to trigger DB sync directly from current validation.json file."""
+        json_file_path = get_validation_json_path()
+        if not json_file_path.exists():
+            messages.error(request, f"Validation JSON file not found at {json_file_path}")
+            return
+
+        with open(json_file_path, encoding="utf-8") as f:
+            raw_content = f.read()
+
+        valid_rules, errors = ValidationRuleJsonService.validate_raw_json(raw_content)
+        if errors:
+            for err in errors:
+                messages.error(request, f"❌ {err}")
+            return
+
+        created_cnt, updated_cnt = ValidationRuleJsonService.seed_database(valid_rules)
+        messages.success(
+            request,
+            f"✅ Synced validation.json successfully! {created_cnt} created, {updated_cnt} updated in database.",
+        )
+
+    sync_database_from_validation_json.short_description = _(
+        "🔄 Sync Database Validation Rules from validation.json File"
+    )
 
     def get_severity_badge(self, obj: ValidationRule) -> str:
         """Returns colored badge for validation severity level."""
@@ -306,10 +453,12 @@ class ValidationRuleAdmin(admin.ModelAdmin):
         """Returns colored badge for active/disabled status."""
         if obj.is_active:
             return format_html(
-                '<span style="background-color: #059669; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">ACTIVE</span>'
+                '<span style="background-color: #059669; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+                "ACTIVE",
             )
         return format_html(
-            '<span style="background-color: #6b7280; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">DISABLED</span>'
+            '<span style="background-color: #6b7280; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            "DISABLED",
         )
 
     get_active_badge.short_description = _("Is Active")

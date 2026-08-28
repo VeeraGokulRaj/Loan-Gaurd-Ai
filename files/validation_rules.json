@@ -1,0 +1,164 @@
+[
+  {
+    "rule_code": "VAL_001",
+    "strategy_key": "MISSING_LOAN_ID",
+    "rule_name": "Missing Loan ID",
+    "field_name": "loan_id",
+    "description": "Flags loan records lacking a primary loan_id identifier.",
+    "severity": "CRITICAL",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_002",
+    "strategy_key": "DUPLICATE_LOAN_ID",
+    "rule_name": "Duplicate Loan ID",
+    "field_name": "loan_id",
+    "description": "Flags two or more loan records sharing identical loan_id identifiers.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_003",
+    "strategy_key": "DUPLICATE_BORROWER_TRIPLET",
+    "rule_name": "Duplicate Borrower Triplet",
+    "field_name": "borrower_id",
+    "description": "Flags duplicate borrower entries matching (borrower_id, original_principal, origination_date).",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_004",
+    "strategy_key": "INVALID_DATE_FORMAT",
+    "rule_name": "Invalid Date Formats",
+    "field_name": "origination_date",
+    "description": "Flags unparseable date strings (e.g. invalid month or day).",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_005",
+    "strategy_key": "MATURITY_BEFORE_ORIGINATION",
+    "rule_name": "Maturity Date Before Origination Date",
+    "field_name": "maturity_date",
+    "description": "Flags records where loan maturity date is earlier than origination date.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_006",
+    "strategy_key": "NEGATIVE_PRINCIPAL_BALANCE",
+    "rule_name": "Negative Principal Balance",
+    "field_name": "original_principal",
+    "description": "Flags records where original_principal or current_balance is negative.",
+    "severity": "CRITICAL",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_007",
+    "strategy_key": "BALANCE_EXCEEDS_PRINCIPAL",
+    "rule_name": "Current Balance Greater Than Original Principal",
+    "field_name": "current_balance",
+    "description": "Flags records where current_balance is greater than original_principal.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_008",
+    "strategy_key": "OUT_OF_RANGE_INTEREST_RATE",
+    "rule_name": "Interest Rate Outside Expected Range",
+    "field_name": "interest_rate",
+    "description": "Flags interest rates outside expected range (0.0% to 35.0% APY).",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "parameters": {
+      "min_rate": 0.0,
+      "max_rate": 35.0
+    }
+  },
+  {
+    "rule_code": "VAL_009",
+    "strategy_key": "STATUS_DPD_INCONSISTENCY",
+    "rule_name": "Payment Status Inconsistent With Days Past Due",
+    "field_name": "payment_status",
+    "description": "Flags logical mismatch when payment_status is CURRENT but days_past_due exceeds threshold.",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "parameters": {
+      "max_current_dpd": 30
+    }
+  },
+  {
+    "rule_code": "VAL_010",
+    "strategy_key": "MISSING_DOCUMENT_STATUS",
+    "rule_name": "Missing Document Status",
+    "field_name": "document_status",
+    "description": "Flags loan records missing required compliance document manifest verification or verification status.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_011",
+    "strategy_key": "SERVICER_UPDATE_CONFLICT",
+    "rule_name": "Conflicting Values Between loan_tape.csv and servicer_update.csv",
+    "field_name": "current_balance",
+    "description": "Flags mismatch between loan_tape balance and servicer_update balance.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {
+      "max_delta_dollars": 1.0
+    }
+  },
+  {
+    "rule_code": "VAL_012",
+    "strategy_key": "STALE_RECORD",
+    "rule_name": "Stale Records Based on last_updated_at",
+    "field_name": "last_updated_at",
+    "description": "Flags records where last_updated_at is older than configured days threshold.",
+    "severity": "LOW",
+    "is_active": true,
+    "parameters": {
+      "max_stale_days": 180
+    }
+  },
+  {
+    "rule_code": "VAL_013",
+    "strategy_key": "INVALID_STATE_CODE",
+    "rule_name": "Invalid State Codes",
+    "field_name": "borrower_state",
+    "description": "Flags state codes not present in US 50 state list.",
+    "severity": "MEDIUM",
+    "is_active": true,
+    "parameters": {}
+  },
+  {
+    "rule_code": "VAL_014",
+    "strategy_key": "SUSPICIOUS_BORROWER_DUPLICATION",
+    "rule_name": "Suspiciously Repeated Borrower Records",
+    "field_name": "borrower_id",
+    "description": "Flags fraud risk when single borrower_id is associated with excessive new loans within window.",
+    "severity": "HIGH",
+    "is_active": true,
+    "parameters": {
+      "max_loans_per_window": 5,
+      "window_days": 30
+    }
+  },
+  {
+    "rule_code": "VAL_015",
+    "strategy_key": "CLOSED_LOAN_POSITIVE_BALANCE",
+    "rule_name": "Loans Marked Closed But Showing Positive Balance",
+    "field_name": "current_balance",
+    "description": "Flags records where payment_status is CLOSED but current_balance is greater than zero.",
+    "severity": "CRITICAL",
+    "is_active": true,
+    "parameters": {}
+  }
+]
