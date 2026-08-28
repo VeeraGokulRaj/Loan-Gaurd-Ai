@@ -15,6 +15,9 @@
     </button>
     <button type="button"
             onclick="switchTab('batchesTab')"
+            hx-get="{% url 'batch_list' %}"
+            hx-target="#batchesTab"
+            hx-swap="outerHTML"
             id="subnav-batchesTab"
             class="subtab-btn pb-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors duration-150 flex items-center gap-2">
         <svg class="w-4 h-4 text-slate-400"
@@ -28,6 +31,9 @@
     </button>
     <button type="button"
             onclick="switchTab('failedTab')"
+            hx-get="{% url 'failed_row_list' %}"
+            hx-target="#failedTab"
+            hx-swap="outerHTML"
             id="subnav-failedTab"
             class="subtab-btn pb-3 border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors duration-150 flex items-center gap-2">
         <svg class="w-4 h-4 text-amber-400"

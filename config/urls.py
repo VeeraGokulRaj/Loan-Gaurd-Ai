@@ -9,7 +9,11 @@ from django.urls import include, path
 
 from app.views.auth import LoginView, LogoutView
 from app.views.dashboard import dashboard_view
-from app.views.data_operator import IngestPipelineView
+from app.views.data_operator import (
+    BatchListView,
+    FailedRowListView,
+    IngestPipelineView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -17,6 +21,8 @@ urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("ingest/pipeline/", IngestPipelineView.as_view(), name="ingest_pipeline"),
+    path("ingest/batches/", BatchListView.as_view(), name="batch_list"),
+    path("ingest/failed-rows/", FailedRowListView.as_view(), name="failed_row_list"),
 ]
 
 if settings.DEBUG:

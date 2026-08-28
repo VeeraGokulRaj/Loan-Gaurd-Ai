@@ -1,8 +1,15 @@
-<!-- TAB 2: INGESTION BATCHES HISTORY TABLE WITH SEARCH & FILTER -->
-<div id="batchesTab" class="tab-content hidden">
+{% load humanize %}
+<!-- TAB 2: INGESTION BATCHES HISTORY TABLE WITH SEARCH, FILTER & PAGINATION -->
+<div id="batchesTab"
+     class="tab-content {% if tab_visible %}block{% else %}hidden{% endif %}">
     <div id="batchesTableContainer"
          class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Search & Filter Header Form -->
+        <form hx-get="{% url 'batch_list' %}"
+              hx-target="#batchesTab"
+              hx-swap="outerHTML"
+              hx-trigger="submit, change from:select, keyup changed delay:300ms from:#batchSearchInput"
+              class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold text-white flex items-center gap-2">
                     <svg class="w-5 h-5 text-indigo-400"
@@ -14,36 +21,34 @@
                     </svg>
                     Batch Database & Source Lineage
                 </h2>
-                <p class="text-xs text-slate-400">Search and filter historical CSV upload batches.</p>
+                <p class="text-xs text-slate-400">Search and filter historical CSV upload batches across the system.</p>
             </div>
-            <!-- Search & Filter Controls -->
+            <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="relative">
-                    <input type="text"
-                           id="batchSearchInput"
-                           onkeyup="filterBatchesTable()"
-                           placeholder="Search by filename or Batch ID..."
-                           class="w-64 px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
-                </div>
-                <select id="sourceTypeFilter"
-                        onchange="filterBatchesTable()"
+                {% include "includes/searchbar.html" with id="batchSearchInput" name="q" value=filter.data.q placeholder="Search by filename or Batch ID..." accent_color="indigo" %}
+                <select name="source_type"
+                        id="sourceTypeFilter"
                         class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Source Types</option>
-                    <option value="LOAN_TAPE">Primary Loan Tape</option>
-                    <option value="SERVICER_UPDATE">Servicer Update</option>
-                    <option value="DOCUMENT_MANIFEST">Document Manifest</option>
+                    {% for val, label in filter.form.fields.source_type.choices %}
+                        <option value="{{ val|default:'' }}"
+                                {% if filter.data.source_type == val|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
                 </select>
-                <select id="batchStatusFilter"
-                        onchange="filterBatchesTable()"
+                <select name="status"
+                        id="batchStatusFilter"
                         class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <option value="">All Statuses</option>
-                    <option value="INGESTED">Ingested</option>
-                    <option value="PARTIAL SUCCESS">Partial Success</option>
-                    <option value="FAILED">Failed</option>
-                    <option value="PROCESSING">Processing</option>
+                    {% for val, label in filter.form.fields.status.choices %}
+                        <option value="{{ val|default:'' }}"
+                                {% if filter.data.status == val|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
-        </div>
+        </form>
+        <!-- Table Container -->
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-300" id="batchesTable">
                 <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
@@ -56,7 +61,6 @@
                         <th class="px-4 py-3 font-semibold">Failed Rows</th>
                         <th class="px-4 py-3 font-semibold">Status</th>
                         <th class="px-4 py-3 font-semibold">Uploaded At</th>
-                        <th class="px-4 py-3 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800/60" id="batchesTbody">
@@ -64,11 +68,9 @@
                         {% for batch in batches %}
                             <tr class="hover:bg-slate-800/40 transition-colors batch-row"
                                 data-filename="{{ batch.file_name }}"
-                                data-batchid="#{{ batch.id }}"
-                                data-sourcetype="{% if batch.source_type == 1 %}LOAN_TAPE{% elif batch.source_type == 2 %}SERVICER_UPDATE{% else %}DOCUMENT_MANIFEST{% endif %}"
-                                data-status="{% if batch.status == 2 %}INGESTED{% elif batch.status == 3 %}PARTIAL SUCCESS{% elif batch.status == 4 %}FAILED{% else %}PROCESSING{% endif %}">
+                                data-batchid="#{{ batch.id }}">
                                 <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#{{ batch.id }}</td>
-                                <td class="px-4 py-3.5 font-medium text-white">{{ batch.file_name }}</td>
+                                <td class="px-4 py-3.5 font-medium text-white">{{ batch.file_name|default:"Unnamed File" }}</td>
                                 <td class="px-4 py-3.5">
                                     {% if batch.source_type == 1 %}
                                         <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">Primary Loan Tape</span>
@@ -78,9 +80,9 @@
                                         <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Document Manifest</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-4 py-3.5 font-semibold text-white">{{ batch.total_records }}</td>
-                                <td class="px-4 py-3.5 text-emerald-400 font-semibold">{{ batch.successful_records }}</td>
-                                <td class="px-4 py-3.5 text-amber-400 font-semibold">{{ batch.failed_records }}</td>
+                                <td class="px-4 py-3.5 font-semibold text-white">{{ batch.total_records|default:0|intcomma }}</td>
+                                <td class="px-4 py-3.5 text-emerald-400 font-semibold">{{ batch.successful_records|default:0|intcomma }}</td>
+                                <td class="px-4 py-3.5 text-amber-400 font-semibold">{{ batch.failed_records|default:0|intcomma }}</td>
                                 <td class="px-4 py-3.5">
                                     {% if batch.status == 2 %}
                                         <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">INGESTED</span>
@@ -93,82 +95,20 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-3.5 text-xs text-slate-400">{{ batch.created|date:"M d, Y H:i" }}</td>
-                                <td class="px-4 py-3.5 text-right">
-                                    <a href="#"
-                                       class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Details</a>
-                                </td>
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr class="hover:bg-slate-800/40 transition-colors batch-row"
-                            data-filename="loan_tape_2026_08_25.csv"
-                            data-batchid="#101"
-                            data-sourcetype="LOAN_TAPE"
-                            data-status="PARTIAL SUCCESS">
-                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#101</td>
-                            <td class="px-4 py-3.5 font-medium text-white">loan_tape_2026_08_25.csv</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">Primary Loan Tape</span>
-                            </td>
-                            <td class="px-4 py-3.5 font-semibold text-white">5,000</td>
-                            <td class="px-4 py-3.5 text-emerald-400 font-semibold">4,960</td>
-                            <td class="px-4 py-3.5 text-amber-400 font-semibold">40</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">PARTIAL SUCCESS</span>
-                            </td>
-                            <td class="px-4 py-3.5 text-xs text-slate-400">Today, 14:20</td>
-                            <td class="px-4 py-3.5 text-right">
-                                <a href="#"
-                                   class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Details</a>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/40 transition-colors batch-row"
-                            data-filename="servicer_update_2026_08.csv"
-                            data-batchid="#102"
-                            data-sourcetype="SERVICER_UPDATE"
-                            data-status="INGESTED">
-                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#102</td>
-                            <td class="px-4 py-3.5 font-medium text-white">servicer_update_2026_08.csv</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-purple-500/10 text-purple-400 border border-purple-500/20">Servicer Update</span>
-                            </td>
-                            <td class="px-4 py-3.5 font-semibold text-white">420</td>
-                            <td class="px-4 py-3.5 text-emerald-400 font-semibold">420</td>
-                            <td class="px-4 py-3.5 text-amber-400 font-semibold">0</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">INGESTED</span>
-                            </td>
-                            <td class="px-4 py-3.5 text-xs text-slate-400">Today, 14:22</td>
-                            <td class="px-4 py-3.5 text-right">
-                                <a href="#"
-                                   class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Details</a>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/40 transition-colors batch-row"
-                            data-filename="document_manifest_ledger.csv"
-                            data-batchid="#103"
-                            data-sourcetype="DOCUMENT_MANIFEST"
-                            data-status="INGESTED">
-                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#103</td>
-                            <td class="px-4 py-3.5 font-medium text-white">document_manifest_ledger.csv</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Document Manifest</span>
-                            </td>
-                            <td class="px-4 py-3.5 font-semibold text-white">500</td>
-                            <td class="px-4 py-3.5 text-emerald-400 font-semibold">500</td>
-                            <td class="px-4 py-3.5 text-amber-400 font-semibold">0</td>
-                            <td class="px-4 py-3.5">
-                                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">INGESTED</span>
-                            </td>
-                            <td class="px-4 py-3.5 text-xs text-slate-400">Today, 14:25</td>
-                            <td class="px-4 py-3.5 text-right">
-                                <a href="#"
-                                   class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">Details</a>
+                        <tr>
+                            <td colspan="8"
+                                class="px-4 py-8 text-center text-slate-500 text-xs font-medium">
+                                No upload batches found matching your filter criteria.
                             </td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+        <!-- Reusable HTMX Pagination Widget Component with Page Jump Input -->
+        {% include "includes/pagination.html" with page_obj=batches_page target_id="#batchesTab" url_name="batch_list" search_query=filter.data.q param1_name="source_type" param1_value=filter.data.source_type param2_name="status" param2_value=filter.data.status accent_color="indigo" item_label="batches" %}
     </div>
 </div>

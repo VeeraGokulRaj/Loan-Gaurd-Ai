@@ -1,8 +1,14 @@
-<!-- TAB 3: ACTIONABLE FAILED IMPORT ROWS WITH SEARCH & FILTER -->
-<div id="failedTab" class="tab-content hidden">
+<!-- TAB 3: ACTIONABLE FAILED IMPORT ROWS WITH SEARCH, BATCH FILTER & PAGINATION -->
+<div id="failedTab"
+     class="tab-content {% if tab_visible %}block{% else %}hidden{% endif %}">
     <div id="failedTableContainer"
          class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Search & Filter Controls Header Form -->
+        <form hx-get="{% url 'failed_row_list' %}"
+              hx-target="#failedTab"
+              hx-swap="outerHTML"
+              hx-trigger="submit, change from:select, keyup changed delay:300ms from:#failedSearchInput"
+              class="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
                 <h2 class="text-lg font-bold text-white flex items-center gap-2">
                     <svg class="w-5 h-5 text-amber-400"
@@ -16,15 +22,23 @@
                 </h2>
                 <p class="text-xs text-slate-400">Inspect and search malformed rows across all upload batches.</p>
             </div>
-            <!-- Search Input -->
-            <div>
-                <input type="text"
-                       id="failedSearchInput"
-                       onkeyup="filterFailedTable()"
-                       placeholder="Search failure reason or snippet..."
-                       class="w-64 px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 text-xs">
+            <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Batch Filter Dropdown using FilterSet ModelChoiceFilter choices -->
+                <select name="batch_id"
+                        id="failedBatchFilter"
+                        class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    {% for val, label in filter.form.fields.batch_id.choices %}
+                        <option value="{{ val|default:'' }}"
+                                {% if filter.data.batch_id == val|stringformat:"s" or selected_batch_id == val|stringformat:"s" %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+                {% include "includes/searchbar.html" with id="failedSearchInput" name="q" value=filter.data.q placeholder="Search failure reason or snippet..." accent_color="amber" %}
             </div>
-        </div>
+        </form>
+        <!-- Table Container -->
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-300" id="failedTable">
                 <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
@@ -45,7 +59,8 @@
                                 data-content="{{ row.raw_line }}">
                                 <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#{{ row.batch_id }}</td>
                                 <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line {{ row.row_number }}</td>
-                                <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">{{ row.raw_line }}</td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate"
+                                    title="{{ row.raw_line }}">{{ row.raw_line }}</td>
                                 <td class="px-4 py-3.5 text-xs text-red-400 font-medium">{{ row.failure_reason }}</td>
                                 <td class="px-4 py-3.5 text-right">
                                     <button type="button"
@@ -56,41 +71,17 @@
                             </tr>
                         {% endfor %}
                     {% else %}
-                        <tr class="hover:bg-slate-800/40 transition-colors failed-row"
-                            data-batch="#101"
-                            data-reason="Unescaped quote character in CSV field string"
-                            data-content="LN-992, Murugan, CLOSED">
-                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#101</td>
-                            <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line 142</td>
-                            <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">
-                                LN-992, "Murugan", "CLOSED, 45000.00, "Unescaped Quote
-                            </td>
-                            <td class="px-4 py-3.5 text-xs text-red-400 font-medium">Unescaped quote character in CSV field string</td>
-                            <td class="px-4 py-3.5 text-right">
-                                <button type="button"
-                                        class="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                                    Inspect Line
-                                </button>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-slate-800/40 transition-colors failed-row"
-                            data-batch="#101"
-                            data-reason="Empty CSV line across all columns"
-                            data-content=",,,,,,,,,,">
-                            <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#101</td>
-                            <td class="px-4 py-3.5 font-mono text-xs text-amber-400">Line 289</td>
-                            <td class="px-4 py-3.5 font-mono text-xs text-slate-400 max-w-xs truncate">,,,,,,,,,,</td>
-                            <td class="px-4 py-3.5 text-red-400 font-medium text-xs">Empty CSV line across all columns</td>
-                            <td class="px-4 py-3.5 text-right">
-                                <button type="button"
-                                        class="px-3 py-1 text-xs font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                                    Inspect Line
-                                </button>
+                        <tr>
+                            <td colspan="5"
+                                class="px-4 py-8 text-center text-slate-500 text-xs font-medium">
+                                No failed import rows found. All records ingested cleanly!
                             </td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
+        <!-- Reusable HTMX Pagination Widget Component with Page Jump Input -->
+        {% include "includes/pagination.html" with page_obj=failed_rows_page target_id="#failedTab" url_name="failed_row_list" search_query=filter.data.q param1_name="batch_id" param1_value=filter.data.batch_id accent_color="amber" item_label="failed rows" %}
     </div>
 </div>

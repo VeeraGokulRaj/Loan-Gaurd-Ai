@@ -1,0 +1,125 @@
+<!-- Reusable Pagination Widget Component with Page Jump Input & HTMX Loading Indicator -->
+{% if page_obj %}
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+        <!-- Item Range Info & HTMX Loading Indicator -->
+        <div class="flex items-center gap-3">
+            <span>
+                Showing <span class="font-bold text-white">{{ page_obj.start_index|default:0 }}</span> to <span class="font-bold text-white">{{ page_obj.end_index|default:0 }}</span> of <span class="font-bold text-white">{{ page_obj.paginator.count }}</span> {{ item_label|default:'records' }}
+            </span>
+            <!-- HTMX In-flight Loader Badge -->
+            <span class="htmx-indicator inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-{{ accent_color|default:'indigo' }}-500/10 border border-{{ accent_color|default:'indigo' }}-500/20 text-{{ accent_color|default:'indigo' }}-400 font-semibold text-[11px]">
+                <svg class="w-3.5 h-3.5 animate-spin text-{{ accent_color|default:'indigo' }}-400"
+                     fill="none"
+                     viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                <span>Loading...</span>
+            </span>
+        </div>
+        {% if page_obj.has_other_pages %}
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Page Navigation Buttons -->
+                <div class="flex items-center gap-1.5">
+                    {% if page_obj.has_previous %}
+                        <button type="button"
+                                hx-get="{% url url_name %}?q={{ search_query|default:''|urlencode }}{% if param1_name %}&{{ param1_name }}={{ param1_value|default:'' }}{% endif %}{% if param2_name %}&{{ param2_name }}={{ param2_value|default:'' }}{% endif %}&page={{ page_obj.previous_page_number }}"
+                                hx-target="{{ target_id }}"
+                                hx-swap="outerHTML"
+                                class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors flex items-center gap-1 font-medium">
+                            <svg class="w-3.5 h-3.5"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Prev
+                        </button>
+                    {% else %}
+                        <span class="px-3 py-1.5 rounded-lg bg-slate-900/40 text-slate-600 border border-slate-800/60 cursor-not-allowed flex items-center gap-1 font-medium">
+                            <svg class="w-3.5 h-3.5"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Prev
+                        </span>
+                    {% endif %}
+                    {% for p in page_obj.paginator.page_range %}
+                        {% if p == page_obj.number %}
+                            <span class="px-3 py-1.5 rounded-lg bg-{{ accent_color|default:'indigo' }}-600 text-white font-bold text-xs shadow-md border border-{{ accent_color|default:'indigo' }}-500">
+                                {{ p }}
+                            </span>
+                        {% elif p > page_obj.number|add:"-3" and p < page_obj.number|add:"3" %}
+                            <button type="button"
+                                    hx-get="{% url url_name %}?q={{ search_query|default:''|urlencode }}{% if param1_name %}&{{ param1_name }}={{ param1_value|default:'' }}{% endif %}{% if param2_name %}&{{ param2_name }}={{ param2_value|default:'' }}{% endif %}&page={{ p }}"
+                                    hx-target="{{ target_id }}"
+                                    hx-swap="outerHTML"
+                                    class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors font-medium">
+                                {{ p }}
+                            </button>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <button type="button"
+                                hx-get="{% url url_name %}?q={{ search_query|default:''|urlencode }}{% if param1_name %}&{{ param1_name }}={{ param1_value|default:'' }}{% endif %}{% if param2_name %}&{{ param2_name }}={{ param2_value|default:'' }}{% endif %}&page={{ page_obj.next_page_number }}"
+                                hx-target="{{ target_id }}"
+                                hx-swap="outerHTML"
+                                class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors flex items-center gap-1 font-medium">
+                            Next
+                            <svg class="w-3.5 h-3.5"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    {% else %}
+                        <span class="px-3 py-1.5 rounded-lg bg-slate-900/40 text-slate-600 border border-slate-800/60 cursor-not-allowed flex items-center gap-1 font-medium">
+                            Next
+                            <svg class="w-3.5 h-3.5"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </span>
+                    {% endif %}
+                </div>
+                <!-- Page Jump Input Form (Direct Page Navigation with Invalid Number Handling) -->
+                <form hx-get="{% url url_name %}"
+                      hx-target="{{ target_id }}"
+                      hx-swap="outerHTML"
+                      class="flex items-center gap-1.5 pl-2 border-l border-slate-800">
+                    <input type="hidden" name="q" value="{{ search_query|default:'' }}">
+                    {% if param1_name %}
+                        <input type="hidden"
+                               name="{{ param1_name }}"
+                               value="{{ param1_value|default:'' }}">
+                    {% endif %}
+                    {% if param2_name %}
+                        <input type="hidden"
+                               name="{{ param2_name }}"
+                               value="{{ param2_value|default:'' }}">
+                    {% endif %}
+                    <span class="text-[11px] text-slate-400 font-medium">Go to:</span>
+                    <input type="text"
+                           inputmode="numeric"
+                           pattern="[0-9]*"
+                           name="page"
+                           value="{{ page_obj.number }}"
+                           placeholder="#"
+                           onkeydown="if(event.key === 'Enter'){ event.preventDefault(); htmx.trigger(this.form, 'submit'); }"
+                           class="w-12 px-2 py-1 bg-slate-950/90 border border-slate-800 focus:border-{{ accent_color|default:'indigo' }}-500 rounded-lg text-center font-bold text-white text-xs focus:outline-none focus:ring-1 focus:ring-{{ accent_color|default:'indigo' }}-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <span class="text-[11px] text-slate-500 font-medium">/ {{ page_obj.paginator.num_pages }}</span>
+                    <button type="submit"
+                            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold transition-colors">
+                        Go
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

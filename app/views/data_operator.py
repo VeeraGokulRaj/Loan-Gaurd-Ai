@@ -8,6 +8,7 @@ and multi-file CSV ingestion pipeline execution using AnyPermissionRequiredMixin
 from decimal import ROUND_HALF_UP, Decimal
 
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -16,6 +17,7 @@ from django.views import View
 
 from app.domain.ingestion import IngestionService
 from app.domain.roles import AppPermission
+from app.filters import FailedImportRowFilter, UploadBatchFilter
 from app.mixins import AnyPermissionRequiredMixin
 from app.models import FailedImportRow, RawLoanRecord, UploadBatch
 
@@ -27,8 +29,8 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
     Provides full management workspace for Data Operators:
     1. File Upload Dropzone (Loan Tape, Servicer Update, Document Manifest)
     2. Real-time Ingestion Metrics Banner
-    3. Recent Upload Batches History Table
-    4. Actionable Failed Import Rows Table
+    3. Upload Batches History Table (Paginated & Filterable via HTMX)
+    4. Actionable Failed Import Rows Table (Paginated & Filterable via HTMX)
     """
 
     permissions_required = [AppPermission.DATA_OPERATOR_CAN_VIEW_INGESTION_SUMMARY]
@@ -36,11 +38,22 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
     def get(self, request):
         user = request.user
 
-        # Fetch recent upload batches
-        batches = UploadBatch.objects.select_related("uploaded_by").order_by("-created")[:10]
+        # Fetch paginated upload batches (Page 1)
+        batch_qs = UploadBatch.objects.select_related("uploaded_by").order_by("-created")
+        batch_paginator = Paginator(batch_qs, 10)
+        batches_page = batch_paginator.get_page(1)
 
-        # Fetch recent failed import rows
-        failed_rows = FailedImportRow.objects.select_related("batch").order_by("-created")[:10]
+        # Fetch paginated failed import rows (Page 1)
+        failed_qs = FailedImportRow.objects.select_related("batch").order_by("-created")
+        failed_paginator = Paginator(failed_qs, 10)
+        failed_rows_page = failed_paginator.get_page(1)
+
+        # Fetch upload batches with failures for failed row batch filter dropdown
+        failed_batches = UploadBatch.objects.filter(
+            id__in=FailedImportRow.objects.values_list("batch_id", flat=True).distinct()
+        ).order_by("-created")
+        if not failed_batches.exists():
+            failed_batches = UploadBatch.objects.order_by("-created")[:20]
 
         # Calculate summary metrics
         total_batches = UploadBatch.objects.count()
@@ -64,8 +77,11 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
         context = {
             "title": _("Data Operator Workspace - LoanGuard AI"),
             "user": user,
-            "batches": batches,
-            "failed_rows": failed_rows,
+            "batches_page": batches_page,
+            "batches": batches_page.object_list,
+            "failed_rows_page": failed_rows_page,
+            "failed_rows": failed_rows_page.object_list,
+            "failed_batches": failed_batches,
             "total_batches": total_batches,
             "total_raw_records": total_raw_records,
             "total_failed_rows": total_failed_rows,
@@ -73,6 +89,69 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
             "source_type_choices": UploadBatch.SourceType.choices,
         }
         return render(request, "dashboard/operator/index.html", context)
+
+
+class BatchListView(AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Ingestion Batch Database List endpoint (`/ingest/batches/`).
+
+    Provides HTMX-driven pagination, filename/batch ID search, source type, and status filtering
+    using UploadBatchFilter FilterSet class.
+    """
+
+    permissions_required = [AppPermission.DATA_OPERATOR_CAN_VIEW_INGESTION_SUMMARY]
+
+    def get(self, request):
+        batch_qs = UploadBatch.objects.select_related("uploaded_by").order_by("-created")
+        batch_filter = UploadBatchFilter(request.GET, queryset=batch_qs)
+
+        paginator = Paginator(batch_filter.qs, 10)
+        batches_page = paginator.get_page(request.GET.get("page", 1))
+
+        context = {
+            "filter": batch_filter,
+            "batches_page": batches_page,
+            "batches": batches_page.object_list,
+            "tab_visible": True,
+        }
+        return render(request, "dashboard/operator/includes/batches_tab.html", context)
+
+
+class FailedRowListView(AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Failed Import Rows List endpoint (`/ingest/failed-rows/`).
+
+    Provides HTMX-driven pagination, search (reason/raw_line/filename), and failed batch filtering
+    using FailedImportRowFilter FilterSet class.
+    """
+
+    permissions_required = [AppPermission.DATA_OPERATOR_CAN_VIEW_INGESTION_SUMMARY]
+
+    def get(self, request):
+        failed_qs = FailedImportRow.objects.select_related("batch").order_by("-created")
+        failed_filter = FailedImportRowFilter(request.GET, queryset=failed_qs)
+
+        paginator = Paginator(failed_filter.qs, 10)
+        failed_rows_page = paginator.get_page(request.GET.get("page", 1))
+
+        failed_batches = UploadBatch.objects.filter(
+            id__in=FailedImportRow.objects.values_list("batch_id", flat=True).distinct()
+        ).order_by("-created")
+        if not failed_batches.exists():
+            failed_batches = UploadBatch.objects.order_by("-created")[:20]
+
+        total_failed_rows = FailedImportRow.objects.count()
+
+        context = {
+            "filter": failed_filter,
+            "failed_rows_page": failed_rows_page,
+            "failed_rows": failed_rows_page.object_list,
+            "failed_batches": failed_batches,
+            "selected_batch_id": failed_filter.data.get("batch_id", ""),
+            "total_failed_rows": total_failed_rows,
+            "tab_visible": True,
+        }
+        return render(request, "dashboard/operator/includes/failed_tab.html", context)
 
 
 class IngestPipelineView(AnyPermissionRequiredMixin, View):
@@ -137,8 +216,19 @@ class IngestPipelineView(AnyPermissionRequiredMixin, View):
         )
 
         # Compute updated overall dashboard metrics for OOB HTMX components
-        batches = UploadBatch.objects.select_related("uploaded_by").order_by("-created")[:10]
-        failed_rows = FailedImportRow.objects.select_related("batch").order_by("-created")[:10]
+        batch_qs = UploadBatch.objects.select_related("uploaded_by").order_by("-created")
+        batch_paginator = Paginator(batch_qs, 10)
+        batches_page = batch_paginator.get_page(1)
+
+        failed_qs = FailedImportRow.objects.select_related("batch").order_by("-created")
+        failed_paginator = Paginator(failed_qs, 10)
+        failed_rows_page = failed_paginator.get_page(1)
+
+        failed_batches = UploadBatch.objects.filter(
+            id__in=FailedImportRow.objects.values_list("batch_id", flat=True).distinct()
+        ).order_by("-created")
+        if not failed_batches.exists():
+            failed_batches = UploadBatch.objects.order_by("-created")[:20]
 
         total_batches = UploadBatch.objects.count()
         total_raw_records = RawLoanRecord.objects.count()
@@ -156,8 +246,11 @@ class IngestPipelineView(AnyPermissionRequiredMixin, View):
 
         context = {
             "summary": summary_result,
-            "batches": batches,
-            "failed_rows": failed_rows,
+            "batches_page": batches_page,
+            "batches": batches_page.object_list,
+            "failed_rows_page": failed_rows_page,
+            "failed_rows": failed_rows_page.object_list,
+            "failed_batches": failed_batches,
             "total_batches": total_batches,
             "total_raw_records": total_raw_records,
             "total_failed_rows": total_failed_rows,

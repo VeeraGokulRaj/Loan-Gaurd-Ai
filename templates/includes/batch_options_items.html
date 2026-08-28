@@ -1,0 +1,14 @@
+<!-- Paginated Batch Options Partial with HTMX Infinite Scroll Trigger -->
+{% for batch in batches %}
+    <option value="{{ batch.id }}"
+            {% if selected_batch_id == batch.id|stringformat:"s" %}selected{% endif %}>
+        Batch #{{ batch.id }} - {{ batch.file_name|default:"Unnamed File" }}
+    </option>
+{% endfor %}
+{% if batch_page and batch_page.has_next %}
+    <option hx-get="{% url 'batch_options' %}?page={{ batch_page.next_page_number }}&selected={{ selected_batch_id }}&q={{ search_query|default:'' }}"
+            hx-trigger="intersect once"
+            hx-swap="afterend"
+            disabled
+            class="text-slate-500 italic">⏳ Loading more batches...</option>
+{% endif %}
