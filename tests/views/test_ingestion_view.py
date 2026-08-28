@@ -25,9 +25,9 @@ class TestIngestPipelineView:
         self.login_url = reverse("login")
         self.user = UserFactory.create_data_operator(username="op_view")
 
-    def _auth_client(self):
+    def _auth_client(self, user=None):
         client = Client(enforce_csrf_checks=False)
-        client.force_login(self.user)
+        client.force_login(user or self.user)
         return client
 
     def _valid_files_post_data(self, files=None):
@@ -52,6 +52,26 @@ class TestIngestPipelineView:
         response = self.client.post(self.url, data=self._valid_files_post_data())
         assert response.status_code == 302
         assert self.login_url in response.url
+
+    # ── Permission Gating (Negative) ──
+
+    def test_post_superuser_denied(self):
+        """Superuser should be denied category-gated pipeline access."""
+        superuser = UserFactory.create_superuser(username="pipe_admin")
+        response = self._auth_client(superuser).post(self.url, data=self._valid_files_post_data())
+        assert response.status_code == 403
+
+    def test_post_reviewer_denied(self):
+        """Reviewer should be denied the operator-only pipeline access."""
+        reviewer = UserFactory.create_reviewer(username="pipe_reviewer")
+        response = self._auth_client(reviewer).post(self.url, data=self._valid_files_post_data())
+        assert response.status_code == 403
+
+    def test_post_data_consumer_denied(self):
+        """Data Consumer should be denied the operator-only pipeline access."""
+        consumer = UserFactory.create_data_consumer(username="pipe_consumer")
+        response = self._auth_client(consumer).post(self.url, data=self._valid_files_post_data())
+        assert response.status_code == 403
 
     # ── HTTP Method Enforcement (Negative) ──
 
@@ -97,6 +117,21 @@ class TestIngestPipelineView:
         assert response.status_code == 400
         assert b"Missing Required Ingestion Files" in response.content
         assert b"All 3 CSV files must be selected" in response.content
+
+    def test_post_missing_one_file_htmx_returns_bad_request_html(self):
+        """HTMX POST missing a single file should only list that file in the error."""
+        client = self._auth_client()
+        data = self._valid_files_post_data()
+        del data["servicer_update_file"]
+        response = client.post(
+            self.url,
+            data=data,
+            HTTP_HX_REQUEST="true",
+        )
+        assert response.status_code == 400
+        assert b"Missing Required Ingestion Files" in response.content
+        assert b"Servicer Update" in response.content
+        assert b"Primary Loan Tape" not in response.content
 
     def test_post_missing_files_does_not_create_batches(self):
         """POST blocked by missing files should not create any UploadBatch."""
