@@ -5,21 +5,34 @@ Provides Class-Based Views (CBV) for Data Operator dashboard workspace
 and multi-file CSV ingestion pipeline execution using AnyPermissionRequiredMixin.
 """
 
+import time
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Any
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Sum
-from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
-from django.views import View
+from django.views.generic import View
 
 from app.domain.ingestion import IngestionService
 from app.domain.roles import AppPermission
+from app.domain.validation_engine import ValidationEngine
+from app.domain.validation_service import ValidationRuleJsonService
 from app.filters import FailedImportRowFilter, UploadBatchFilter
 from app.mixins import AnyPermissionRequiredMixin
-from app.models import FailedImportRow, RawLoanRecord, UploadBatch
+from app.models import (
+    AuditEvent,
+    FailedImportRow,
+    LoanException,
+    RawLoanRecord,
+    UploadBatch,
+    ValidationRule,
+    ValidationSeverity,
+)
 
 
 class OperatorDashboardView(AnyPermissionRequiredMixin, View):
@@ -40,12 +53,14 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
 
         # Fetch paginated upload batches (Page 1)
         batch_qs = UploadBatch.objects.select_related("uploaded_by").order_by("-created")
-        batch_paginator = Paginator(batch_qs, 10)
+        batch_filter = UploadBatchFilter(request.GET, queryset=batch_qs)
+        batch_paginator = Paginator(batch_filter.qs, 10)
         batches_page = batch_paginator.get_page(1)
 
         # Fetch paginated failed import rows (Page 1)
         failed_qs = FailedImportRow.objects.select_related("batch").order_by("-created")
-        failed_paginator = Paginator(failed_qs, 10)
+        failed_filter = FailedImportRowFilter(request.GET, queryset=failed_qs)
+        failed_paginator = Paginator(failed_filter.qs, 10)
         failed_rows_page = failed_paginator.get_page(1)
 
         # Fetch upload batches with failures for failed row batch filter dropdown
@@ -74,9 +89,14 @@ class OperatorDashboardView(AnyPermissionRequiredMixin, View):
         else:
             success_rate = 100.0
 
+        selected_batch_id = request.GET.get("batch_id", "")
+
         context = {
             "title": _("Data Operator Workspace - LoanGuard AI"),
             "user": user,
+            "filter": batch_filter,
+            "failed_filter": failed_filter,
+            "selected_batch_id": selected_batch_id,
             "batches_page": batches_page,
             "batches": batches_page.object_list,
             "failed_rows_page": failed_rows_page,
@@ -273,3 +293,120 @@ class IngestPipelineView(AnyPermissionRequiredMixin, View):
             % {"rows": summary_result["total_session_rows"]},
         )
         return redirect("dashboard")
+
+
+class ExecuteValidationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Data Operator to manually execute the Validation Engine.
+
+    Restricted strictly to users with DATA_OPERATOR_CAN_TRIGGER_VALIDATION permission.
+    Evaluates active ValidationRules against RawLoanRecords for target UploadBatch(es).
+    Returns real-time execution metrics and progress banner via HTMX.
+    """
+
+    permissions_required = [AppPermission.DATA_OPERATOR_CAN_TRIGGER_VALIDATION]
+
+    def post(
+        self, request: HttpRequest, batch_id: int | None = None, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        start_time = time.time()
+        user = request.user
+
+        # 1. Ensure Validation Rules exist in Database (Auto-seed if empty)
+        active_rules_count = ValidationRule.objects.filter(is_active=True).count()
+        if active_rules_count == 0:
+            valid_rules, _ = ValidationRuleJsonService.load_and_validate_json()
+            if valid_rules:
+                ValidationRuleJsonService.seed_database(valid_rules)
+                active_rules_count = ValidationRule.objects.filter(is_active=True).count()
+
+        # 2. Resolve target batch(es) to evaluate
+        single_batch_id = batch_id or request.GET.get("batch_id") or request.POST.get("batch_id")
+        batch_ids_param = request.GET.get("batch_ids") or request.POST.get("batch_ids")
+
+        if single_batch_id and str(single_batch_id).isdigit():
+            target_batch = get_object_or_404(UploadBatch, id=int(single_batch_id))
+            batches = [target_batch]
+        else:
+            try:
+                parsed_ids = [
+                    int(i.strip()) for i in str(batch_ids_param).split(",") if i.strip().isdigit()
+                ]
+                batches = list(
+                    UploadBatch.objects.filter(id__in=parsed_ids).exclude(
+                        status=UploadBatch.BatchStatus.FAILED
+                    )
+                )
+            except Exception:
+                batches = []
+
+        if not batches:
+            html_error = """
+            <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center gap-3">
+                <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>No valid upload batches found to execute validation engine against. Please ingest CSV files first.</span>
+            </div>
+            """
+            return HttpResponse(html_error, status=400)
+
+        # 3. Execute Validation Engine for target batches
+        total_records_evaluated = 0
+        total_exceptions_created = 0
+        processed_batch_ids = []
+
+        for batch in batches:
+            records_count = batch.raw_records.count()
+            total_records_evaluated += records_count
+            created_exceptions = ValidationEngine.validate_batch(batch)
+            total_exceptions_created += len(created_exceptions)
+            processed_batch_ids.append(batch.id)
+
+        execution_time_ms = round((time.time() - start_time) * 1000, 2)
+
+        # 4. Log Audit Trail Event
+        AuditEvent.log_event(
+            event_type="VALIDATION_ENGINE_EXECUTED",
+            actor=user,
+            payload={
+                "batch_ids": processed_batch_ids,
+                "active_rules_evaluated": active_rules_count,
+                "total_records_evaluated": total_records_evaluated,
+                "exceptions_flagged": total_exceptions_created,
+                "execution_time_ms": execution_time_ms,
+            },
+        )
+
+        # 5. Compute Severity Breakdown
+        critical_count = LoanException.objects.filter(
+            batch_id__in=processed_batch_ids, severity=ValidationSeverity.CRITICAL
+        ).count()
+        high_count = LoanException.objects.filter(
+            batch_id__in=processed_batch_ids, severity=ValidationSeverity.HIGH
+        ).count()
+        medium_count = LoanException.objects.filter(
+            batch_id__in=processed_batch_ids, severity=ValidationSeverity.MEDIUM
+        ).count()
+        low_count = LoanException.objects.filter(
+            batch_id__in=processed_batch_ids, severity=ValidationSeverity.LOW
+        ).count()
+
+        context = {
+            "execution_time_ms": execution_time_ms,
+            "active_rules_count": active_rules_count,
+            "total_records_evaluated": total_records_evaluated,
+            "total_exceptions_created": total_exceptions_created,
+            "processed_batch_ids": processed_batch_ids,
+            "target_batch_id": batch_id,
+            "critical_count": critical_count,
+            "high_count": high_count,
+            "medium_count": medium_count,
+            "low_count": low_count,
+        }
+
+        return render(
+            request,
+            "dashboard/operator/includes/validation_progress_partial.html",
+            context,
+        )

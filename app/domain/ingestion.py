@@ -368,6 +368,9 @@ class IngestionService:
 
         total_execution_time_ms = round((time.time() - session_start) * 1000, 2)
 
+        batch_ids = [b["batch_id"] for b in batch_results if "batch_id" in b]
+        batch_ids_str = ",".join(str(i) for i in batch_ids)
+
         # Log session completion audit event
         AuditEvent.log_event(
             event_type="INGESTION_SESSION_COMPLETED",
@@ -378,6 +381,7 @@ class IngestionService:
                 "successful_records": total_session_success,
                 "failed_records": total_session_failed,
                 "execution_time_ms": total_execution_time_ms,
+                "batch_ids": batch_ids,
             },
         )
 
@@ -388,4 +392,6 @@ class IngestionService:
             "total_session_success": total_session_success,
             "total_session_failed": total_session_failed,
             "batch_results": batch_results,
+            "batch_ids": batch_ids,
+            "batch_ids_str": batch_ids_str,
         }
