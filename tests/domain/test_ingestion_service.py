@@ -322,7 +322,7 @@ class TestProcessSingleFile:
         assert ServicerUpdateRecord.objects.filter(batch=batch).count() == 0
         failed_row = FailedImportRow.objects.filter(batch=batch).first()
         assert failed_row is not None
-        assert "missing or empty" in failed_row.failure_reason
+        assert "null or empty" in failed_row.failure_reason
 
     def test_document_manifest_records_created(self):
         """Document manifest files should populate DocumentManifestRecord correctly."""
@@ -358,7 +358,7 @@ class TestProcessSingleFile:
         assert DocumentManifestRecord.objects.filter(batch=batch).count() == 0
         failed_row = FailedImportRow.objects.filter(batch=batch).first()
         assert failed_row is not None
-        assert "missing or empty" in failed_row.failure_reason
+        assert "null or empty" in failed_row.failure_reason
 
     def test_loan_tape_creates_no_specialized_records(self):
         """Loan tape ingestion should not create servicer or document records."""

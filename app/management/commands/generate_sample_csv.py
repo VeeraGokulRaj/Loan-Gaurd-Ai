@@ -374,15 +374,9 @@ class SampleDatasetGenerator:
             ):
                 note_flag, id_flag, inc_flag = "FALSE", "FALSE", "FALSE"
             else:
-                note_flag = (
-                    "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE", ""])
-                )
-                id_flag = (
-                    "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE", ""])
-                )
-                inc_flag = (
-                    "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE", ""])
-                )
+                note_flag = "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE"])
+                id_flag = "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE"])
+                inc_flag = "TRUE" if doc_status == "VERIFIED" else random.choice(["TRUE", "FALSE"])
 
             doc_upload_date = mutation_context["doc_date_override"] or orig_date_str
 
@@ -508,7 +502,7 @@ class SampleDatasetGenerator:
     def _assign_intentional_issues(self) -> dict[int, str]:
         issue_assignments: dict[int, str] = {}
         for idx in range(1, self.target_row_count + 1):
-            if random.random() < 0.30:
+            if random.random() < 0.20:
                 issue_assignments[idx] = random.choice(INTENTIONAL_ISSUES)
         return issue_assignments
 
@@ -527,22 +521,12 @@ class SampleDatasetGenerator:
 
     def _generate_extra_unmapped_columns(self, index: int) -> dict[str, str]:
         return {
-            "custom_risk_score": f"EXT-RISK-{random.randint(100, 999)}"
-            if random.random() < 0.20
-            else "",
-            "unmapped_vendor_data": f"VENDOR-TAG-{random.randint(10, 99)}"
-            if random.random() < 0.20
-            else "",
-            "unexpected_audit_flag": f"AUDIT-FLAG-{random.randint(1, 5)}"
-            if random.random() < 0.20
-            else "",
-            "servicer_raw_notes": f"Servicer note line {index}" if random.random() < 0.20 else "",
-            "legacy_servicer_code": f"LEGACY-CODE-{random.randint(1000, 9999)}"
-            if random.random() < 0.20
-            else "",
-            "ocr_confidence_score": f"{round(random.uniform(0.50, 0.99), 2)}"
-            if random.random() < 0.20
-            else "",
+            "custom_risk_score": f"EXT-RISK-{random.randint(100, 999)}",
+            "unmapped_vendor_data": f"VENDOR-TAG-{random.randint(10, 99)}",
+            "unexpected_audit_flag": f"AUDIT-FLAG-{random.randint(1, 5)}",
+            "servicer_raw_notes": f"Servicer note line {index}",
+            "legacy_servicer_code": f"LEGACY-CODE-{random.randint(1000, 9999)}",
+            "ocr_confidence_score": f"{round(random.uniform(0.50, 0.99), 2)}",
         }
 
     # ruff: noqa: UP038
