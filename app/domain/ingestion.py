@@ -180,14 +180,14 @@ class IngestionService:
             data_row_count += 1
             raw_line_text = str(row)
 
-            # Structural Validation: Check for empty rows
-            if not row or all(v is None or str(v).strip() == "" for v in row.values()):
+            # Structural Validation: Check for empty or incomplete rows (fails if any field is empty)
+            if not row or any(v is None or str(v).strip() == "" for v in row.values()):
                 failed_rows_to_create.append(
                     FailedImportRow(
                         batch=batch,
                         row_number=row_idx,
                         raw_line=raw_line_text,
-                        failure_reason="Empty row or null values across all CSV columns.",
+                        failure_reason="Row contains missing or empty column values.",
                     )
                 )
                 continue
