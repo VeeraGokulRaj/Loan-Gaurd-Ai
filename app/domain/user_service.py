@@ -192,9 +192,6 @@ class UserSeederService:
         if not users_data:
             return 0, 0
 
-        created_count = 0
-        updated_count = 0
-
         # Pre-fetch existing users in a single query
         target_usernames = [
             str(info.get("username", "")).strip() for info in users_data if info.get("username")
@@ -205,6 +202,10 @@ class UserSeederService:
 
         # Cache hashed passwords to avoid expensive repeated PBKDF2/Argon2 hashing
         password_hash_cache: dict[str, str] = {}
+
+        to_create = []
+        to_update = []
+        update_fields = ["first_name", "last_name", "email", "phone", "category", "password"]
 
         with transaction.atomic():
             for info in users_data:
@@ -227,19 +228,19 @@ class UserSeederService:
                 hashed_password = password_hash_cache[raw_password]
 
                 user = existing_users_map.get(username)
-                created = False
 
                 if not user:
-                    user = User(
-                        username=username,
-                        first_name=first_name,
-                        last_name=last_name,
-                        email=email,
-                        phone=phone,
-                        category=category,
-                        password=hashed_password,
+                    to_create.append(
+                        User(
+                            username=username,
+                            first_name=first_name,
+                            last_name=last_name,
+                            email=email,
+                            phone=phone,
+                            category=category,
+                            password=hashed_password,
+                        )
                     )
-                    created = True
                 else:
                     user.first_name = first_name
                     user.last_name = last_name
@@ -247,20 +248,20 @@ class UserSeederService:
                     user.phone = phone
                     user.category = category
                     user.password = hashed_password
+                    to_update.append(user)
 
-                user.save()
+            if to_create:
+                User.objects.bulk_create(to_create, batch_size=500)
 
-                if created:
-                    created_count += 1
-                else:
-                    updated_count += 1
+            if to_update:
+                User.objects.bulk_update(to_update, fields=update_fields, batch_size=500)
 
             # Automatically trigger permission sync after seeding data
             from app.domain.roles import sync_category_permissions
 
             sync_category_permissions()
 
-        return created_count, updated_count
+        return len(to_create), len(to_update)
 
     @classmethod
     def save_to_file(cls, users_data: list[dict[str, Any]], target_path: str = None) -> Path:
