@@ -305,7 +305,7 @@ class TestProcessSingleFile:
         assert rec.servicer_as_of_date == date(2025, 6, 30)
 
     def test_servicer_update_with_missing_values_defaults(self):
-        """Missing servicer column values (with loan_id present) should be stored as None."""
+        """Missing servicer column values should mark the row as failed, not create a record."""
         row = "LG-0001,,,,,"
         file_obj = IngestionFactory.servicer_update_file(rows=[row])
         result = IngestionService.process_single_file(
@@ -314,12 +314,15 @@ class TestProcessSingleFile:
             UploadBatch.SourceType.SERVICER_UPDATE,
             "SERVICER_UPDATE",
         )
-        rec = ServicerUpdateRecord.objects.get(batch__id=result["batch_id"])
-        assert rec.loan_id == "LG-0001"
-        assert rec.updated_current_balance is None
-        assert rec.updated_payment_status is None
-        assert rec.updated_days_past_due is None
-        assert rec.last_payment_date is None
+        assert result["status"] == UploadBatch.BatchStatus.FAILED
+        assert result["successful_records"] == 0
+        assert result["failed_records"] == 1
+
+        batch = UploadBatch.objects.get(id=result["batch_id"])
+        assert ServicerUpdateRecord.objects.filter(batch=batch).count() == 0
+        failed_row = FailedImportRow.objects.filter(batch=batch).first()
+        assert failed_row is not None
+        assert "missing or empty" in failed_row.failure_reason
 
     def test_document_manifest_records_created(self):
         """Document manifest files should populate DocumentManifestRecord correctly."""
@@ -338,7 +341,7 @@ class TestProcessSingleFile:
         assert rec.document_verification_status == "COMPLETE"
 
     def test_document_manifest_missing_flags_default_false(self):
-        """Missing document boolean columns should default to False, status to MISSING."""
+        """Missing document columns should mark the row as failed, not create a record."""
         row = "LG-0099,,,,"
         file_obj = IngestionFactory.document_manifest_file(rows=[row])
         result = IngestionService.process_single_file(
@@ -347,12 +350,15 @@ class TestProcessSingleFile:
             UploadBatch.SourceType.DOCUMENT_MANIFEST,
             "DOCUMENT_MANIFEST",
         )
-        rec = DocumentManifestRecord.objects.get(batch__id=result["batch_id"])
-        assert rec.loan_id == "LG-0099"
-        assert rec.promissory_note_present is False
-        assert rec.id_proof_present is False
-        assert rec.income_verification_present is False
-        assert rec.document_verification_status == "MISSING"
+        assert result["status"] == UploadBatch.BatchStatus.FAILED
+        assert result["successful_records"] == 0
+        assert result["failed_records"] == 1
+
+        batch = UploadBatch.objects.get(id=result["batch_id"])
+        assert DocumentManifestRecord.objects.filter(batch=batch).count() == 0
+        failed_row = FailedImportRow.objects.filter(batch=batch).first()
+        assert failed_row is not None
+        assert "missing or empty" in failed_row.failure_reason
 
     def test_loan_tape_creates_no_specialized_records(self):
         """Loan tape ingestion should not create servicer or document records."""

@@ -55,12 +55,12 @@ class TestIngestPipelineView:
 
     # ── HTTP Method Enforcement (Negative) ──
 
-    def test_get_with_login_returns_bad_request(self):
-        """Authenticated GET should return 400 Invalid request method."""
+    def test_get_with_login_returns_method_not_allowed(self):
+        """Authenticated GET should return 405 Method Not Allowed (CBV default)."""
         client = self._auth_client()
         response = client.get(self.url)
-        assert response.status_code == 400
-        assert b"Invalid request method" in response.content
+        assert response.status_code == 405
+        assert "POST" in response.headers.get("Allow", "")
 
     # ── Missing Files Validation (Negative) ──
 

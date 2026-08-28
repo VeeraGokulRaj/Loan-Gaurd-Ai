@@ -45,7 +45,9 @@ class TestLoginView:
 
     def test_post_valid_credentials_sets_success_message(self):
         """Successful login should add a welcome success message."""
-        UserFactory.create_user(username="msguser", password="msgpass123", first_name="Alice")
+        UserFactory.create_data_operator(
+            username="msguser", password="msgpass123", first_name="Alice"
+        )
         response = self.client.post(
             self.login_url,
             {"username": "msguser", "password": "msgpass123"},
@@ -56,7 +58,7 @@ class TestLoginView:
 
     def test_post_valid_credentials_falls_back_to_username_in_welcome(self):
         """If user has no first_name, welcome message should use username."""
-        UserFactory.create_user(
+        UserFactory.create_data_operator(
             username="nonameuser",
             password="pass123",
             first_name="",

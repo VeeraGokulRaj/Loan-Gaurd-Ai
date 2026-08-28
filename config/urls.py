@@ -7,15 +7,16 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
-from app.views import ingest_pipeline_view, login_view, logout_view
+from app.views.auth import LoginView, LogoutView
 from app.views.dashboard import dashboard_view
+from app.views.data_operator import IngestPipelineView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", dashboard_view, name="dashboard"),
-    path("login/", login_view, name="login"),
-    path("logout/", logout_view, name="logout"),
-    path("ingest/pipeline/", ingest_pipeline_view, name="ingest_pipeline"),
+    path("login/", LoginView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("ingest/pipeline/", IngestPipelineView.as_view(), name="ingest_pipeline"),
 ]
 
 if settings.DEBUG:
