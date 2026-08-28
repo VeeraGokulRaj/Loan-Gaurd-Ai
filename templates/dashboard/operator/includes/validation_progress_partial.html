@@ -1,0 +1,76 @@
+{% load humanize %}
+<!-- Dynamic Validation Engine Execution Progress Partial -->
+<div id="validationResultBox"
+     class="p-6 rounded-2xl bg-slate-900/90 border border-emerald-500/40 shadow-2xl backdrop-blur-xl space-y-5 animate-fade-in my-4">
+    <!-- Header status banner -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-lg shadow-emerald-500/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <span>Validation Engine Execution Complete!</span>
+                    <span class="px-2 py-0.5 text-[10px] font-mono font-semibold rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {{ execution_time_ms }} ms
+                    </span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    Evaluated {{ active_rules_count }} active rules against {{ total_records_evaluated|intcomma }} raw loan records.
+                </p>
+            </div>
+        </div>
+        <div class="text-right">
+            <span class="text-xs text-slate-400 block">Total Exceptions Flagged</span>
+            <span class="text-xl font-bold font-mono text-amber-400">{{ total_exceptions_created|intcomma }}</span>
+        </div>
+    </div>
+    <!-- Severity Distribution Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-red-500/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-400 animate-pulse"></span>
+                <span class="text-xs font-semibold text-red-300">Critical</span>
+            </div>
+            <span class="text-sm font-bold font-mono text-white">{{ critical_count|intcomma }}</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-amber-500/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                <span class="text-xs font-semibold text-amber-300">High</span>
+            </div>
+            <span class="text-sm font-bold font-mono text-white">{{ high_count|intcomma }}</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-yellow-500/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-yellow-400"></span>
+                <span class="text-xs font-semibold text-yellow-300">Medium</span>
+            </div>
+            <span class="text-sm font-bold font-mono text-white">{{ medium_count|intcomma }}</span>
+        </div>
+        <div class="p-3.5 rounded-xl bg-slate-950/80 border border-blue-500/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-400"></span>
+                <span class="text-xs font-semibold text-blue-300">Low</span>
+            </div>
+            <span class="text-sm font-bold font-mono text-white">{{ low_count|intcomma }}</span>
+        </div>
+    </div>
+    <!-- Reviewer Workspace Separation Notice -->
+    <div class="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs text-purple-200 flex items-start gap-3">
+        <svg class="w-5 h-5 text-purple-400 shrink-0 mt-0.5"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+            </path>
+        </svg>
+        <div>
+            <span class="font-bold text-white block mb-0.5">Role Access Control Notice:</span>
+            <span>All {{ total_exceptions_created|intcomma }} flagged Loan Exceptions have been securely routed to the <strong>Reviewer Workspace</strong>. Individual exception queue items, field overrides, and AI Copilot suggestions are visible strictly to Reviewer accounts.</span>
+        </div>
+    </div>
+</div>

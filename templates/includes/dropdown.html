@@ -1,7 +1,7 @@
 <!-- Reusable Filter Dropdown Widget Component -->
 <select name="{{ name }}"
         id="{{ id }}"
-        class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-{{ accent_color|default:'indigo' }}-500 {{ extra_classes|default:'' }}">
+        class="px-3.5 py-2 bg-slate-950/80 border {% if selected_value %}border-{{ accent_color|default:'indigo' }}-500/50 text-{{ accent_color|default:'indigo' }}-300{% else %}border-slate-800 text-slate-300{% endif %} rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-{{ accent_color|default:'indigo' }}-500 {{ extra_classes|default:'' }}">
     <option value="">{{ default_label|default:'All' }}</option>
     {% for item in options %}
         {% if item.id %}

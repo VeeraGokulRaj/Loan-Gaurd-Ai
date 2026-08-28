@@ -24,18 +24,8 @@
             </div>
             <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
             <div class="flex flex-wrap items-center gap-3">
-                <!-- Batch Filter Dropdown using FilterSet ModelChoiceFilter choices -->
-                <select name="batch_id"
-                        id="failedBatchFilter"
-                        class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    {% for val, label in filter.form.fields.batch_id.choices %}
-                        <option value="{{ val|default:'' }}"
-                                {% if filter.data.batch_id == val|stringformat:"s" or selected_batch_id == val|stringformat:"s" %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-                {% include "includes/searchbar.html" with id="failedSearchInput" name="q" value=filter.data.q placeholder="Search failure reason or snippet..." accent_color="amber" %}
+                {% include "includes/dropdown.html" with name="batch_id" id="failedBatchFilter" options=failed_batches selected_value=selected_batch_id default_label="All Batches" accent_color="indigo" %}
+                {% include "includes/searchbar.html" with id="failedSearchInput" name="q" value=filter.data.q placeholder="Search failure reason or snippet..." accent_color="indigo" %}
             </div>
         </form>
         <!-- Table Container -->
@@ -82,6 +72,6 @@
             </table>
         </div>
         <!-- Reusable HTMX Pagination Widget Component with Page Jump Input -->
-        {% include "includes/pagination.html" with page_obj=failed_rows_page target_id="#failedTab" url_name="failed_row_list" search_query=filter.data.q param1_name="batch_id" param1_value=filter.data.batch_id accent_color="amber" item_label="failed rows" %}
+        {% include "includes/pagination.html" with page_obj=failed_rows_page target_id="#failedTab" url_name="failed_row_list" search_query=filter.data.q param1_name="batch_id" param1_value=filter.data.batch_id accent_color="indigo" item_label="failed rows" %}
     </div>
 </div>

@@ -11,9 +11,11 @@ from app.views.auth import LoginView, LogoutView
 from app.views.dashboard import dashboard_view
 from app.views.data_operator import (
     BatchListView,
+    ExecuteValidationView,
     FailedRowListView,
     IngestPipelineView,
 )
+from app.views.reviewer import ReviewerDashboardView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -23,6 +25,12 @@ urlpatterns = [
     path("ingest/pipeline/", IngestPipelineView.as_view(), name="ingest_pipeline"),
     path("ingest/batches/", BatchListView.as_view(), name="batch_list"),
     path("ingest/failed-rows/", FailedRowListView.as_view(), name="failed_row_list"),
+    path(
+        "validation/execute/",
+        ExecuteValidationView.as_view(),
+        name="execute_validation",
+    ),
+    path("reviewer/", ReviewerDashboardView.as_view(), name="reviewer_dashboard"),
 ]
 
 if settings.DEBUG:

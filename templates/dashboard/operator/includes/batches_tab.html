@@ -26,26 +26,8 @@
             <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
             <div class="flex flex-wrap items-center gap-3">
                 {% include "includes/searchbar.html" with id="batchSearchInput" name="q" value=filter.data.q placeholder="Search by filename or Batch ID..." accent_color="indigo" %}
-                <select name="source_type"
-                        id="sourceTypeFilter"
-                        class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    {% for val, label in filter.form.fields.source_type.choices %}
-                        <option value="{{ val|default:'' }}"
-                                {% if filter.data.source_type == val|stringformat:"s" %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <select name="status"
-                        id="batchStatusFilter"
-                        class="px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    {% for val, label in filter.form.fields.status.choices %}
-                        <option value="{{ val|default:'' }}"
-                                {% if filter.data.status == val|stringformat:"s" %}selected{% endif %}>
-                            {{ label }}
-                        </option>
-                    {% endfor %}
-                </select>
+                {% include "includes/dropdown.html" with name="source_type" id="sourceTypeFilter" options=filter.form.fields.source_type.choices selected_value=filter.data.source_type default_label="All Source Types" accent_color="indigo" %}
+                {% include "includes/dropdown.html" with name="status" id="batchStatusFilter" options=filter.form.fields.status.choices selected_value=filter.data.status default_label="All Statuses" accent_color="indigo" %}
             </div>
         </form>
         <!-- Table Container -->
@@ -61,6 +43,7 @@
                         <th class="px-4 py-3 font-semibold">Failed Rows</th>
                         <th class="px-4 py-3 font-semibold">Status</th>
                         <th class="px-4 py-3 font-semibold">Uploaded At</th>
+                        <th class="px-4 py-3 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800/60" id="batchesTbody">
@@ -68,7 +51,9 @@
                         {% for batch in batches %}
                             <tr class="hover:bg-slate-800/40 transition-colors batch-row"
                                 data-filename="{{ batch.file_name }}"
-                                data-batchid="#{{ batch.id }}">
+                                data-batchid="#{{ batch.id }}"
+                                data-sourcetype="{{ batch.source_type }}"
+                                data-status="{{ batch.status }}">
                                 <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#{{ batch.id }}</td>
                                 <td class="px-4 py-3.5 font-medium text-white">{{ batch.file_name|default:"Unnamed File" }}</td>
                                 <td class="px-4 py-3.5">
@@ -95,11 +80,28 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-4 py-3.5 text-xs text-slate-400">{{ batch.created|date:"M d, Y H:i" }}</td>
+                                <td class="px-4 py-3.5 text-right flex items-center justify-end gap-2">
+                                    <button type="button"
+                                            hx-post="{% url 'execute_validation' %}?batch_id={{ batch.id }}"
+                                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                                            hx-target="#dynamicSessionSummaryContainer"
+                                            hx-swap="innerHTML"
+                                            title="Execute Validation Rules against batch #{{ batch.id }}"
+                                            class="text-xs font-semibold text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-emerald-400"
+                                             fill="none"
+                                             stroke="currentColor"
+                                             viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                        <span>Run Validation</span>
+                                    </button>
+                                </td>
                             </tr>
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="8"
+                            <td colspan="9"
                                 class="px-4 py-8 text-center text-slate-500 text-xs font-medium">
                                 No upload batches found matching your filter criteria.
                             </td>
