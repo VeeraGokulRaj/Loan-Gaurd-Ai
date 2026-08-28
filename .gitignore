@@ -50,3 +50,6 @@ npm-debug.log*
 htmlcov/
 .pytest_cache/
 .ruff_cache/
+
+# Data & Upload Files
+files/
