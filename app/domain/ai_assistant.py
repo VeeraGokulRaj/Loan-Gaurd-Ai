@@ -579,15 +579,6 @@ def _apply_rejected_exception_decision(
     recommendation.save()
 
     exception = recommendation.exception
-    if exception:
-        from app.domain.exception_handling import apply_exception_resolution
-
-        apply_exception_resolution(
-            loan_exception=exception,
-            actor=reviewer,
-            status=LoanException.ExceptionStatus.REJECTED,
-            comment=comment_clean or "Rejected AI Copilot recommendation.",
-        )
 
     AuditEvent.log_event(
         event_type="AI_RECOMMENDATION_REJECTED",
