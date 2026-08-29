@@ -36,9 +36,10 @@ class AIRecommendation(BaseModel):
         EDITED = 4, _("Edited")
 
     class ModelProvider(models.IntegerChoices):
-        GEMINI_2_5_FLASH = 1, _("Gemini 2.5 Flash")
+        GEMINI = 1, _("Gemini")
         CHATGPT = 2, _("ChatGPT")
         OTHERS = 3, _("Others")
+        OPENCODE_ZEN = 4, _("OpenCode Zen")
 
     recommendation_type = models.IntegerField(
         choices=RecommendationType.choices,
@@ -91,10 +92,10 @@ class AIRecommendation(BaseModel):
     )
     model_name = models.IntegerField(
         choices=ModelProvider.choices,
-        default=ModelProvider.GEMINI_2_5_FLASH,
+        default=ModelProvider.OPENCODE_ZEN,
         db_index=True,
         help_text=_(
-            "LLM model provider choice used for generation (Gemini 2.5 Flash, ChatGPT, Others)."
+            "LLM model provider choice used for generation (Gemini, ChatGPT, OpenCode Zen, Others)."
         ),
     )
     raw_response = models.TextField(
