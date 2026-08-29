@@ -104,6 +104,8 @@
         }
     }
 
+    window.pipelineExecutedForCurrentFiles = false;
+
     function onIngestionStart(evt) {
         if (!checkAllFilesSelected()) {
             if (evt && evt.preventDefault) evt.preventDefault();
@@ -133,21 +135,29 @@
     }
 
     function onIngestionComplete() {
+        window.pipelineExecutedForCurrentFiles = true;
+
         const btn = document.getElementById('startPipelineBtn');
         const icon = document.getElementById('startPipelineIcon');
         const btnText = document.getElementById('startPipelineBtnText');
         const container = document.getElementById('dynamicSessionSummaryContainer');
 
         if (btn) {
-            btn.classList.remove('opacity-75', 'cursor-wait');
+            btn.disabled = true;
+            btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
         }
         if (icon) {
-            icon.className = 'w-4 h-4 text-white';
+            icon.className = 'w-4 h-4 text-slate-500';
         }
         if (btnText) {
-            btnText.textContent = 'Start Ingestion Pipeline';
+            btnText.textContent = 'Pipeline Completed';
         }
-        checkAllFilesSelected();
+
+        const hint = document.getElementById('pipelineValidationHint');
+        if (hint) {
+            hint.className = 'text-xs text-indigo-400 font-medium flex items-center gap-1.5';
+            hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ Pipeline executed. Select a new set of 3 files to run another ingestion session.</span>';
+        }
 
         if (container) {
             container.scrollIntoView({ behavior: 'smooth' });
@@ -159,6 +169,7 @@
     }
 
     function onFileSlotChange(slotKey, input) {
+        window.pipelineExecutedForCurrentFiles = false;
         const labelEl = document.getElementById('label_' + slotKey);
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -181,6 +192,7 @@
 
         const btn = document.getElementById('startPipelineBtn');
         const icon = document.getElementById('startPipelineIcon');
+        const btnText = document.getElementById('startPipelineBtnText');
         const hint = document.getElementById('pipelineValidationHint');
 
         const hasTape = fileTape && fileTape.files && fileTape.files.length > 0 && fileTape.files[0].name.length > 0;
@@ -190,18 +202,29 @@
         const allSelected = hasTape && hasServicer && hasManifest;
 
         if (btn) {
-            if (allSelected) {
+            if (allSelected && !window.pipelineExecutedForCurrentFiles) {
                 btn.disabled = false;
                 btn.className = 'py-3.5 px-8 bg-gradient-to-r from-indigo-600 to-sky-500 hover:from-indigo-500 hover:to-sky-400 text-white font-semibold rounded-xl shadow-lg shadow-indigo-600/30 transition-all text-sm flex items-center gap-2 cursor-pointer opacity-100';
                 if (icon) icon.className = 'w-4 h-4 text-white';
+                if (btnText) btnText.textContent = 'Start Ingestion Pipeline';
                 if (hint) {
                     hint.className = 'text-xs text-emerald-400 font-medium flex items-center gap-1.5';
                     hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ All 3 required CSV files selected. Pipeline unlocked!</span>';
+                }
+            } else if (window.pipelineExecutedForCurrentFiles) {
+                btn.disabled = true;
+                btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
+                if (icon) icon.className = 'w-4 h-4 text-slate-500';
+                if (btnText) btnText.textContent = 'Pipeline Completed';
+                if (hint) {
+                    hint.className = 'text-xs text-indigo-400 font-medium flex items-center gap-1.5';
+                    hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>✓ Pipeline executed. Select a new set of 3 files to run another ingestion session.</span>';
                 }
             } else {
                 btn.disabled = true;
                 btn.className = 'py-3.5 px-8 bg-slate-800 text-slate-500 font-semibold rounded-xl shadow-lg transition-all text-sm flex items-center gap-2 cursor-not-allowed opacity-50';
                 if (icon) icon.className = 'w-4 h-4 text-slate-500';
+                if (btnText) btnText.textContent = 'Start Ingestion Pipeline';
                 if (hint) {
                     hint.className = 'text-xs text-amber-400 font-medium flex items-center gap-1.5';
                     hint.innerHTML = '<svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Select all 3 required CSV files to enable pipeline execution</span>';
@@ -210,6 +233,23 @@
         }
 
         return allSelected;
+    }
+
+    function onValidationComplete(btn) {
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.remove('bg-gradient-to-r', 'from-emerald-600', 'to-teal-500', 'hover:from-emerald-500', 'hover:to-teal-400', 'cursor-pointer');
+            btn.classList.add('bg-slate-800', 'text-slate-500', 'cursor-not-allowed', 'opacity-50');
+            const idleSpan = btn.querySelector('.group-\\[\\.htmx-request\\]\\:hidden');
+            if (idleSpan) {
+                idleSpan.innerHTML = '<svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Validation Completed</span>';
+            }
+        }
+        const checkbox = document.getElementById('includeDbHistoryCheckbox');
+        if (checkbox) {
+            checkbox.disabled = true;
+            checkbox.classList.add('opacity-50', 'cursor-not-allowed');
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function() {

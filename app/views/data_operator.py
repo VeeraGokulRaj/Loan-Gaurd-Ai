@@ -14,7 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Sum
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 
@@ -33,6 +33,12 @@ from app.models import (
     ValidationRule,
     ValidationSeverity,
 )
+
+REQUIRED_TYPE_FOR_VALIDATION = {
+    UploadBatch.SourceType.LOAN_TAPE,
+    UploadBatch.SourceType.SERVICER_UPDATE,
+    UploadBatch.SourceType.DOCUMENT_MANIFEST,
+}
 
 
 class OperatorDashboardView(AnyPermissionRequiredMixin, View):
@@ -321,13 +327,9 @@ class ExecuteValidationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
                 active_rules_count = ValidationRule.objects.filter(is_active=True).count()
 
         # 2. Resolve target batch(es) to evaluate
-        single_batch_id = batch_id or request.GET.get("batch_id") or request.POST.get("batch_id")
         batch_ids_param = request.GET.get("batch_ids") or request.POST.get("batch_ids")
 
-        if single_batch_id and str(single_batch_id).isdigit():
-            target_batch = get_object_or_404(UploadBatch, id=int(single_batch_id))
-            batches = [target_batch]
-        else:
+        if batch_ids_param:
             try:
                 parsed_ids = [
                     int(i.strip()) for i in str(batch_ids_param).split(",") if i.strip().isdigit()
@@ -339,6 +341,8 @@ class ExecuteValidationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
                 )
             except Exception:
                 batches = []
+        else:
+            batches = []
 
         if not batches:
             html_error = """
@@ -351,15 +355,42 @@ class ExecuteValidationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             """
             return HttpResponse(html_error, status=400)
 
-        # 3. Execute Validation Engine for target batches
+        # Enforce validation requirement: Validation runs only when all 3 files are selected / present
+        source_types_present = {b.source_type for b in batches}
+
+        if not REQUIRED_TYPE_FOR_VALIDATION.issubset(source_types_present):
+            html_error = """
+            <div class="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-sm flex items-center gap-3">
+                <svg class="w-5 h-5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <span>Validation can only be run when all 3 CSV files (Primary Loan Tape, Servicer Update, and Document Manifest) are selected.</span>
+            </div>
+            """
+            return HttpResponse(html_error, status=400)
+
+        # Parse user decision for include_db_history toggle (defaults to False unless checked)
+        raw_include_history = request.POST.get("include_db_history") or request.GET.get(
+            "include_db_history"
+        )
+        include_db_history = str(raw_include_history).lower() in ["true", "on", "1", "yes"]
+
+        # 3. Execute Validation Engine for target primary loan tape batches
+        loan_tape_batches = [
+            b for b in batches if b.source_type == UploadBatch.SourceType.LOAN_TAPE
+        ]
+        target_batches = loan_tape_batches if loan_tape_batches else batches
+
         total_records_evaluated = 0
         total_exceptions_created = 0
         processed_batch_ids = []
 
-        for batch in batches:
+        for batch in target_batches:
             records_count = batch.raw_records.count()
             total_records_evaluated += records_count
-            created_exceptions = ValidationEngine.validate_batch(batch)
+            created_exceptions = ValidationEngine.validate_batch(
+                batch, include_db_history=include_db_history
+            )
             total_exceptions_created += len(created_exceptions)
             processed_batch_ids.append(batch.id)
 

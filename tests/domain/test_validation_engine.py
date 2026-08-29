@@ -234,6 +234,144 @@ class TestValidationContextBuild:
         assert "LG-1" in ctx.servicer_map
         assert "LG-2" in ctx.doc_manifest_map
 
+    # ── include_db_history behavior ──
+
+    def test_include_db_history_false_indexes_only_batch(self):
+        current_batch = UploadBatch.objects.create(
+            file_name="current.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(
+            batch=current_batch, row_number=1, raw_data={"loan_id": "LG-1"}
+        )
+        historical = UploadBatch.objects.create(
+            file_name="old.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(batch=historical, row_number=1, raw_data={"loan_id": "LG-1"})
+
+        ctx = ValidationContext.build(
+            list(RawLoanRecord.objects.filter(batch=current_batch)),
+            include_db_history=False,
+        )
+        # Only the single current-batch record is counted.
+        assert ctx.loan_id_counts["LG-1"] == 1
+
+    def test_include_db_history_true_indexes_historical_records(self):
+        current_batch = UploadBatch.objects.create(
+            file_name="current.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(
+            batch=current_batch, row_number=1, raw_data={"loan_id": "LG-1"}
+        )
+        historical = UploadBatch.objects.create(
+            file_name="old.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(batch=historical, row_number=1, raw_data={"loan_id": "LG-1"})
+
+        ctx = ValidationContext.build(
+            list(RawLoanRecord.objects.filter(batch=current_batch)),
+            include_db_history=True,
+        )
+        # Current batch (1) + historical DB (1) = 2 total occurrences.
+        assert ctx.loan_id_counts["LG-1"] == 2
+
+    def test_db_history_excludes_current_batch(self):
+        current_batch = UploadBatch.objects.create(
+            file_name="current.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(
+            batch=current_batch, row_number=1, raw_data={"loan_id": "LG-X"}
+        )
+        ctx = ValidationContext.build(
+            list(RawLoanRecord.objects.filter(batch=current_batch)),
+            include_db_history=True,
+        )
+        # The current batch must not be double-counted by the history query.
+        assert ctx.loan_id_counts["LG-X"] == 1
+
+    def test_db_history_only_indexes_loan_tape_source(self):
+        current_batch = UploadBatch.objects.create(
+            file_name="current.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(
+            batch=current_batch, row_number=1, raw_data={"loan_id": "LG-1"}
+        )
+        other_type = UploadBatch.objects.create(
+            file_name="servicer.csv",
+            source_type=UploadBatch.SourceType.SERVICER_UPDATE,
+        )
+        RawLoanRecord.objects.create(batch=other_type, row_number=1, raw_data={"loan_id": "LG-1"})
+
+        ctx = ValidationContext.build(
+            list(RawLoanRecord.objects.filter(batch=current_batch)),
+            include_db_history=True,
+        )
+        # SERVICER_UPDATE records are not part of loan_id_counts.
+        assert ctx.loan_id_counts["LG-1"] == 1
+
+    # ── list-valued servicer / doc manifest maps ──
+
+    def test_servicer_map_supports_multiple_records_per_loan(self):
+        batch = UploadBatch.objects.create(file_name="servicer.csv")
+        ServicerUpdateRecord.objects.create(
+            batch=batch, loan_id="LG-1", updated_current_balance=100
+        )
+        ServicerUpdateRecord.objects.create(
+            batch=batch, loan_id="LG-1", updated_current_balance=200
+        )
+        records = list(ServicerUpdateRecord.objects.filter(loan_id="LG-1"))
+        ctx = ValidationContext.build([], servicer_records=records)
+        values = ctx.servicer_map.get("LG-1", [])
+        assert isinstance(values, list)
+        assert len(values) == 2
+
+    def test_doc_manifest_map_supports_multiple_records_per_loan(self):
+        batch = UploadBatch.objects.create(file_name="manifest.csv")
+        DocumentManifestRecord.objects.create(
+            batch=batch, loan_id="LG-1", document_verification_status="COMPLETE"
+        )
+        DocumentManifestRecord.objects.create(
+            batch=batch, loan_id="LG-1", document_verification_status="PARTIAL"
+        )
+        records = list(DocumentManifestRecord.objects.filter(loan_id="LG-1"))
+        ctx = ValidationContext.build([], doc_manifest_records=records)
+        values = ctx.doc_manifest_map.get("LG-1", [])
+        assert isinstance(values, list)
+        assert len(values) == 2
+
+    def test_maps_pull_matching_db_records_for_target_loan_ids(self):
+        tape = UploadBatch.objects.create(
+            file_name="tape.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+        )
+        RawLoanRecord.objects.create(batch=tape, row_number=1, raw_data={"loan_id": "LG-1"})
+        ServicerUpdateRecord.objects.create(
+            batch=UploadBatch.objects.create(file_name="s.csv"),
+            loan_id="LG-1",
+            updated_current_balance=999,
+        )
+        DocumentManifestRecord.objects.create(
+            batch=UploadBatch.objects.create(file_name="d.csv"),
+            loan_id="LG-1",
+            document_verification_status="COMPLETE",
+            promissory_note_present=True,
+            id_proof_present=True,
+            income_verification_present=True,
+        )
+
+        ctx = ValidationContext.build(
+            list(RawLoanRecord.objects.filter(batch=tape)),
+            include_db_history=False,
+        )
+        # Target loan LG-1 appears in the tape, so DB servicer/doc records are fetched.
+        assert len(ctx.servicer_map.get("LG-1", [])) >= 1
+        assert len(ctx.doc_manifest_map.get("LG-1", [])) >= 1
+
 
 # =============================================================================
 # Strategy handlers
@@ -284,7 +422,7 @@ class TestDuplicateLoanIdRule:
         result = self._validate({"loan_id": "LG-1"}, ctx)
         assert result is not None
         assert result.is_valid is False
-        assert "3 occurrences" in result.message
+        assert "3 total occurrences" in result.message
 
     def test_empty_loan_id_skipped(self):
         ctx = ValidationContext(loan_id_counts={"": 5})
@@ -589,6 +727,35 @@ class TestMissingDocumentStatusRule:
         ctx = ValidationContext(doc_manifest_map={"LG-1": doc})
         assert self._validate({"loan_id": "LG-1"}, ctx) is not None
 
+    def test_manifest_multiple_records_any_missing_flags(self):
+        # List-valued doc map: a MISSING record among several must still be flagged.
+        ctx = ValidationContext(
+            doc_manifest_map={
+                "LG-1": [
+                    DocumentManifestRecord(
+                        document_verification_status="COMPLETE",
+                        promissory_note_present=True,
+                        id_proof_present=True,
+                        income_verification_present=True,
+                    ),
+                    DocumentManifestRecord(
+                        document_verification_status="PARTIAL",
+                        promissory_note_present=True,
+                        id_proof_present=False,
+                        income_verification_present=True,
+                    ),
+                ]
+            }
+        )
+        assert self._validate({"loan_id": "LG-1"}, ctx) is not None
+
+    def test_manifest_empty_list_falls_back_to_raw_tape(self):
+        # An empty doc list for a known loan triggers the raw loan tape fallback.
+        ctx = ValidationContext(doc_manifest_map={"LG-1": []})
+        result = self._validate({"loan_id": "LG-1"}, ctx)
+        assert result is not None
+        assert result.is_valid is False
+
 
 class TestServicerUpdateConflictRule:
     def _validate(self, raw_data, context=None, parameters=None):
@@ -640,6 +807,31 @@ class TestServicerUpdateConflictRule:
             }
         )
         assert self._validate({"loan_id": "LG-1", "current_balance": "500"}, ctx) is None
+
+    def test_multiple_servicer_records_one_conflicting_flagged(self):
+        # List-valued servicer map: at least one conflicting balance must raise an exception.
+        ctx = ValidationContext(
+            servicer_map={
+                "LG-1": [
+                    ServicerUpdateRecord(loan_id="LG-1", updated_current_balance=100.0),
+                    ServicerUpdateRecord(loan_id="LG-1", updated_current_balance=2500000.0),
+                ]
+            }
+        )
+        result = self._validate({"loan_id": "LG-1", "current_balance": "100.50"}, ctx)
+        assert result is not None
+        assert result.is_valid is False
+
+    def test_multiple_servicer_records_all_close_passes(self):
+        ctx = ValidationContext(
+            servicer_map={
+                "LG-1": [
+                    ServicerUpdateRecord(loan_id="LG-1", updated_current_balance=100.0),
+                    ServicerUpdateRecord(loan_id="LG-1", updated_current_balance=100.5),
+                ]
+            }
+        )
+        assert self._validate({"loan_id": "LG-1", "current_balance": "100.25"}, ctx) is None
 
 
 class TestStaleRecordRule:

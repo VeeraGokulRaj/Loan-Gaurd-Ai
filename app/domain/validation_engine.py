@@ -71,8 +71,8 @@ class ValidationContext:
     loan_id_counts: Counter = field(default_factory=Counter)
     borrower_id_counts: Counter = field(default_factory=Counter)
     triplet_counts: Counter = field(default_factory=Counter)
-    servicer_map: dict[str, ServicerUpdateRecord] = field(default_factory=dict)
-    doc_manifest_map: dict[str, DocumentManifestRecord] = field(default_factory=dict)
+    servicer_map: dict[str, list[ServicerUpdateRecord]] = field(default_factory=dict)
+    doc_manifest_map: dict[str, list[DocumentManifestRecord]] = field(default_factory=dict)
 
     @classmethod
     def build(
@@ -80,37 +80,42 @@ class ValidationContext:
         raw_records: Sequence[RawLoanRecord],
         servicer_records: Sequence[ServicerUpdateRecord] | None = None,
         doc_manifest_records: Sequence[DocumentManifestRecord] | None = None,
+        include_db_history: bool = True,
     ) -> "ValidationContext":
-        """Pre-calculates O(N) batch counts and lookup maps in a single pass."""
+        """Pre-calculates O(N) batch and DB-wide counts and lookup maps in a single pass."""
         loan_id_counts = Counter()
         borrower_id_counts = Counter()
         triplet_counts = Counter()
 
-        for record in raw_records:
-            record_data = record.raw_data or {}
-            loan_id = str(record_data.get("loan_id", "") or "").strip()
-            borrower_id = str(record_data.get("borrower_id", "") or "").strip()
-            principal = safe_float(record_data.get("original_principal"))
-            origination_date = str(record_data.get("origination_date", "") or "").strip()
+        current_batch_ids = cls._extract_batch_ids(raw_records)
 
-            if loan_id:
-                loan_id_counts[loan_id] += 1
-
-            if borrower_id:
-                borrower_id_counts[borrower_id] += 1
-
-            if borrower_id and principal is not None and origination_date:
-                triplet_counts[(borrower_id, principal, origination_date)] += 1
-
-        servicer_map = (
-            {record.loan_id: record for record in servicer_records if record.loan_id}
-            if servicer_records
-            else {}
+        # 1. Index batch records
+        cls._index_records(
+            records=raw_records,
+            loan_id_counts=loan_id_counts,
+            borrower_id_counts=borrower_id_counts,
+            triplet_counts=triplet_counts,
         )
-        doc_manifest_map = (
-            {record.loan_id: record for record in doc_manifest_records if record.loan_id}
-            if doc_manifest_records
-            else {}
+
+        # 2. Index historical DB records if requested
+        if include_db_history:
+            cls._index_db_history(
+                current_batch_ids=current_batch_ids,
+                loan_id_counts=loan_id_counts,
+                borrower_id_counts=borrower_id_counts,
+                triplet_counts=triplet_counts,
+            )
+
+        # 3. Build servicer update lookup map
+        servicer_map = cls._build_servicer_map(
+            servicer_records=servicer_records,
+            target_loan_ids=list(loan_id_counts.keys()),
+        )
+
+        # 4. Build document manifest lookup map
+        doc_manifest_map = cls._build_doc_manifest_map(
+            doc_manifest_records=doc_manifest_records,
+            target_loan_ids=list(loan_id_counts.keys()),
         )
 
         return cls(
@@ -120,6 +125,139 @@ class ValidationContext:
             servicer_map=servicer_map,
             doc_manifest_map=doc_manifest_map,
         )
+
+    @staticmethod
+    def _extract_batch_ids(raw_records: Sequence[RawLoanRecord]) -> set[int]:
+        batch_ids = set()
+        for record in raw_records:
+            batch_id = getattr(record, "batch_id", None)
+            if batch_id:
+                batch_ids.add(batch_id)
+        return batch_ids
+
+    @staticmethod
+    def _index_raw_data_entry(
+        raw_data: dict[str, Any],
+        loan_id_counts: Counter,
+        borrower_id_counts: Counter,
+        triplet_counts: Counter,
+    ) -> None:
+        if not raw_data or not isinstance(raw_data, dict):
+            return
+
+        loan_id = str(raw_data.get("loan_id", "") or "").strip()
+        borrower_id = str(raw_data.get("borrower_id", "") or "").strip()
+        principal = safe_float(raw_data.get("original_principal"))
+        origination_date = str(raw_data.get("origination_date", "") or "").strip()
+
+        if loan_id:
+            loan_id_counts[loan_id] += 1
+        if borrower_id:
+            borrower_id_counts[borrower_id] += 1
+        if borrower_id and principal is not None and origination_date:
+            triplet_counts[(borrower_id, principal, origination_date)] += 1
+
+    @classmethod
+    def _index_records(
+        cls,
+        records: Sequence[RawLoanRecord],
+        loan_id_counts: Counter,
+        borrower_id_counts: Counter,
+        triplet_counts: Counter,
+    ) -> None:
+        for record in records:
+            batch_source = getattr(getattr(record, "batch", None), "source_type", None)
+            if batch_source and batch_source != UploadBatch.SourceType.LOAN_TAPE:
+                continue
+            raw_data = getattr(record, "raw_data", {}) or {}
+            cls._index_raw_data_entry(raw_data, loan_id_counts, borrower_id_counts, triplet_counts)
+
+    @classmethod
+    def _index_db_history(
+        cls,
+        current_batch_ids: set[int],
+        loan_id_counts: Counter,
+        borrower_id_counts: Counter,
+        triplet_counts: Counter,
+    ) -> None:
+        try:
+            db_records = RawLoanRecord.objects.filter(
+                batch__source_type=UploadBatch.SourceType.LOAN_TAPE,
+            )
+            if current_batch_ids:
+                db_records = db_records.exclude(batch_id__in=current_batch_ids)
+
+            existing_raw_datas = db_records.values_list("raw_data", flat=True)
+            for raw_data in existing_raw_datas:
+                cls._index_raw_data_entry(
+                    raw_data, loan_id_counts, borrower_id_counts, triplet_counts
+                )
+        except Exception:
+            pass
+
+    @staticmethod
+    def _build_servicer_map(
+        servicer_records: Sequence[ServicerUpdateRecord] | None,
+        target_loan_ids: list[str],
+    ) -> dict[str, list[ServicerUpdateRecord]]:
+        servicer_map: dict[str, list[ServicerUpdateRecord]] = {}
+
+        if servicer_records:
+            for record in servicer_records:
+                if record and getattr(record, "loan_id", None):
+                    loan_id = str(record.loan_id).strip()
+                    if loan_id:
+                        servicer_map.setdefault(loan_id, []).append(record)
+
+        try:
+            valid_targets = [loan_id for loan_id in target_loan_ids if loan_id]
+            if valid_targets:
+                db_servicers = ServicerUpdateRecord.objects.filter(
+                    loan_id__in=valid_targets
+                ).order_by("-created")
+                for rec in db_servicers:
+                    if rec and getattr(rec, "loan_id", None):
+                        loan_id = str(rec.loan_id).strip()
+                        if loan_id:
+                            lid_records = servicer_map.setdefault(loan_id, [])
+                            if rec not in lid_records:
+                                lid_records.append(rec)
+        except Exception:
+            pass
+
+        return servicer_map
+
+    @staticmethod
+    def _build_doc_manifest_map(
+        doc_manifest_records: Sequence[DocumentManifestRecord] | None,
+        target_loan_ids: list[str],
+    ) -> dict[str, list[DocumentManifestRecord]]:
+        doc_manifest_map: dict[str, list[DocumentManifestRecord]] = {}
+
+        if doc_manifest_records:
+            for record in doc_manifest_records:
+                if record and getattr(record, "loan_id", None):
+                    lid = str(record.loan_id).strip()
+                    if lid:
+                        doc_manifest_map.setdefault(lid, []).append(record)
+
+        try:
+            valid_targets = [lid for lid in target_loan_ids if lid]
+            if valid_targets:
+                db_docs = DocumentManifestRecord.objects.filter(loan_id__in=valid_targets).order_by(
+                    "-created"
+                )
+                for rec in db_docs:
+                    if rec and getattr(rec, "loan_id", None):
+                        lid = str(rec.loan_id).strip()
+                        if lid:
+                            lid_records = doc_manifest_map.setdefault(lid, [])
+                            if rec not in lid_records:
+                                lid_records.append(rec)
+        except Exception:
+            pass
+
+        return doc_manifest_map
 
 
 # ruff: noqa: UP038
@@ -238,7 +376,7 @@ class DuplicateLoanIdRule(BaseValidationRule):
                     field_name=db_rule.field_name or "loan_id",
                     rule_code=db_rule.rule_code,
                     severity=db_rule.severity,
-                    message=f"Duplicate loan_id '{loan_id}' detected ({matching_count} occurrences in batch).",
+                    message=f"Duplicate loan_id '{loan_id}' detected ({matching_count} total occurrences across database/batch).",
                 )
         return None
 
@@ -276,7 +414,7 @@ class DuplicateBorrowerTripletRule(BaseValidationRule):
                     message=(
                         f"Duplicate borrower triplet detected for borrower '{borrower_id}' "
                         f"with principal ${principal:,.2f} and origination date '{origination_date}' "
-                        f"({matching_count} occurrences)."
+                        f"({matching_count} total occurrences across database/batch)."
                     ),
                 )
         return None
@@ -513,29 +651,49 @@ class MissingDocumentStatusRule(BaseValidationRule):
         record_data = raw_record.raw_data or {}
         loan_id = str(record_data.get("loan_id", "") or "").strip()
 
-        # Check cross-file document manifest record from O(1) context map if available
+        # Check cross-file document manifest records from O(1) context map if available
         if context and context.doc_manifest_map and loan_id in context.doc_manifest_map:
-            document_record = context.doc_manifest_map[loan_id]
-            verification_status = (
-                str(document_record.document_verification_status or "").strip().upper()
-            )
-            if verification_status in ["MISSING", "INCOMPLETE", "PENDING"] or not (
-                document_record.promissory_note_present
-                and document_record.id_proof_present
-                and document_record.income_verification_present
-            ):
-                return RuleResult(
-                    is_valid=False,
-                    field_name=db_rule.field_name or "document_status",
-                    rule_code=db_rule.rule_code,
-                    severity=db_rule.severity,
-                    message=(
-                        f"Document manifest check failed for loan '{loan_id}': "
-                        f"Verification Status '{verification_status}', Note: {document_record.promissory_note_present}, "
-                        f"ID: {document_record.id_proof_present}, Income: {document_record.income_verification_present}."
-                    ),
+            doc_records = context.doc_manifest_map.get(loan_id) or []
+            if not isinstance(doc_records, list):
+                doc_records = [doc_records]
+
+            for document_record in doc_records:
+                if not document_record:
+                    continue
+
+                verification_status = (
+                    str(getattr(document_record, "document_verification_status", "") or "")
+                    .strip()
+                    .upper()
                 )
-            return None
+                note_present = bool(getattr(document_record, "promissory_note_present", False))
+                id_present = bool(getattr(document_record, "id_proof_present", False))
+                income_present = bool(
+                    getattr(document_record, "income_verification_present", False)
+                )
+
+                if verification_status in [
+                    "MISSING",
+                    "INCOMPLETE",
+                    "PENDING",
+                    "UNVERIFIED",
+                    "NONE",
+                    "",
+                ] or not (note_present and id_present and income_present):
+                    return RuleResult(
+                        is_valid=False,
+                        field_name=db_rule.field_name or "document_status",
+                        rule_code=db_rule.rule_code,
+                        severity=db_rule.severity,
+                        message=(
+                            f"Document manifest check failed for loan '{loan_id}': "
+                            f"Verification Status '{verification_status or 'MISSING'}', Note: {note_present}, "
+                            f"ID: {id_present}, Income: {income_present}."
+                        ),
+                    )
+
+            if doc_records:
+                return None
 
         # Fallback to checking raw loan tape fields
         document_status = str(record_data.get("document_status", "") or "").strip().upper()
@@ -575,15 +733,14 @@ class ServicerUpdateConflictRule(BaseValidationRule):
             not loan_id
             or tape_balance is None
             or not context
+            or not context.servicer_map
             or loan_id not in context.servicer_map
         ):
             return None
 
-        servicer_record = context.servicer_map[loan_id]
-        servicer_balance = safe_float(servicer_record.updated_current_balance)
-
-        if servicer_balance is None:
-            return None
+        servicer_records = context.servicer_map.get(loan_id) or []
+        if not isinstance(servicer_records, list):
+            servicer_records = [servicer_records]
 
         parameters = db_rule.parameters or {}
         max_delta_dollars = (
@@ -594,19 +751,28 @@ class ServicerUpdateConflictRule(BaseValidationRule):
         if max_delta_dollars is None:
             max_delta_dollars = DEFAULT_MAX_SERVICER_DELTA_DOLLARS
 
-        delta_dollars = abs(tape_balance - servicer_balance)
-        if delta_dollars > max_delta_dollars:
-            return RuleResult(
-                is_valid=False,
-                field_name=db_rule.field_name or "current_balance",
-                rule_code=db_rule.rule_code,
-                severity=db_rule.severity,
-                message=(
-                    f"Servicer balance conflict for loan '{loan_id}': Tape balance (${tape_balance:,.2f}) "
-                    f"differs from Servicer update balance (${servicer_balance:,.2f}) by ${delta_dollars:,.2f} "
-                    f"(max allowed delta: ${max_delta_dollars:,.2f})."
-                ),
-            )
+        for servicer_record in servicer_records:
+            if not servicer_record:
+                continue
+
+            servicer_balance = safe_float(getattr(servicer_record, "updated_current_balance", None))
+            if servicer_balance is None:
+                continue
+
+            delta_dollars = abs(tape_balance - servicer_balance)
+            if delta_dollars > max_delta_dollars:
+                return RuleResult(
+                    is_valid=False,
+                    field_name=db_rule.field_name or "current_balance",
+                    rule_code=db_rule.rule_code,
+                    severity=db_rule.severity,
+                    message=(
+                        f"Servicer balance conflict for loan '{loan_id}': Tape balance (${tape_balance:,.2f}) "
+                        f"differs from Servicer update balance (${servicer_balance:,.2f}) by ${delta_dollars:,.2f} "
+                        f"(max allowed delta: ${max_delta_dollars:,.2f})."
+                    ),
+                )
+
         return None
 
 
@@ -717,7 +883,7 @@ class SuspiciousBorrowerDuplicationRule(BaseValidationRule):
                 severity=db_rule.severity,
                 message=(
                     f"Suspicious borrower duplication: borrower '{borrower_id}' is associated "
-                    f"with {borrower_count} loan records in batch (max allowed: {max_loans})."
+                    f"with {borrower_count} loan records in database (max allowed: {max_loans})."
                 ),
             )
         return None
@@ -918,7 +1084,11 @@ class ValidationEngine:
 
     @classmethod
     @transaction.atomic
-    def validate_batch(cls, batch: UploadBatch) -> list[LoanException]:
+    def validate_batch(
+        cls,
+        batch: UploadBatch,
+        include_db_history: bool = True,
+    ) -> list[LoanException]:
         """
         Executes all active ValidationRules against RawLoanRecords for the given UploadBatch.
         Utilizes O(N) batch indexing via ValidationContext for high performance (100k+ records).
@@ -944,6 +1114,7 @@ class ValidationEngine:
             raw_records=raw_records,
             servicer_records=servicer_records,
             doc_manifest_records=doc_manifest_records,
+            include_db_history=include_db_history,
         )
 
         # Clear existing OPEN exceptions for this batch to allow idempotent re-running
