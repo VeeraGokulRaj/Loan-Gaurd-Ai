@@ -19,6 +19,7 @@ from app.domain.validation_service import (
     ValidationRuleJsonService,
     get_validation_json_path,
 )
+from app.models.ai import AIRecommendation
 from app.models.audit import AuditEvent
 from app.models.ingestion import (
     DocumentManifestRecord,
@@ -603,3 +604,107 @@ class LoanExceptionAdmin(admin.ModelAdmin):
         )
 
     get_status_badge.short_description = _("Exception Status")
+
+
+@admin.register(AIRecommendation)
+class AIRecommendationAdmin(admin.ModelAdmin):
+    """Admin configuration for unified AIRecommendation model with select_related & autocomplete support."""
+
+    list_display = (
+        "id",
+        "get_recommendation_type_badge",
+        "exception",
+        "rule",
+        "suggested_value",
+        "get_confidence_badge",
+        "get_model_name_badge",
+        "get_status_badge",
+        "created_by",
+        "reviewed_by",
+        "created",
+    )
+    list_filter = ("recommendation_type", "status", "model_name", "created")
+    search_fields = (
+        "id",
+        "exception__rule_code",
+        "rule__rule_code",
+        "suggested_value",
+        "explanation",
+        "prompt_text",
+        "reviewer_comment",
+    )
+    ordering = ("-created",)
+    readonly_fields = ("created", "modified")
+
+    # Performance & UX Optimizations
+    list_select_related = ("exception", "rule", "created_by", "reviewed_by")
+    autocomplete_fields = ("exception", "rule", "created_by", "reviewed_by")
+
+    def get_recommendation_type_badge(self, obj: AIRecommendation) -> str:
+        """Returns colored badge for recommendation type."""
+        colors = {
+            AIRecommendation.RecommendationType.EXCEPTION_REVIEW: "#0284c7",  # Sky Blue
+            AIRecommendation.RecommendationType.RULE_GENERATION: "#7c3aed",  # Purple
+        }
+        color = colors.get(obj.recommendation_type, "#6b7280")
+        label = obj.get_recommendation_type_display() if obj.recommendation_type else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_recommendation_type_badge.short_description = _("Type")
+
+    def get_model_name_badge(self, obj: AIRecommendation) -> str:
+        """Returns badge for LLM Model Provider choice."""
+        colors = {
+            AIRecommendation.ModelProvider.GEMINI_2_5_FLASH: "#059669",  # Emerald
+            AIRecommendation.ModelProvider.CHATGPT: "#2563eb",  # Blue
+            AIRecommendation.ModelProvider.OTHERS: "#6b7280",  # Gray
+        }
+        color = colors.get(obj.model_name, "#6b7280")
+        label = obj.get_model_name_display() if obj.model_name else "Gemini 2.5 Flash"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_model_name_badge.short_description = _("LLM Model")
+
+    def get_confidence_badge(self, obj: AIRecommendation) -> str:
+        """Returns colored badge for confidence score."""
+        score = obj.confidence_score or 0.0
+        if score >= 0.8:
+            color = "#059669"  # Emerald / High confidence
+        elif score >= 0.5:
+            color = "#d97706"  # Amber / Medium confidence
+        else:
+            color = "#dc2626"  # Red / Low confidence
+
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            obj.confidence_percentage,
+        )
+
+    get_confidence_badge.short_description = _("Confidence")
+
+    def get_status_badge(self, obj: AIRecommendation) -> str:
+        """Returns colored badge for AI recommendation status."""
+        status_colors = {
+            AIRecommendation.RecommendationStatus.PENDING: "#d97706",  # Amber
+            AIRecommendation.RecommendationStatus.ACCEPTED: "#059669",  # Emerald
+            AIRecommendation.RecommendationStatus.REJECTED: "#dc2626",  # Red
+            AIRecommendation.RecommendationStatus.EDITED: "#7c3aed",  # Purple
+        }
+        color = status_colors.get(obj.status, "#6b7280")
+        label = obj.get_status_display() if obj.status else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_status_badge.short_description = _("Status")
