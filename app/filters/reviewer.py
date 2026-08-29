@@ -51,6 +51,8 @@ class LoanExceptionFilter(django_filters.FilterSet):
                 | Q(rule__rule_name__icontains=val)
                 | Q(field_name__icontains=val)
                 | Q(description__icontains=val)
+                | Q(raw_record__raw_data__loan_id__icontains=val)
+                | Q(raw_record__raw_data__borrower_id__icontains=val)
                 | Q(raw_record__raw_data__icontains=val)
             )
         return queryset.filter(
@@ -59,5 +61,7 @@ class LoanExceptionFilter(django_filters.FilterSet):
             | Q(rule__rule_name__icontains=val)
             | Q(field_name__icontains=val)
             | Q(description__icontains=val)
+            | Q(raw_record__raw_data__loan_id__icontains=val)
+            | Q(raw_record__raw_data__borrower_id__icontains=val)
             | Q(raw_record__raw_data__icontains=val)
         )

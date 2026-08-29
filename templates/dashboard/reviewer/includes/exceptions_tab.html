@@ -28,7 +28,7 @@
             <!-- Search & Filter Controls (Using FilterSet & Reusable Widgets) -->
             <div class="flex flex-wrap items-center gap-3">
                 <!-- Reusable Searchbar Widget Component with HTMX Loading Spinner -->
-                {% include "includes/searchbar.html" with id="reviewerSearchInput" name="q" value=filter.data.q placeholder="Search rule code, field, description..." accent_color="indigo" %}
+                {% include "includes/searchbar.html" with id="reviewerSearchInput" name="q" value=filter.data.q placeholder="Search Loan ID, Borrower ID, Rule Code..." accent_color="indigo" %}
                 <!-- Reusable Severity Filter Dropdown Widget -->
                 {% include "includes/dropdown.html" with name="severity" id="severityFilter" options=severity_choices selected_value=filter.data.severity default_label="All Severities" accent_color="indigo" %}
                 <!-- Reusable Status Filter Dropdown Widget -->
@@ -55,7 +55,12 @@
                     {% if exceptions %}
                         {% for exc in exceptions %}
                             <tr class="hover:bg-slate-800/40 transition-colors">
-                                <td class="px-4 py-3.5 font-mono text-xs font-bold text-indigo-400">#EXP-{{ exc.id }}</td>
+                                <td class="px-4 py-3.5 font-mono text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-indigo-400">#EXP-{{ exc.id }}</span>
+                                        {% include "includes/info_popover.html" with exc=exc %}
+                                    </div>
+                                </td>
                                 <td class="px-4 py-3.5">
                                     {% if exc.severity == 4 %}
                                         <span class="px-2.5 py-1 text-[10px] font-bold rounded-md bg-red-500/10 text-red-400 border border-red-500/20">CRITICAL</span>

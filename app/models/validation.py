@@ -193,6 +193,33 @@ class LoanException(BaseModel):
         help_text=_("Timestamp when this exception was resolved or rejected."),
     )
 
+    @property
+    def loan_id(self) -> str:
+        """Returns the primary Loan ID identifier from associated raw record payload if available."""
+        if self.raw_record and self.raw_record.raw_data:
+            return str(self.raw_record.raw_data.get("loan_id", "") or "").strip()
+        return ""
+
+    @property
+    def borrower_id(self) -> str:
+        """Returns the Borrower ID identifier from associated raw record payload if available."""
+        if self.raw_record and self.raw_record.raw_data:
+            return str(self.raw_record.raw_data.get("borrower_id", "") or "").strip()
+        return ""
+
+    @property
+    def borrower_name(self) -> str:
+        """Returns the Borrower Name from associated raw record payload if available."""
+        if self.raw_record and self.raw_record.raw_data:
+            data = self.raw_record.raw_data
+            return str(
+                data.get("borrower_name")
+                or data.get("borrower_full_name")
+                or data.get("name")
+                or ""
+            ).strip()
+        return ""
+
     class Meta:
         verbose_name = _("Loan Exception")
         verbose_name_plural = _("Loan Exceptions")
