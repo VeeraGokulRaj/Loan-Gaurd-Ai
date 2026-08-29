@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Track Action History - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Top Navigation Header -->
+        {% include "dashboard/reviewer/includes/header.html" %}
+        <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Navigation Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'exception_loan_detail' exc.id %}"
+                       class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-2 text-xs font-semibold"
+                       title="Back to Loan Detail">
+                        <svg class="w-4 h-4 text-slate-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to Loan Detail
+                    </a>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl font-bold text-white tracking-tight">Track Action History</h1>
+                            <span class="font-mono text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg">#EXP-{{ exc.id }}</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{% url 'reviewer_dashboard' %}"
+                   class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4 text-indigo-400"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                    </svg>
+                    Exception Queue List
+                </a>
+            </div>
+            <!-- Provenance & Integrity Status Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">Associated Loan ID:</span>
+                        <span class="font-mono font-bold text-white text-sm">{{ exc.loan_id|default:"N/A" }}</span>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Audit events are cryptographically linked using SHA-256 hash chaining to guarantee tamper-evidence.
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                            </path>
+                        </svg>
+                        Cryptographically Verified
+                    </span>
+                </div>
+            </div>
+            <!-- Vertical Timeline Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl">
+                {% if audit_events %}
+                    <div class="relative pl-6 border-l-2 border-slate-800 space-y-6 my-2">
+                        {% for event in audit_events %}
+                            <div class="relative group">
+                                <!-- Timeline Node Marker -->
+                                <div class="absolute -left-[31px] top-0.5 size-4 rounded-full border-2 border-slate-900 bg-indigo-500 ring-4 ring-indigo-500/20 group-hover:scale-110 transition-transform">
+                                </div>
+                                <!-- Event Entry Card -->
+                                <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-2">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/60 pb-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-xs font-bold text-indigo-400">{{ event.event_type }}</span>
+                                            <span class="px-2 py-0.5 text-[10px] font-semibold rounded bg-slate-800 text-slate-300">
+                                                {{ event.get_actor_role_display }}
+                                            </span>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 font-mono">{{ event.timestamp|date:"M d, Y H:i:s" }}</span>
+                                    </div>
+                                    <!-- Actor info -->
+                                    <div class="text-xs text-slate-300">
+                                        Triggered by: <strong class="text-white">
+                                        {% if event.actor %}
+                                            {{ event.actor.first_name|default:event.actor.username }}
+                                        {% else %}
+                                            {{ event.get_actor_role_display|default:"System Engine" }}
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <!-- Event Payload details -->
+                                {% if event.payload %}
+                                    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800 font-mono text-[11px] text-slate-300 space-y-1 overflow-x-auto">
+                                        {% for p_key, p_val in event.payload.items %}
+                                            <div>
+                                                <span class="text-indigo-400">{{ p_key }}:</span> {{ p_val }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <!-- Cryptographic SHA-256 Hash Snippet -->
+                                {% if event.event_hash %}
+                                    <div class="text-[10px] font-mono text-slate-500 truncate"
+                                         title="SHA-256: {{ event.event_hash }}">
+                                        SHA-256: <span class="text-slate-400">{{ event.event_hash|slice:":32" }}...</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="py-12 text-center text-slate-500 text-xs space-y-2">
+                    <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mx-auto text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>No audit history logged for this loan exception yet.</div>
+                </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+{% endblock content %}

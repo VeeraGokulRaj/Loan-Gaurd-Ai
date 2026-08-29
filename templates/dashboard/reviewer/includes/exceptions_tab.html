@@ -57,7 +57,8 @@
                             <tr class="hover:bg-slate-800/40 transition-colors">
                                 <td class="px-4 py-3.5 font-mono text-xs">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-indigo-400">#EXP-{{ exc.id }}</span>
+                                        <a href="{% url 'exception_loan_detail' exc.id %}"
+                                           class="font-bold text-indigo-400 hover:text-indigo-300 hover:underline transition-colors">#EXP-{{ exc.id }}</a>
                                         {% include "includes/info_popover.html" with exc=exc %}
                                     </div>
                                 </td>

@@ -1,0 +1,83 @@
+<!-- Card 3: Loan Data Attributes & Edit Allowed Fields Module -->
+<div id="loanAttributesCard"
+     class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-sky-400"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                </path>
+            </svg>
+            <h3 class="text-sm font-bold text-white">Loan Record Attributes</h3>
+        </div>
+        <button type="button"
+                onclick="toggleEditFieldsMode()"
+                id="editFieldsToggleBtn"
+                class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-sky-400 border border-slate-700 hover:bg-slate-700 hover:text-sky-300 transition-colors flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                </path>
+            </svg>
+            <span>Edit Allowed Fields</span>
+        </button>
+    </div>
+    <!-- Read-Only View Grid -->
+    <div id="readOnlyFieldsGrid"
+         class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-xs">
+        {% for item in field_list %}
+            <div class="p-3 rounded-xl bg-slate-950/40 border {% if item.is_target %}border-indigo-500/60 ring-1 ring-indigo-500/30 bg-indigo-500/5{% else %}border-slate-800/80{% endif %} space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-slate-400 font-mono text-[11px] truncate"
+                          title="{{ item.key }}">{{ item.label }}</span>
+                    {% if item.is_target %}
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded bg-indigo-500/20 text-indigo-300">FLAGGED</span>
+                    {% endif %}
+                </div>
+                <div class="font-semibold text-slate-200 font-mono truncate"
+                     title="{{ item.value|default:'N/A' }}">{{ item.value|default:"—" }}</div>
+            </div>
+        {% endfor %}
+    </div>
+    <!-- Edit Form Grid (Hidden by default) -->
+    <form id="editFieldsForm"
+          method="post"
+          class="hidden space-y-4 pt-2 border-t border-slate-800/60">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" value="save_fields">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+            {% for item in field_list %}
+                <div class="space-y-1 p-3 rounded-xl border {% if item.is_target %}border-indigo-500/60 bg-indigo-500/5{% else %}border-slate-800 bg-slate-950/60{% endif %}">
+                    <label for="field_{{ item.key }}"
+                           class="block text-[11px] font-semibold text-slate-300">{{ item.label }}</label>
+                    <input type="text"
+                           id="field_{{ item.key }}"
+                           name="{{ item.key }}"
+                           value="{{ item.value }}"
+                           class="w-full rounded-lg bg-slate-900 border border-slate-700 p-2 text-xs font-mono text-white focus:outline-none focus:border-indigo-500">
+                </div>
+            {% endfor %}
+        </div>
+        <div class="flex items-center justify-end gap-3 pt-2">
+            <button type="button"
+                    onclick="closeEditFieldsMode()"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 transition-colors">
+                Cancel
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-600 hover:bg-sky-500 text-white transition-colors shadow-lg shadow-sky-500/20 flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Save Field Edits
+            </button>
+        </div>
+    </form>
+</div>

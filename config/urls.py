@@ -15,7 +15,12 @@ from app.views.data_operator import (
     FailedRowListView,
     IngestPipelineView,
 )
-from app.views.reviewer import LoanExceptionListView, ReviewerDashboardView
+from app.views.reviewer import (
+    ExceptionActionHistoryView,
+    ExceptionLoanDetailView,
+    LoanExceptionListView,
+    ReviewerDashboardView,
+)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -35,6 +40,16 @@ urlpatterns = [
         "reviewer/exceptions/",
         LoanExceptionListView.as_view(),
         name="loan_exceptions_list",
+    ),
+    path(
+        "reviewer/exceptions/<int:pk>/detail/",
+        ExceptionLoanDetailView.as_view(),
+        name="exception_loan_detail",
+    ),
+    path(
+        "reviewer/exceptions/<int:pk>/history/",
+        ExceptionActionHistoryView.as_view(),
+        name="exception_action_history",
     ),
 ]
 

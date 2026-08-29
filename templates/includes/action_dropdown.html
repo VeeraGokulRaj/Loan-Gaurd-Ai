@@ -25,29 +25,17 @@
     </button>
     <!-- Action Dropdown Menu Card -->
     <div id="action-menu-{{ exc.id }}"
-         class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-44 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1 text-[11px] text-slate-300 focus:outline-none"
+         class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
          role="menu"
          aria-orientation="vertical">
         <div class="flex flex-col text-left">
-            <a href="#"
-               class="w-full flex items-center py-1 px-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+            <a href="{% url 'exception_loan_detail' exc.id %}"
+               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
                 Open Loan Detail View
             </a>
-            <a href="#"
-               class="w-full flex items-center py-1 px-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
-                Add Review Comments
-            </a>
-            <a href="#"
-               class="w-full flex items-center py-1 px-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
-                Approve, Reject, or Correct
-            </a>
-            <a href="#"
-               class="w-full flex items-center py-1 px-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
-                Edit Allowed Fields
-            </a>
-            <div class="my-0.5 border-t border-slate-800/80"></div>
-            <a href="#"
-               class="w-full flex items-center py-1 px-1.5 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+            <div class="my-1 border-t border-slate-800/80"></div>
+            <a href="{% url 'exception_action_history' exc.id %}"
+               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
                 Track Action History
             </a>
         </div>

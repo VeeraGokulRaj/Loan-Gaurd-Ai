@@ -1,0 +1,130 @@
+<!-- Card 1: Exception Overview & Decision Resolution Panel -->
+<div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+        <div class="space-y-1">
+            <div class="flex items-center gap-3">
+                <span class="text-lg font-bold text-white font-mono">{{ exc.rule_code }}</span>
+                <span class="text-sm text-slate-300 font-semibold">— {{ exc.rule.rule_name|default:"Validation Engine Flag" }}</span>
+            </div>
+            <p class="text-xs text-slate-300 max-w-3xl">{{ exc.description }}</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <!-- Severity Badge -->
+            {% if exc.severity == 4 %}
+                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">CRITICAL SEVERITY</span>
+            {% elif exc.severity == 3 %}
+                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20">HIGH SEVERITY</span>
+            {% elif exc.severity == 2 %}
+                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">MEDIUM SEVERITY</span>
+            {% else %}
+                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">LOW SEVERITY</span>
+            {% endif %}
+            <!-- Status Badge -->
+            {% if exc.status == 1 %}
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20">OPEN</span>
+            {% elif exc.status == 2 %}
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">UNDER REVIEW</span>
+            {% elif exc.status == 3 or exc.status == 4 %}
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">RESOLVED</span>
+            {% else %}
+                <span class="px-2.5 py-1 text-[10px] font-semibold rounded-lg bg-slate-700 text-slate-400 border border-slate-600">REJECTED</span>
+            {% endif %}
+        </div>
+    </div>
+    <!-- Exception Details Context Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-0.5">
+            <span class="text-slate-400 font-medium">Target Field</span>
+            <div class="font-mono font-bold text-indigo-400">{{ exc.field_name }}</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-0.5">
+            <span class="text-slate-400 font-medium">Upload Batch</span>
+            <div class="font-mono font-bold text-white">Batch #{{ exc.batch_id }}</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-0.5">
+            <span class="text-slate-400 font-medium">Flagged Timestamp</span>
+            <div class="font-semibold text-slate-200">{{ exc.created|date:"M d, H:i" }}</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-0.5">
+            <span class="text-slate-400 font-medium">Assigned / Resolved By</span>
+            <div class="font-semibold text-slate-200">
+                {% if exc.resolved_by %}
+                    {{ exc.resolved_by.first_name|default:exc.resolved_by.username }}
+                {% else %}
+                    <span class="text-slate-500 font-normal">Pending Review</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Formal Resolution Action Controls -->
+    <div class="pt-4 border-t border-slate-800/80 space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                    </path>
+                </svg>
+                Resolution Decision Workflow
+            </h3>
+            <span class="text-[11px] text-slate-400">Submitting a decision resolves the item and navigates to Exception Queue list.</span>
+        </div>
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="action_type" value="resolve_decision">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- Approve Option -->
+                <label class="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-emerald-500/40 transition-colors cursor-pointer flex items-start gap-3">
+                    <input type="radio"
+                           name="decision"
+                           value="approve"
+                           required
+                           onclick="closeEditFieldsMode()"
+                           class="mt-0.5 size-4 text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500">
+                    <div>
+                        <div class="text-xs font-bold text-emerald-400">Approve Record</div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Accept current values as valid.</p>
+                    </div>
+                </label>
+                <!-- Reject Option -->
+                <label class="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-red-500/40 transition-colors cursor-pointer flex items-start gap-3">
+                    <input type="radio"
+                           name="decision"
+                           value="reject"
+                           required
+                           onclick="closeEditFieldsMode()"
+                           class="mt-0.5 size-4 text-red-500 bg-slate-900 border-slate-700 focus:ring-red-500">
+                    <div>
+                        <div class="text-xs font-bold text-red-400">Reject Record</div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Reject record from pipeline processing.</p>
+                    </div>
+                </label>
+                <!-- Correct Option -->
+                <label class="p-3.5 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-indigo-500/40 transition-colors cursor-pointer flex items-start gap-3">
+                    <input type="radio"
+                           name="decision"
+                           value="correct"
+                           required
+                           onclick="openEditFieldsMode()"
+                           class="mt-0.5 size-4 text-indigo-500 bg-slate-900 border-slate-700 focus:ring-indigo-500">
+                    <div>
+                        <div class="text-xs font-bold text-indigo-400">Correct Record</div>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Edit fields in Loan Record Attributes below.</p>
+                    </div>
+                </label>
+            </div>
+            <!-- Submit Button (aligned right) -->
+            <div class="flex justify-end pt-2">
+                <button type="submit"
+                        class="px-5 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Submit Decision & Complete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

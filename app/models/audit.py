@@ -116,6 +116,13 @@ class AuditEvent(BaseModel):
     def __str__(self) -> str:
         return f"AuditEvent [{self.event_type}] at {self.timestamp} (Loan: {self.loan_id or 'N/A'})"
 
+    @property
+    def actor_name(self) -> str:
+        """Returns actor full name/username or fallback role display."""
+        if self.actor:
+            return self.actor.get_full_name() or self.actor.username
+        return self.get_actor_role_display() or "System Engine"
+
     @classmethod
     def _resolve_actor_role(cls, actor_role=None, actor=None) -> int:
         """Determines the ActorRole integer choice cleanly from an int, str, or User instance."""

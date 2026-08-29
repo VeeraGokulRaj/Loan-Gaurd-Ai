@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Approve, Reject, or Correct - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Top Navigation Header -->
+        {% include "dashboard/reviewer/includes/header.html" %}
+        <main class="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Breadcrumb Navigation -->
+            <div class="flex items-center gap-3 border-b border-slate-800 pb-4">
+                <a href="{% url 'exception_loan_detail' exc.id %}"
+                   class="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                   title="Back to Loan Detail">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold text-white tracking-tight">Approve, Reject, or Correct</h1>
+                        <span class="font-mono text-sm font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg">#EXP-{{ exc.id }}</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Select a formal review decision to resolve or reject this loan exception.</p>
+                </div>
+            </div>
+            <!-- Exception Overview Pill Card -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-xl space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-mono font-bold text-white text-sm">{{ exc.rule_code }}</span>
+                    <span class="text-xs font-mono text-indigo-400">Target Field: {{ exc.field_name }}</span>
+                </div>
+                <p class="text-xs text-slate-300">{{ exc.description }}</p>
+            </div>
+            <!-- Decision Selection Form Card -->
+            <form method="post"
+                  class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="action_type" value="resolve_decision">
+                <div class="space-y-3">
+                    <label class="block text-sm font-semibold text-white">Select Resolution Decision</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <!-- Option A: Approve / Accept Discrepancy -->
+                        <label class="relative flex items-start p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-emerald-500/40 transition-colors cursor-pointer group">
+                            <input type="radio"
+                                   name="decision"
+                                   value="approve"
+                                   required
+                                   onclick="toggleOverrideInput(false)"
+                                   class="mt-1 size-4 text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500">
+                            <div class="ml-3 space-y-0.5">
+                                <div class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    Approve Record (Accept Discrepancy)
+                                </div>
+                                <p class="text-[11px] text-slate-400">
+                                    Accept the record with its current values as valid, resolving the exception status to <strong class="text-emerald-300">Resolved (Accepted)</strong>.
+                                </p>
+                            </div>
+                        </label>
+                        <!-- Option B: Reject Record -->
+                        <label class="relative flex items-start p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-red-500/40 transition-colors cursor-pointer group">
+                            <input type="radio"
+                                   name="decision"
+                                   value="reject"
+                                   required
+                                   onclick="toggleOverrideInput(false)"
+                                   class="mt-1 size-4 text-red-500 bg-slate-900 border-slate-700 focus:ring-red-500">
+                            <div class="ml-3 space-y-0.5">
+                                <div class="text-xs font-bold text-red-400 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Reject Record
+                                </div>
+                                <p class="text-[11px] text-slate-400">
+                                    Reject this loan record due to unresolvable errors, marking status as <strong class="text-red-300">Rejected</strong> and stopping pipeline processing.
+                                </p>
+                            </div>
+                        </label>
+                        <!-- Option C: Correct & Override Value -->
+                        <label class="relative flex items-start p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/40 hover:border-indigo-500/40 transition-colors cursor-pointer group">
+                            <input type="radio"
+                                   name="decision"
+                                   value="correct"
+                                   required
+                                   onclick="toggleOverrideInput(true)"
+                                   class="mt-1 size-4 text-indigo-500 bg-slate-900 border-slate-700 focus:ring-indigo-500">
+                            <div class="ml-3 space-y-0.5 w-full">
+                                <div class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                        </path>
+                                    </svg>
+                                    Correct & Override Target Field Value
+                                </div>
+                                <p class="text-[11px] text-slate-400">
+                                    Enter a corrected override value for <span class="font-mono text-indigo-300 font-bold">{{ exc.field_name }}</span> and mark status as <strong class="text-indigo-300">Resolved (Edited)</strong>.
+                                </p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <!-- Conditional Manual Override Field Box -->
+                <div id="overrideFieldContainer"
+                     class="hidden space-y-2 p-4 rounded-xl bg-slate-950/80 border border-indigo-500/30">
+                    <label for="override_value"
+                           class="block text-xs font-semibold text-indigo-300">
+                        Override Value for Field: <span class="font-mono font-bold">{{ exc.field_name }}</span>
+                    </label>
+                    <input type="text"
+                           id="override_value"
+                           name="override_value"
+                           value="{{ exc.override_value|default:'' }}"
+                           placeholder="Enter corrected value..."
+                           class="w-full rounded-xl bg-slate-900 border border-slate-700 p-3 text-xs text-white font-mono placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                </div>
+                <!-- Reviewer Comment / Justification Box -->
+                <div class="space-y-2">
+                    <label for="reviewer_comment"
+                           class="block text-xs font-semibold text-slate-300">Resolution Notes / Justification</label>
+                    <textarea id="reviewer_comment"
+                              name="reviewer_comment"
+                              rows="3"
+                              placeholder="Provide optional notes or reasoning for this decision..."
+                              class="w-full rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">{{ exc.reviewer_comment|default:"" }}</textarea>
+                </div>
+                <!-- Form Action Buttons -->
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-800/80">
+                    <a href="{% url 'exception_loan_detail' exc.id %}"
+                       class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white bg-slate-800/60 hover:bg-slate-800 transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                            class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors shadow-lg shadow-indigo-500/20 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                        Submit Decision
+                    </button>
+                </div>
+            </form>
+        </main>
+    </div>
+    <script>
+    function toggleOverrideInput(show) {
+        const container = document.getElementById('overrideFieldContainer');
+        const input = document.getElementById('override_value');
+        if (show) {
+            container.classList.remove('hidden');
+            input.required = true;
+        } else {
+            container.classList.add('hidden');
+            input.required = false;
+        }
+    }
+    </script>
+{% endblock content %}
