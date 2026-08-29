@@ -85,7 +85,7 @@ def generate_exception_ai_recommendation(
     user: Any = None,
     servicer_record: dict[str, Any] | None = None,
     doc_manifest: dict[str, Any] | None = None,
-    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI,
 ) -> AIRecommendation:
     """
     High-level entry point: Generates an AI recommendation for a LoanException.
@@ -258,7 +258,7 @@ def process_rule_ai_decision(
 def generate_ai_rule_recommendation(
     prompt_text: str,
     user: Any = None,
-    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI,
 ) -> AIRecommendation:
     """
     High-level entry point: Translates natural language into a ValidationRule recommendation.
@@ -352,14 +352,14 @@ def clean_json_response_text(text: str) -> str:
 
 def resolve_model_name(model_choice: int) -> str:
     """Maps ModelProvider enum choice to Gemini API model name string."""
-    if model_choice == AIRecommendation.ModelProvider.GEMINI_2_5_FLASH:
+    if model_choice == AIRecommendation.ModelProvider.GEMINI:
         return "gemini-3.6-flash"
     return "gemini-3.6-flash"
 
 
 def call_gemini_for_exception(
     prompt: str,
-    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI,
 ) -> AIAnalysisResult:
     """
     Calls Google Gemini API using GEMINI_API_KEY.
@@ -777,7 +777,7 @@ def _apply_rejected_rule_decision(
 
 def call_gemini_for_rules(
     prompt_text: str,
-    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI,
 ) -> AIRuleResult:
     """
     Parses natural language prompt text into structured validation rule definition using Gemini LLM.
