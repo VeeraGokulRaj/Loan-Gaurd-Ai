@@ -9,18 +9,26 @@ Follows the Stepdown Rule (Clean Code top-down narrative structure).
 
 import json
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Any
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from app.models import AIRecommendation, AuditEvent, LoanException
-from config.settings.base import GEMINI_API_KEY
+from app.models import AIRecommendation, AuditEvent, LoanException, ValidationRule
 
 logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY_ERROR_MESSAGE = "GEMINI_API_KEY environment variable or setting is not configured."
+
+
+def get_gemini_api_key() -> str | None:
+    """Helper function to resolve GEMINI_API_KEY from Django settings or environment."""
+    return getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
+
+
 # ============================================================================
 # Dataclasses
 # ============================================================================
@@ -98,7 +106,9 @@ def generate_exception_ai_recommendation(
         doc_manifest=doc_manifest,
     )
 
-    analysis_result: AIAnalysisResult = call_gemini_llm_analysis(prompt=prompt)
+    analysis_result: AIAnalysisResult = call_gemini_for_exception(
+        prompt=prompt, model_choice=model_choice
+    )
 
     with transaction.atomic():
         recommendation = AIRecommendation.objects.create(
@@ -113,7 +123,7 @@ def generate_exception_ai_recommendation(
             model_name=model_choice,
             raw_response=analysis_result.raw_response,
             status=AIRecommendation.RecommendationStatus.PENDING,
-            created_by=user,
+            created_by=user if (hasattr(user, "pk") and user.pk) else None,
         )
 
         AuditEvent.log_event(
@@ -137,28 +147,55 @@ def generate_exception_ai_recommendation(
 
 
 @transaction.atomic
-def process_reviewer_ai_decision(
+def process_ai_recommendation_decision(
+    recommendation: AIRecommendation,
+    action: str,
+    actor: Any,
+    comment: str = "",
+    edited_value: str = "",
+    edited_rule_data: dict[str, Any] | None = None,
+) -> tuple[bool, str]:
+    """
+    High-level entry point: Enforces Section 9 Human-In-The-Loop compliance.
+
+    Dispatches review decisions (Accept, Reject, Edit) to type-specific handlers
+    (Exception Review vs Rule Generation) before applying canonical state changes.
+    """
+    if recommendation.status != AIRecommendation.RecommendationStatus.PENDING:
+        return False, f"Recommendation #{recommendation.id} has already been reviewed."
+
+    if recommendation.recommendation_type == AIRecommendation.RecommendationType.RULE_GENERATION:
+        return process_rule_ai_decision(
+            recommendation=recommendation,
+            action=action,
+            actor=actor,
+            comment=comment,
+            edited_rule_data=edited_rule_data,
+        )
+    else:
+        return process_exception_ai_decision(
+            recommendation=recommendation,
+            action=action,
+            reviewer=actor,
+            reviewer_comment=comment,
+            edited_value=edited_value,
+        )
+
+
+def process_exception_ai_decision(
     recommendation: AIRecommendation,
     action: str,
     reviewer: Any,
     reviewer_comment: str = "",
     edited_value: str = "",
 ) -> tuple[bool, str]:
-    """
-    High-level entry point: Enforces Section 9 Human-In-The-Loop compliance.
-
-    Reviewer explicitly accepts, rejects, or edits an AI recommendation before
-    any canonical data state change is applied.
-    """
+    """Processes decisions (Accept, Edit, Reject) for Exception Review AI Recommendations."""
     action_clean = action.lower().strip()
     comment_clean = reviewer_comment.strip()
     edited_clean = edited_value.strip()
 
-    if recommendation.status != AIRecommendation.RecommendationStatus.PENDING:
-        return False, f"Recommendation #{recommendation.id} has already been reviewed."
-
     if action_clean == "accept":
-        return _apply_accepted_ai_decision(
+        return _apply_accepted_exception_decision(
             recommendation=recommendation,
             reviewer=reviewer,
             comment_clean=comment_clean,
@@ -166,20 +203,56 @@ def process_reviewer_ai_decision(
     elif action_clean == "edit":
         if not edited_clean:
             return False, "Edited value cannot be empty when choosing Edit option."
-        return _apply_edited_ai_decision(
+        return _apply_edited_exception_decision(
             recommendation=recommendation,
             reviewer=reviewer,
             comment_clean=comment_clean,
             edited_clean=edited_clean,
         )
     elif action_clean == "reject":
-        return _apply_rejected_ai_decision(
+        return _apply_rejected_exception_decision(
             recommendation=recommendation,
             reviewer=reviewer,
             comment_clean=comment_clean,
         )
 
-    return False, f"Invalid decision action '{action}'."
+    return False, f"Invalid decision action '{action}' for exception recommendation."
+
+
+def process_rule_ai_decision(
+    recommendation: AIRecommendation,
+    action: str,
+    actor: Any,
+    comment: str = "",
+    edited_rule_data: dict[str, Any] | None = None,
+) -> tuple[bool, str]:
+    """Processes decisions (Accept, Edit, Reject) for Rule Generation AI Recommendations."""
+    action_clean = action.lower().strip()
+    comment_clean = comment.strip()
+
+    if action_clean == "accept":
+        return _apply_accepted_rule_decision(
+            recommendation=recommendation,
+            actor=actor,
+            comment_clean=comment_clean,
+        )
+    elif action_clean == "edit":
+        if not edited_rule_data:
+            return False, "Edited rule data cannot be empty when choosing Edit option."
+        return _apply_edited_rule_decision(
+            recommendation=recommendation,
+            actor=actor,
+            comment_clean=comment_clean,
+            edited_rule_data=edited_rule_data,
+        )
+    elif action_clean == "reject":
+        return _apply_rejected_rule_decision(
+            recommendation=recommendation,
+            actor=actor,
+            comment_clean=comment_clean,
+        )
+
+    return False, f"Invalid decision action '{action}' for rule recommendation."
 
 
 def generate_ai_rule_recommendation(
@@ -191,7 +264,9 @@ def generate_ai_rule_recommendation(
     High-level entry point: Translates natural language into a ValidationRule recommendation.
     If generation fails, records the failure reason in explanation for UI display.
     """
-    rule_result: AIRuleResult = parse_natural_language_rule(prompt_text)
+    rule_result: AIRuleResult = call_gemini_for_rules(
+        prompt_text=prompt_text, model_choice=model_choice
+    )
 
     explanation_text = (
         rule_result.description
@@ -210,7 +285,7 @@ def generate_ai_rule_recommendation(
             model_name=model_choice,
             suggested_rule_data=rule_result.to_dict(),
             status=AIRecommendation.RecommendationStatus.PENDING,
-            created_by=user,
+            created_by=user if (hasattr(user, "pk") and user.pk) else None,
         )
 
         AuditEvent.log_event(
@@ -235,11 +310,9 @@ def build_ai_prompt_for_exception(
     servicer_record: dict[str, Any] | None,
     doc_manifest: dict[str, Any] | None,
 ) -> str:
-    """Builds structured prompt string for LLM analysis with conciseness directives."""
-    rule_code = loan_exception.rule.rule_code if loan_exception.rule else loan_exception.rule_code
-    rule_desc = (
-        loan_exception.rule.description if loan_exception.rule else loan_exception.description
-    )
+    """Builds structured prompt string for LLM exception analysis."""
+    rule_code = getattr(loan_exception.rule, "rule_code", loan_exception.rule_code)
+    rule_desc = getattr(loan_exception.rule, "description", loan_exception.description)
     current_val = raw_data.get(loan_exception.field_name, "") if raw_data else ""
 
     return (
@@ -264,14 +337,38 @@ def build_ai_prompt_for_exception(
     )
 
 
-def call_gemini_llm_analysis(prompt: str) -> AIAnalysisResult:
+def clean_json_response_text(text: str) -> str:
+    """Removes markdown code fences and strips whitespace from LLM response text."""
+    text_clean = text.strip()
+    if text_clean.startswith("```"):
+        lines = text_clean.splitlines()
+        if lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        text_clean = "\n".join(lines).strip()
+    return text_clean
+
+
+def resolve_model_name(model_choice: int) -> str:
+    """Maps ModelProvider enum choice to Gemini API model name string."""
+    if model_choice == AIRecommendation.ModelProvider.GEMINI_2_5_FLASH:
+        return "gemini-3.6-flash"
+    return "gemini-3.6-flash"
+
+
+def call_gemini_for_exception(
+    prompt: str,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+) -> AIAnalysisResult:
     """
     Calls Google Gemini API using GEMINI_API_KEY.
 
     If API key is unconfigured or call fails, returns failure AIAnalysisResult.
     Applies length truncation safeguards on 'explanation' to prevent UI overflow.
     """
-    if not GEMINI_API_KEY:
+    api_key = get_gemini_api_key()
+    if not api_key:
         return AIAnalysisResult(
             explanation=f"AI generation failed: {GEMINI_API_KEY_ERROR_MESSAGE}",
             suggested_value="",
@@ -285,15 +382,17 @@ def call_gemini_llm_analysis(prompt: str) -> AIAnalysisResult:
     try:
         from google import genai
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        model_name = resolve_model_name(model_choice)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model=model_name,
             contents=prompt,
             config={"response_mime_type": "application/json"},
         )
 
         if response and response.text:
-            parsed = json.loads(response.text)
+            cleaned_text = clean_json_response_text(response.text)
+            parsed = json.loads(cleaned_text)
 
             # Strict check for required keys without fallback defaults
             if "explanation" not in parsed or "suggested_value" not in parsed:
@@ -372,14 +471,14 @@ def truncate_long_explanation(
     return truncated_explanation, extended_reasoning
 
 
-def _apply_accepted_ai_decision(
+def _apply_accepted_exception_decision(
     recommendation: AIRecommendation,
     reviewer: Any,
     comment_clean: str,
 ) -> tuple[bool, str]:
-    """Applies reviewer acceptance of an AI recommendation and updates underlying exception."""
+    """Applies reviewer acceptance of an AI exception recommendation and updates underlying exception."""
     recommendation.status = AIRecommendation.RecommendationStatus.ACCEPTED
-    recommendation.reviewed_by = reviewer
+    recommendation.reviewed_by = reviewer if (hasattr(reviewer, "pk") and reviewer.pk) else None
     recommendation.reviewed_at = timezone.now()
     recommendation.reviewer_comment = comment_clean
     recommendation.save()
@@ -418,16 +517,16 @@ def _apply_accepted_ai_decision(
     return True, f"AI Recommendation #{recommendation.id} accepted successfully."
 
 
-def _apply_edited_ai_decision(
+def _apply_edited_exception_decision(
     recommendation: AIRecommendation,
     reviewer: Any,
     comment_clean: str,
     edited_clean: str,
 ) -> tuple[bool, str]:
-    """Applies reviewer edit of an AI recommendation and updates underlying exception."""
+    """Applies reviewer edit of an AI exception recommendation and updates underlying exception."""
     recommendation.status = AIRecommendation.RecommendationStatus.EDITED
     recommendation.edited_value = edited_clean
-    recommendation.reviewed_by = reviewer
+    recommendation.reviewed_by = reviewer if (hasattr(reviewer, "pk") and reviewer.pk) else None
     recommendation.reviewed_at = timezone.now()
     recommendation.reviewer_comment = comment_clean
     recommendation.save()
@@ -467,14 +566,14 @@ def _apply_edited_ai_decision(
     return True, f"AI Recommendation #{recommendation.id} edited and saved."
 
 
-def _apply_rejected_ai_decision(
+def _apply_rejected_exception_decision(
     recommendation: AIRecommendation,
     reviewer: Any,
     comment_clean: str,
 ) -> tuple[bool, str]:
-    """Applies reviewer rejection of an AI recommendation."""
+    """Applies reviewer rejection of an AI exception recommendation."""
     recommendation.status = AIRecommendation.RecommendationStatus.REJECTED
-    recommendation.reviewed_by = reviewer
+    recommendation.reviewed_by = reviewer if (hasattr(reviewer, "pk") and reviewer.pk) else None
     recommendation.reviewed_at = timezone.now()
     recommendation.reviewer_comment = comment_clean
     recommendation.save()
@@ -505,14 +604,189 @@ def _apply_rejected_ai_decision(
     return True, f"AI Recommendation #{recommendation.id} rejected."
 
 
-def parse_natural_language_rule(prompt_text: str) -> AIRuleResult:
+def create_canonical_validation_rule(
+    rule_data: dict[str, Any],
+    actor: Any = None,
+    default_description: str = "",
+) -> tuple[ValidationRule | None, str]:
+    """
+    Helper function to validate rule parameters and create a canonical ValidationRule record.
+    Returns (ValidationRule | None, error_message).
+    """
+    rule_code = str(rule_data.get("rule_code", "")).strip()
+    rule_name = str(rule_data.get("rule_name", "")).strip()
+    field_name = str(rule_data.get("field_name", "")).strip()
+
+    SEVERITY_MAP = {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}
+    raw_severity = rule_data.get("severity", 2)
+    if isinstance(raw_severity, str):
+        raw_sev_clean = raw_severity.strip().upper()
+        if raw_sev_clean in SEVERITY_MAP:
+            severity = SEVERITY_MAP[raw_sev_clean]
+        else:
+            try:
+                severity = int(raw_sev_clean)
+            except ValueError:
+                severity = 2
+    else:
+        try:
+            severity = int(raw_severity)
+        except (ValueError, TypeError):
+            severity = 2
+
+    strategy_key = str(rule_data.get("strategy_key", "")).strip()
+    parameters = rule_data.get("parameters", {})
+    description = str(rule_data.get("description", default_description)).strip()
+
+    if not rule_code or not rule_name or not field_name or not strategy_key:
+        return (
+            None,
+            "Rule payload missing required fields (rule_code, rule_name, field_name, strategy_key).",
+        )
+
+    if ValidationRule.objects.filter(rule_code=rule_code).exists():
+        return None, f"Validation rule with code '{rule_code}' already exists."
+
+    val_rule = ValidationRule.objects.create(
+        rule_code=rule_code,
+        rule_name=rule_name,
+        description=description,
+        field_name=field_name,
+        severity=severity,
+        strategy_key=strategy_key,
+        parameters=parameters if isinstance(parameters, dict) else {},
+        is_active=True,
+    )
+    return val_rule, ""
+
+
+def _apply_accepted_rule_decision(
+    recommendation: AIRecommendation,
+    actor: Any,
+    comment_clean: str,
+) -> tuple[bool, str]:
+    """Applies acceptance of an AI rule recommendation and creates canonical ValidationRule."""
+    rule_data = recommendation.suggested_rule_data or {}
+    if not rule_data.get("success"):
+        return (
+            False,
+            f"Cannot accept AI Recommendation #{recommendation.id}: rule generation payload failed.",
+        )
+
+    val_rule, err_msg = create_canonical_validation_rule(
+        rule_data=rule_data,
+        actor=actor,
+        default_description=recommendation.explanation,
+    )
+    if not val_rule:
+        return False, f"Cannot accept AI Recommendation #{recommendation.id}: {err_msg}"
+
+    recommendation.status = AIRecommendation.RecommendationStatus.ACCEPTED
+    recommendation.rule = val_rule
+    recommendation.reviewed_by = actor if (hasattr(actor, "pk") and actor.pk) else None
+    recommendation.reviewed_at = timezone.now()
+    recommendation.reviewer_comment = comment_clean
+    recommendation.save()
+
+    AuditEvent.log_event(
+        event_type="AI_RULE_ACCEPTED",
+        actor=actor,
+        actor_role=AuditEvent.ActorRole.DATA_OPERATOR,
+        payload={
+            "recommendation_id": recommendation.id,
+            "rule_id": val_rule.id,
+            "rule_code": val_rule.rule_code,
+            "rule_name": val_rule.rule_name,
+            "comment": comment_clean,
+        },
+    )
+    return (
+        True,
+        f"AI Rule Recommendation #{recommendation.id} accepted. ValidationRule '{val_rule.rule_code}' created successfully.",
+    )
+
+
+def _apply_edited_rule_decision(
+    recommendation: AIRecommendation,
+    actor: Any,
+    comment_clean: str,
+    edited_rule_data: dict[str, Any],
+) -> tuple[bool, str]:
+    """Applies reviewer edit of an AI rule recommendation and creates canonical ValidationRule with modified parameters."""
+    rule_data = recommendation.suggested_rule_data or {}
+    merged_data = {**rule_data, **edited_rule_data}
+
+    val_rule, err_msg = create_canonical_validation_rule(
+        rule_data=merged_data,
+        actor=actor,
+        default_description=recommendation.explanation,
+    )
+    if not val_rule:
+        return False, f"Cannot edit & accept AI Recommendation #{recommendation.id}: {err_msg}"
+
+    recommendation.status = AIRecommendation.RecommendationStatus.EDITED
+    recommendation.rule = val_rule
+    recommendation.edited_value = val_rule.rule_code
+    recommendation.reviewed_by = actor if (hasattr(actor, "pk") and actor.pk) else None
+    recommendation.reviewed_at = timezone.now()
+    recommendation.reviewer_comment = comment_clean
+    recommendation.save()
+
+    AuditEvent.log_event(
+        event_type="AI_RULE_EDITED",
+        actor=actor,
+        actor_role=AuditEvent.ActorRole.DATA_OPERATOR,
+        payload={
+            "recommendation_id": recommendation.id,
+            "rule_id": val_rule.id,
+            "rule_code": val_rule.rule_code,
+            "rule_name": val_rule.rule_name,
+            "edited_fields": list(edited_rule_data.keys()),
+            "comment": comment_clean,
+        },
+    )
+    return (
+        True,
+        f"AI Rule Recommendation #{recommendation.id} edited & saved. ValidationRule '{val_rule.rule_code}' created successfully.",
+    )
+
+
+def _apply_rejected_rule_decision(
+    recommendation: AIRecommendation,
+    actor: Any,
+    comment_clean: str,
+) -> tuple[bool, str]:
+    """Applies rejection of an AI rule recommendation."""
+    recommendation.status = AIRecommendation.RecommendationStatus.REJECTED
+    recommendation.reviewed_by = actor if (hasattr(actor, "pk") and actor.pk) else None
+    recommendation.reviewed_at = timezone.now()
+    recommendation.reviewer_comment = comment_clean
+    recommendation.save()
+
+    AuditEvent.log_event(
+        event_type="AI_RULE_REJECTED",
+        actor=actor,
+        actor_role=AuditEvent.ActorRole.DATA_OPERATOR,
+        payload={
+            "recommendation_id": recommendation.id,
+            "comment": comment_clean,
+        },
+    )
+    return True, f"AI Rule Recommendation #{recommendation.id} rejected."
+
+
+def call_gemini_for_rules(
+    prompt_text: str,
+    model_choice: int = AIRecommendation.ModelProvider.GEMINI_2_5_FLASH,
+) -> AIRuleResult:
     """
     Parses natural language prompt text into structured validation rule definition using Gemini LLM.
 
     If GEMINI_API_KEY is missing, API fails, or required fields are missing, returns an explicit
     failure AIRuleResult with error_message. No fallback defaults are used.
     """
-    if not GEMINI_API_KEY:
+    api_key = get_gemini_api_key()
+    if not api_key:
         return AIRuleResult(
             rule_code="",
             rule_name="",
@@ -538,15 +812,21 @@ def parse_natural_language_rule(prompt_text: str) -> AIRuleResult:
             "2. 'rule_name': Concise rule title.\n"
             "3. 'field_name': Target loan record field (e.g., interest_rate, current_balance, dti_ratio, days_past_due).\n"
             "4. 'severity': Integer (1=LOW, 2=MEDIUM, 3=HIGH, 4=CRITICAL).\n"
-            "5. 'strategy_key': Execution strategy (e.g., VALUE_RANGE, NON_NEGATIVE, REGEX, REQUIRED_FIELD).\n"
-            "6. 'parameters': Dict of strategy parameters (e.g., {'min': 0.0, 'max': 25.0}).\n"
+            "5. 'strategy_key': Execution strategy. Built-in keys: (MISSING_LOAN_ID, DUPLICATE_LOAN_ID, INVALID_DATE_FORMAT, MATURITY_BEFORE_ORIGINATION, NEGATIVE_PRINCIPAL_BALANCE, VALUE_RANGE, NON_NEGATIVE, REGEX, REQUIRED_FIELD). For generic expression evaluation, set strategy_key to 'GENERIC_EXPRESSION'.\n"
+            "6. 'parameters': Dict of strategy parameters. When strategy_key is 'GENERIC_EXPRESSION', parameters MUST include 'operator' and optional 'target_value':\n"
+            "   - 'IS_NULL': Fails if field value is missing or empty (parameters: {'operator': 'IS_NULL'}).\n"
+            "   - 'NOT_NULL': Fails if field value is present/non-empty (parameters: {'operator': 'NOT_NULL'}).\n"
+            "   - '>', '<', '>=', '<=': Numerical threshold check against target_value (e.g., parameters: {'operator': '>', 'target_value': 25.0}).\n"
+            "   - '==', '!=': Equality comparison against target_value (e.g., parameters: {'operator': '==', 'target_value': 'INVALID'}).\n"
+            "   - 'IN', 'NOT_IN': List membership check against target_value (e.g., parameters: {'operator': 'IN', 'target_value': ['REJECTED', 'TERMINATED']}).\n"
             "7. 'reasoning': Logic behind rule structure.\n"
             "8. 'confidence_score': Float between 0.0 and 1.0.\n"
         )
 
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        model_name = resolve_model_name(model_choice)
+        client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
-            model="gemini-3.6-flash",
+            model=model_name,
             contents=prompt,
             config={"response_mime_type": "application/json"},
         )
@@ -566,7 +846,8 @@ def parse_natural_language_rule(prompt_text: str) -> AIRuleResult:
                 error_message=err_msg,
             )
 
-        parsed = json.loads(response.text)
+        cleaned_text = clean_json_response_text(response.text)
+        parsed = json.loads(cleaned_text)
 
         # Enforce strict field presence without fallback defaults
         required_keys = ["rule_code", "rule_name", "field_name", "severity", "strategy_key"]
