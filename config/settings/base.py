@@ -16,6 +16,7 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-loanguard-ai-default-secret-key")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="GENERATE_GEMINI_API_KEY")
 
 # Application definition
 DJANGO_APPS = [
