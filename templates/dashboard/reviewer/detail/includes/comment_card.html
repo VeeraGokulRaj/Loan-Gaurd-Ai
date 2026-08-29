@@ -1,0 +1,44 @@
+<!-- Card 2: Reviewer Notes & Comments Module -->
+<div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z">
+                </path>
+            </svg>
+            Reviewer Comments & Inspection Log
+        </h3>
+        <span class="text-xs text-slate-400">Updates stay on this page</span>
+    </div>
+    {% if exc.reviewer_comment %}
+        <div class="p-3.5 rounded-xl bg-indigo-950/20 border border-indigo-500/20 text-xs text-slate-200 space-y-1">
+            <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Current Recorded Comment:</span>
+            <p class="italic font-sans">"{{ exc.reviewer_comment }}"</p>
+        </div>
+    {% endif %}
+    <form method="post" class="space-y-3">
+        {% csrf_token %}
+        <input type="hidden" name="action_type" value="save_comment">
+        <textarea name="reviewer_comment"
+                  rows="3"
+                  required
+                  placeholder="Write or update reviewer inspection comment..."
+                  class="w-full rounded-xl bg-slate-950/80 border border-slate-800 p-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">{{ exc.reviewer_comment|default:"" }}</textarea>
+        <div class="flex justify-end">
+            <button type="submit"
+                    class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 hover:text-white transition-colors flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-indigo-400"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                    </path>
+                </svg>
+                Save Review Comment
+            </button>
+        </div>
+    </form>
+</div>

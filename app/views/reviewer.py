@@ -8,17 +8,41 @@ Supports HTMX pagination, filtering, search, severity badges, and AI recommendat
 
 from typing import Any
 
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 
 from app.domain.roles import AppPermission
 from app.filters.reviewer import LoanExceptionFilter
 from app.mixins import AnyPermissionRequiredMixin
-from app.models import LoanException, ValidationSeverity
+from app.models import AuditEvent, LoanException, ValidationSeverity
+
+ALLOWED_FIELDS = [
+    "loan_id",
+    "borrower_id",
+    "borrower_name",
+    "original_balance",
+    "original_principal",
+    "current_balance",
+    "interest_rate",
+    "loan_term",
+    "origination_date",
+    "maturity_date",
+    "payment_status",
+    "days_past_due",
+    "property_state",
+    "state",
+    "borrower_state",
+    "credit_score",
+    "document_status",
+    "last_updated_at",
+    "as_of_date",
+]
 
 
 class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
@@ -72,7 +96,7 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             ]
         ).count()
         rejected_exceptions = all_exceptions.filter(
-            status=LoanException.ExceptionStatus.REJECTED
+            status__in=[LoanException.ExceptionStatus.REJECTED]
         ).count()
 
         # Severity breakdown metrics
@@ -152,3 +176,107 @@ class LoanExceptionListView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             "tab_visible": True,
         }
         return render(request, "dashboard/reviewer/includes/exceptions_tab.html", context)
+
+
+class ExceptionLoanDetailView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Exception Detail View (`/reviewer/exceptions/<int:pk>/detail/`).
+
+    Consolidates exception details inspection, review comments, decision status transitions
+    (Approve, Reject, Correct), and editing allowed loan fields into a single unified view.
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+    ALLOWED_FIELDS = ALLOWED_FIELDS
+
+    def get(self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        loan_exception = get_object_or_404(
+            LoanException.objects.select_related("batch", "raw_record", "rule", "resolved_by"),
+            pk=pk,
+        )
+        raw_data = (
+            loan_exception.raw_record.raw_data
+            if (loan_exception.raw_record and loan_exception.raw_record.raw_data)
+            else {}
+        )
+
+        field_list = []
+        for field in self.ALLOWED_FIELDS:
+            field_list.append(
+                {
+                    "key": field,
+                    "label": field.replace("_", " ").title(),
+                    "value": raw_data.get(field, ""),
+                    "is_target": (field == loan_exception.field_name),
+                }
+            )
+
+        related_exceptions = (
+            LoanException.objects.filter(raw_record=loan_exception.raw_record)
+            .exclude(pk=loan_exception.pk)
+            .order_by("-severity")
+        )
+
+        context = {
+            "title": f"Loan Exception - #EXP-{loan_exception.id}",
+            "exc": loan_exception,
+            "raw_data": raw_data,
+            "field_list": field_list,
+            "related_exceptions": related_exceptions,
+            "user": request.user,
+        }
+        return render(request, "dashboard/reviewer/detail/exception_detail.html", context)
+
+    def post(self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        from app.domain.exception_handling import handle_exception_action
+
+        loan_exception = get_object_or_404(
+            LoanException.objects.select_related("raw_record"), pk=pk
+        )
+        action_type = request.POST.get("action_type", "").strip()
+
+        success, message, redirect_target = handle_exception_action(
+            loan_exception=loan_exception,
+            actor=request.user,
+            action_type=action_type,
+            post_data=request.POST,
+        )
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        if redirect_target == "reviewer_dashboard":
+            return redirect("reviewer_dashboard")
+        return redirect("exception_loan_detail", pk=loan_exception.id)
+
+
+class ExceptionActionHistoryView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Option 2 in Exception Queue Dropdown:
+    Track Action History (`/reviewer/exceptions/<int:pk>/history/`).
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def get(self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        excepetion = get_object_or_404(
+            LoanException.objects.select_related("batch", "raw_record", "rule", "resolved_by"),
+            pk=pk,
+        )
+        loan_id = excepetion.loan_id
+
+        qs = AuditEvent.objects.select_related("actor").order_by("-timestamp")
+        if loan_id:
+            audit_events = qs.filter(Q(loan_id=loan_id) | Q(payload__exception_id=excepetion.id))
+        else:
+            audit_events = qs.filter(payload__exception_id=excepetion.id)
+
+        context = {
+            "title": f"Action History - #EXP-{excepetion.id}",
+            "exc": excepetion,
+            "audit_events": audit_events,
+            "user": request.user,
+        }
+        return render(request, "dashboard/reviewer/detail/exception_history.html", context)

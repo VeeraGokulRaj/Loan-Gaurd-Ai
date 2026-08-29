@@ -57,7 +57,8 @@
                             <tr class="hover:bg-slate-800/40 transition-colors">
                                 <td class="px-4 py-3.5 font-mono text-xs">
                                     <div class="flex items-center gap-2">
-                                        <span class="font-bold text-indigo-400">#EXP-{{ exc.id }}</span>
+                                        <a href="{% url 'exception_loan_detail' exc.id %}"
+                                           class="font-bold text-indigo-400 hover:text-indigo-300 hover:underline transition-colors">#EXP-{{ exc.id }}</a>
                                         {% include "includes/info_popover.html" with exc=exc %}
                                     </div>
                                 </td>
@@ -75,7 +76,7 @@
                                 <td class="px-4 py-3.5 font-mono text-xs font-bold text-white">{{ exc.rule_code }}</td>
                                 <td class="px-4 py-3.5 font-mono text-xs text-slate-300">{{ exc.field_name }}</td>
                                 <td class="px-4 py-3.5 text-xs text-slate-300 max-w-md truncate"
-                                    title="{{ exc.description }}">{{ exc.description }}</td>
+                                    title="{{ exc.description }}">{{ exc.description|truncatechars:40 }}</td>
                                 <td class="px-4 py-3.5">
                                     {% if exc.status == 1 %}
                                         <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/20">OPEN</span>
@@ -89,12 +90,7 @@
                                 </td>
                                 <td class="px-4 py-3.5 font-mono text-xs text-indigo-400">#{{ exc.batch_id }}</td>
                                 <td class="px-4 py-3.5 text-xs text-slate-400">{{ exc.created|date:"M d, H:i" }}</td>
-                                <td class="px-4 py-3.5 text-right">
-                                    <button type="button"
-                                            class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors">
-                                        Inspect
-                                    </button>
-                                </td>
+                                <td class="px-4 py-3.5 text-right">{% include "includes/action_dropdown.html" with exc=exc %}</td>
                             </tr>
                         {% endfor %}
                     {% else %}

@@ -1,0 +1,70 @@
+<!-- Reusable Action Dropdown Widget Component for Exception Queue Items -->
+<div class="relative inline-flex items-center action-dropdown-container"
+     id="action-wrapper-{{ exc.id }}">
+    <!-- 3-Dots Action Dropdown Trigger Button -->
+    <button id="action-btn-{{ exc.id }}"
+            type="button"
+            onclick="toggleActionDropdown(event, 'action-menu-{{ exc.id }}')"
+            class="hover:cursor-pointer inline-flex items-center justify-center size-6 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors focus:outline-none"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-label="Action Options Menu"
+            title="Actions">
+        <svg class="shrink-0 size-3"
+             xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 24 24"
+             fill="none"
+             stroke="currentColor"
+             stroke-width="2"
+             stroke-linecap="round"
+             stroke-linejoin="round">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+        </svg>
+    </button>
+    <!-- Action Dropdown Menu Card -->
+    <div id="action-menu-{{ exc.id }}"
+         class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
+         role="menu"
+         aria-orientation="vertical">
+        <div class="flex flex-col text-left">
+            <a href="{% url 'exception_loan_detail' exc.id %}"
+               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                Open Loan Detail View
+            </a>
+            <div class="my-1 border-t border-slate-800/80"></div>
+            <a href="{% url 'exception_action_history' exc.id %}"
+               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                Track Action History
+            </a>
+        </div>
+    </div>
+</div>
+<script>
+if (typeof window.toggleActionDropdown === 'undefined') {
+    window.toggleActionDropdown = function(event, menuId) {
+        event.stopPropagation();
+        const targetMenu = document.getElementById(menuId);
+        const allActionMenus = document.querySelectorAll('.action-dropdown-menu');
+
+        allActionMenus.forEach(menu => {
+            if (menu.id !== menuId) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        if (targetMenu) {
+            targetMenu.classList.toggle('hidden');
+        }
+    };
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.action-dropdown-container')) {
+            document.querySelectorAll('.action-dropdown-menu').forEach(menu => {
+                menu.classList.add('hidden');
+            });
+        }
+    });
+}
+</script>

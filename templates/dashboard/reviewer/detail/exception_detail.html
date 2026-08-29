@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Loan Exception Detail - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Top Navigation Header Component -->
+        {% include "dashboard/reviewer/includes/header.html" %}
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Messages Banner -->
+            {% include "includes/messages.html" %}
+            <!-- Top Header & Direct Page Navigations -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div class="flex items-center gap-3">
+                    <!-- Navigation 1: Back to Exception Queue List Page -->
+                    <a href="{% url 'reviewer_dashboard' %}"
+                       class="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-2 text-xs font-semibold"
+                       title="Navigate to Exception Queue List">
+                        <svg class="w-4 h-4 text-slate-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Back to Exception Queue
+                    </a>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-xl font-bold text-white tracking-tight">Loan Exception Inspection</h1>
+                            <span class="font-mono text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-lg">#EXP-{{ exc.id }}</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Navigation 2: Track Action History Log Page -->
+                <a href="{% url 'exception_action_history' exc.id %}"
+                   class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-200 border border-slate-800 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-2 shadow-md">
+                    Track Action History & Logs →
+                </a>
+            </div>
+            <!-- Card 1: Exception Overview & Decision Resolution Panel -->
+            {% include "dashboard/reviewer/detail/includes/overview_card.html" %}
+            <!-- Card 2: Reviewer Notes & Comments Module -->
+            {% include "dashboard/reviewer/detail/includes/comment_card.html" %}
+            <!-- Card 3: Loan Data Attributes & Edit Allowed Fields Module -->
+            {% include "dashboard/reviewer/detail/includes/attributes_card.html" %}
+            <!-- Card 4: Related Exceptions (if any) -->
+            {% include "dashboard/reviewer/detail/includes/related_exceptions_card.html" %}
+        </main>
+    </div>
+    <script>
+    function openEditFieldsMode() {
+        const grid = document.getElementById('readOnlyFieldsGrid');
+        const form = document.getElementById('editFieldsForm');
+        const btn = document.getElementById('editFieldsToggleBtn');
+        form.classList.remove('hidden');
+        grid.classList.add('hidden');
+        if (btn) btn.querySelector('span').innerText = 'Close Edit Form';
+        const card = document.getElementById('loanAttributesCard');
+        if (card) card.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function closeEditFieldsMode() {
+        const grid = document.getElementById('readOnlyFieldsGrid');
+        const form = document.getElementById('editFieldsForm');
+        const btn = document.getElementById('editFieldsToggleBtn');
+        form.classList.add('hidden');
+        grid.classList.remove('hidden');
+        if (btn) btn.querySelector('span').innerText = 'Edit Allowed Fields';
+    }
+
+    function toggleEditFieldsMode() {
+        const form = document.getElementById('editFieldsForm');
+        if (form.classList.contains('hidden')) {
+            openEditFieldsMode();
+        } else {
+            closeEditFieldsMode();
+        }
+    }
+    </script>
+{% endblock content %}
