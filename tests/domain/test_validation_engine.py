@@ -10,6 +10,7 @@ positive, negative, edge and boundary/invalid input scenarios.
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from django.utils import timezone
 
 from app.domain.validation_engine import (
     BalanceExceedsPrincipalRule,
@@ -34,6 +35,7 @@ from app.domain.validation_engine import (
     safe_float,
 )
 from app.models import (
+    AuditEvent,
     DocumentManifestRecord,
     LoanException,
     RawLoanRecord,
@@ -1256,3 +1258,143 @@ class TestValidationEngineValidateBatch:
         self._record({"loan_id": "LG-1"}, row_number=2)
         created = ValidationEngine.validate_batch(self.batch)
         assert len(created) == 1
+
+
+@pytest.mark.django_db
+class TestValidationEngineBulkAuditLog:
+    """Tests the EXCEPTION_CREATED bulk audit logging emitted by validate_batch."""
+
+    def setup_method(self):
+        self.batch = UploadBatch.objects.create(
+            file_name="loan_tape.csv",
+            source_type=UploadBatch.SourceType.LOAN_TAPE,
+            status=UploadBatch.BatchStatus.INGESTED,
+            total_records=1,
+            successful_records=1,
+        )
+
+    def _rule(self, **kwargs):
+        defaults = dict(
+            rule_code="VAL_001",
+            strategy_key="MISSING_LOAN_ID",
+            rule_name="Missing Loan ID",
+            field_name="loan_id",
+            description="Flags missing loan ids.",
+            severity=ValidationSeverity.CRITICAL,
+            is_active=True,
+        )
+        defaults.update(kwargs)
+        return ValidationRule.objects.create(**defaults)
+
+    def _record(self, raw_data, row_number=1):
+        return RawLoanRecord.objects.create(
+            batch=self.batch, row_number=row_number, raw_data=raw_data
+        )
+
+    def _created_events(self):
+        return list(AuditEvent.objects.filter(event_type="EXCEPTION_CREATED"))
+
+    def test_flagged_exception_creates_audit_event(self):
+        self._rule()
+        self._record({})
+        ValidationEngine.validate_batch(self.batch)
+        events = self._created_events()
+        assert len(events) == 1
+        event = events[0]
+        assert event.actor_role == AuditEvent.ActorRole.SYSTEM
+        assert event.actor is None
+        assert event.batch_id == self.batch.id
+        assert len(event.event_hash) == 64
+
+    def test_one_audit_event_per_exception(self):
+        self._rule()
+        self._record({}, 1)
+        self._record({}, 2)
+        ValidationEngine.validate_batch(self.batch)
+        assert LoanException.objects.count() == 2
+        assert len(self._created_events()) == 2
+
+    def test_audit_payload_mirrors_exception(self):
+        self._rule()
+        self._record({})
+        ValidationEngine.validate_batch(self.batch)
+        exc = LoanException.objects.get()
+        event = self._created_events()[0]
+        payload = event.payload
+        assert payload["exception_id"] == str(exc.id)
+        assert payload["rule_code"] == exc.rule_code == "VAL_001"
+        assert payload["field_name"] == "loan_id"
+        assert payload["severity"] == "Critical"
+        assert payload["description"] == exc.description
+        assert payload["status"] == "Open"
+        assert payload["raw_record_id"] == exc.raw_record_id
+
+    def test_audit_loan_id_propagated_from_raw_record(self):
+        self._rule(rule_code="VAL_006", strategy_key="NEGATIVE_PRINCIPAL_BALANCE")
+        self._record({"loan_id": "LG-0099", "original_principal": "-500"})
+        ValidationEngine.validate_batch(self.batch)
+        event = self._created_events()[0]
+        assert event.loan_id == "LG-0099"
+
+    def test_clean_records_create_no_audit_events(self):
+        self._rule()
+        self._record({"loan_id": "LG-0001"})
+        ValidationEngine.validate_batch(self.batch)
+        assert LoanException.objects.count() == 0
+        assert self._created_events() == []
+
+    def test_empty_batch_creates_no_audit_events(self):
+        self._rule()
+        assert ValidationEngine.validate_batch(self.batch) == []
+        assert AuditEvent.objects.count() == 0
+
+    def test_batch_without_active_rules_creates_no_audit_events(self):
+        self._record({})
+        assert ValidationEngine.validate_batch(self.batch) == []
+        assert AuditEvent.objects.count() == 0
+
+    def test_multiple_rules_produce_distinct_audit_events(self):
+        self._rule()
+        self._rule(
+            rule_code="VAL_006",
+            strategy_key="NEGATIVE_PRINCIPAL_BALANCE",
+            field_name="original_principal",
+        )
+        self._record({"original_principal": "-500"})
+        ValidationEngine.validate_batch(self.batch)
+        codes = {event.payload["rule_code"] for event in self._created_events()}
+        assert codes == {"VAL_001", "VAL_006"}
+
+    def test_audit_hash_chain_links_exception_events(self):
+        earlier = AuditEvent.objects.create(
+            timestamp=timezone.now() - timedelta(minutes=5),
+            event_type="EARLIER_EVENT",
+            actor_role=AuditEvent.ActorRole.SYSTEM,
+            event_hash="e" * 64,
+        )
+        self._rule()
+        self._record({}, 1)
+        self._record({}, 2)
+        self._record({}, 3)
+        ValidationEngine.validate_batch(self.batch)
+
+        events = self._created_events()
+        assert len(events) == 3
+        by_prev = {event.prev_hash: event for event in events}
+        head = by_prev[earlier.event_hash]
+        chain = [head]
+        current = head
+        while current.event_hash in by_prev:
+            current = by_prev[current.event_hash]
+            chain.append(current)
+        assert len(chain) == len(events)
+        for event in events:
+            assert len(event.event_hash) == 64
+
+    def test_re_run_appends_audit_event_per_run(self):
+        self._rule()
+        self._record({})
+        ValidationEngine.validate_batch(self.batch)
+        ValidationEngine.validate_batch(self.batch)
+        assert LoanException.objects.count() == 1
+        assert len(self._created_events()) == 2

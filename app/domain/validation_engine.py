@@ -19,6 +19,7 @@ from typing import Any
 from django.db import transaction
 
 from app.management.commands.generate_sample_csv import VALID_US_STATES
+from app.models.audit import AuditEvent
 from app.models.ingestion import (
     DocumentManifestRecord,
     RawLoanRecord,
@@ -1162,6 +1163,28 @@ class ValidationEngine:
                     )
 
         if exceptions_to_create:
-            LoanException.objects.bulk_create(exceptions_to_create, batch_size=500)
+            created_exceptions = LoanException.objects.bulk_create(
+                exceptions_to_create, batch_size=500
+            )
+            audit_events_data = [
+                {
+                    "event_type": "EXCEPTION_CREATED",
+                    "actor": None,
+                    "actor_role": AuditEvent.ActorRole.SYSTEM,
+                    "loan_id": exc.loan_id,
+                    "batch_id": exc.batch_id,
+                    "payload": {
+                        "exception_id": str(exc.id),
+                        "rule_code": exc.rule_code,
+                        "field_name": exc.field_name,
+                        "severity": exc.get_severity_display(),
+                        "description": exc.description,
+                        "status": exc.get_status_display(),
+                        "raw_record_id": exc.raw_record_id,
+                    },
+                }
+                for exc in created_exceptions
+            ]
+            AuditEvent.log_events_bulk(audit_events_data, batch_size=500)
 
         return exceptions_to_create

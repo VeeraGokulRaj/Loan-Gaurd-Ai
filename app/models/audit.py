@@ -8,6 +8,7 @@ hash chaining for complete regulatory auditability across the entire loan lifecy
 import hashlib
 import json
 import uuid
+from typing import Any
 
 from django.conf import settings
 from django.db import models
@@ -186,6 +187,72 @@ class AuditEvent(BaseModel):
             prev_hash=prev_hash,
             event_hash=event_hash,
         )
+
+    @classmethod
+    def log_events_bulk(
+        cls,
+        events_data: list[dict[str, Any]],
+        batch_size: int = 500,
+    ) -> list["AuditEvent"]:
+        """
+        Bulk creates and appends multiple AuditEvent records while maintaining
+        SHA-256 cryptographic hash chain integrity across sequence.
+
+        Args:
+            events_data: List of event dictionaries containing keys:
+                - event_type (str, required)
+                - actor (User, optional)
+                - actor_role (int|str|ActorRole, optional)
+                - loan_id (str, optional)
+                - batch_id (int, optional)
+                - payload (dict, optional)
+            batch_size: Database insert batch size (default 500)
+
+        Returns:
+            list[AuditEvent]: Created AuditEvent instances.
+        """
+        if not events_data:
+            return []
+
+        last_event = cls.objects.order_by("-timestamp", "-id").first()
+        current_prev_hash = (
+            last_event.event_hash if (last_event and last_event.event_hash) else "0" * 64
+        )
+
+        audit_objects: list[AuditEvent] = []
+        for data in events_data:
+            event_type = data.get("event_type", "UNKNOWN_EVENT")
+            actor = data.get("actor")
+            actor_role = data.get("actor_role")
+            loan_id = data.get("loan_id")
+            batch_id = data.get("batch_id")
+            payload = data.get("payload") or {}
+
+            ts = timezone.now()
+            ts_str = ts.isoformat()
+            actor_name = getattr(actor, "username", str(actor_role or "SYSTEM"))
+
+            payload_str = json.dumps(payload, sort_keys=True)
+            hash_input = f"{current_prev_hash}|{ts_str}|{event_type}|{actor_name}|{loan_id or ''}|{payload_str}".encode()
+            event_hash = hashlib.sha256(hash_input).hexdigest()
+            role_val = cls._resolve_actor_role(actor_role=actor_role, actor=actor)
+
+            audit_objects.append(
+                cls(
+                    timestamp=ts,
+                    event_type=event_type,
+                    actor=actor,
+                    actor_role=role_val,
+                    loan_id=loan_id,
+                    batch_id=batch_id,
+                    payload=payload,
+                    prev_hash=current_prev_hash,
+                    event_hash=event_hash,
+                )
+            )
+            current_prev_hash = event_hash
+
+        return cls.objects.bulk_create(audit_objects, batch_size=batch_size)
 
     @classmethod
     def log(cls, *args, **kwargs) -> "AuditEvent":
