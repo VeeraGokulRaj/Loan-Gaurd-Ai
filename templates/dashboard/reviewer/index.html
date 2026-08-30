@@ -17,6 +17,8 @@
             {% include "dashboard/reviewer/includes/tabs_nav.html" %}
             <!-- Include Tab 1: Loan Exceptions Queue Component -->
             {% include "dashboard/reviewer/includes/exceptions_tab.html" %}
+            <!-- Include Tab 2: Recent Decisions & Resolution Audit Ledger Component -->
+            {% include "dashboard/reviewer/includes/recent_decisions_tab.html" with tab_visible=False %}
         </main>
         <!-- Footer -->
         <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">

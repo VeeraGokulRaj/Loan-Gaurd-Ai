@@ -31,6 +31,7 @@ from app.views.reviewer import (
     LoanExceptionListView,
     OpenAICopilotModalView,
     ProcessAIRecommendationView,
+    RecentDecisionsListView,
     ReviewerDashboardView,
 )
 
@@ -52,6 +53,11 @@ urlpatterns = [
         "reviewer/exceptions/",
         LoanExceptionListView.as_view(),
         name="loan_exceptions_list",
+    ),
+    path(
+        "reviewer/recent-decisions/",
+        RecentDecisionsListView.as_view(),
+        name="recent_decisions_list",
     ),
     path(
         "reviewer/exceptions/<int:pk>/detail/",

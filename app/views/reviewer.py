@@ -103,7 +103,7 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             ]
         ).count()
         rejected_exceptions = all_exceptions.filter(
-            status__in=[LoanException.ExceptionStatus.REJECTED]
+            status=LoanException.ExceptionStatus.REJECTED
         ).count()
 
         # Severity breakdown metrics
@@ -112,6 +112,36 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
         medium_count = all_exceptions.filter(severity=ValidationSeverity.MEDIUM).count()
         low_count = all_exceptions.filter(severity=ValidationSeverity.LOW).count()
 
+        # Recent Decisions Queryset & Pagination (Filtered for requesting reviewer)
+        recent_qs = (
+            LoanException.objects.filter(
+                status__in=[
+                    LoanException.ExceptionStatus.RESOLVED_ACCEPTED,
+                    LoanException.ExceptionStatus.RESOLVED_EDITED,
+                    LoanException.ExceptionStatus.REJECTED,
+                ],
+                resolved_by=user,
+            )
+            .select_related("batch", "raw_record", "rule", "resolved_by")
+            .order_by("-resolved_at", "-modified", "-created")
+        )
+
+        recent_filter = LoanExceptionFilter(request.GET, queryset=recent_qs)
+        recent_paginator = Paginator(recent_filter.qs, 10)
+        recent_decisions_page = recent_paginator.get_page(request.GET.get("page", 1))
+
+        decision_status_choices = [
+            (
+                LoanException.ExceptionStatus.RESOLVED_ACCEPTED,
+                LoanException.ExceptionStatus.RESOLVED_ACCEPTED.label,
+            ),
+            (
+                LoanException.ExceptionStatus.RESOLVED_EDITED,
+                LoanException.ExceptionStatus.RESOLVED_EDITED.label,
+            ),
+            (LoanException.ExceptionStatus.REJECTED, LoanException.ExceptionStatus.REJECTED.label),
+        ]
+
         context = {
             "title": "Reviewer Workspace - Loan Exception Queue",
             "user": user,
@@ -119,6 +149,10 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             "exceptions_page": exceptions_page,
             "page_obj": exceptions_page,
             "exceptions": exceptions_page.object_list,
+            "recent_filter": recent_filter,
+            "recent_decisions_page": recent_decisions_page,
+            "recent_decisions": recent_decisions_page.object_list,
+            "recent_decisions_count": resolved_exceptions + rejected_exceptions,
             "total_exceptions": total_exceptions,
             "open_exceptions": open_exceptions,
             "under_review_exceptions": under_review_exceptions,
@@ -130,6 +164,7 @@ class ReviewerDashboardView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             "low_count": low_count,
             "severity_choices": ValidationSeverity.choices,
             "status_choices": LoanException.ExceptionStatus.choices,
+            "decision_status_choices": decision_status_choices,
             "current_severity": request.GET.get("severity", ""),
             "current_status": request.GET.get("status", ""),
             "search_query": request.GET.get("q", ""),
@@ -183,6 +218,57 @@ class LoanExceptionListView(LoginRequiredMixin, AnyPermissionRequiredMixin, View
             "tab_visible": True,
         }
         return render(request, "dashboard/reviewer/includes/exceptions_tab.html", context)
+
+
+class RecentDecisionsListView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for Recent Reviewer Decisions List endpoint (`/reviewer/recent-decisions/`).
+
+    Provides HTMX-driven pagination, search, and status/severity filtering for past decisions
+    rendering `dashboard/reviewer/includes/recent_decisions_tab.html`.
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        recent_qs = (
+            LoanException.objects.filter(
+                status__in=[
+                    LoanException.ExceptionStatus.RESOLVED_ACCEPTED,
+                    LoanException.ExceptionStatus.RESOLVED_EDITED,
+                    LoanException.ExceptionStatus.REJECTED,
+                ],
+                resolved_by=request.user,
+            )
+            .select_related("batch", "raw_record", "rule", "resolved_by")
+            .order_by("-resolved_at", "-modified", "-created")
+        )
+
+        recent_filter = LoanExceptionFilter(request.GET, queryset=recent_qs)
+        paginator = Paginator(recent_filter.qs, 10)
+        recent_decisions_page = paginator.get_page(request.GET.get("page", 1))
+
+        decision_status_choices = [
+            (
+                LoanException.ExceptionStatus.RESOLVED_ACCEPTED,
+                LoanException.ExceptionStatus.RESOLVED_ACCEPTED.label,
+            ),
+            (
+                LoanException.ExceptionStatus.RESOLVED_EDITED,
+                LoanException.ExceptionStatus.RESOLVED_EDITED.label,
+            ),
+            (LoanException.ExceptionStatus.REJECTED, LoanException.ExceptionStatus.REJECTED.label),
+        ]
+
+        context = {
+            "recent_filter": recent_filter,
+            "recent_decisions_page": recent_decisions_page,
+            "recent_decisions": recent_decisions_page.object_list,
+            "severity_choices": ValidationSeverity.choices,
+            "status_choices": decision_status_choices,
+            "tab_visible": True,
+        }
+        return render(request, "dashboard/reviewer/includes/recent_decisions_tab.html", context)
 
 
 class ExceptionLoanDetailView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):

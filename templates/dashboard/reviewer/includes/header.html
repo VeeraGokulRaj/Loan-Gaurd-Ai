@@ -42,6 +42,25 @@
                         <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">{{ open_exceptions }}</span>
                     {% endif %}
                 </button>
+                <button type="button"
+                        onclick="switchTab('recentDecisionsTab')"
+                        hx-get="{% url 'recent_decisions_list' %}"
+                        hx-target="#recentDecisionsTab"
+                        hx-swap="outerHTML"
+                        id="nav-recentDecisionsTab"
+                        class="nav-tab-btn px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors duration-150 flex items-center gap-2 text-slate-400 border border-transparent hover:text-slate-200">
+                    <svg class="w-4 h-4 text-emerald-400"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Recent Decisions
+                    {% if recent_decisions_count > 0 %}
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">{{ recent_decisions_count }}</span>
+                    {% endif %}
+                </button>
             </nav>
             <!-- User Profile & Logout -->
             <div class="flex items-center gap-3">
