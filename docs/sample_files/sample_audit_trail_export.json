@@ -1,0 +1,1602 @@
+[
+  {
+    "event_id": "646b0e12-dc04-447e-b8a6-d31459bed489",
+    "timestamp": "2026-08-30T17:07:23.835948+00:00",
+    "loan_id": "LN-08301942-10001",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47970,
+      "row_number": 2,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "event_hash": "e6269b40f09d632c4227414624e9373339a6fad2951f04a61a4762ab216eb926"
+  },
+  {
+    "event_id": "8e87468a-f561-4d9c-a38d-3ca3bdf8af69",
+    "timestamp": "2026-08-30T17:07:23.836228+00:00",
+    "loan_id": "LN-08301942-10002",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47971,
+      "row_number": 3,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "e6269b40f09d632c4227414624e9373339a6fad2951f04a61a4762ab216eb926",
+    "event_hash": "9bc98410233b8b7bd80838e495f1f1a33baa130c476f9ebfa4983e5bf4d92709"
+  },
+  {
+    "event_id": "32565b20-5471-479a-bbe2-052c77b451a0",
+    "timestamp": "2026-08-30T17:07:23.836363+00:00",
+    "loan_id": "LN-08301942-10003",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47972,
+      "row_number": 4,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "9bc98410233b8b7bd80838e495f1f1a33baa130c476f9ebfa4983e5bf4d92709",
+    "event_hash": "ad08d1bbe9cc743e33e4dada92677357b1c963f66d31873e8331039c4b9ba09b"
+  },
+  {
+    "event_id": "06f1b811-1141-420c-8d4f-c3540ef12756",
+    "timestamp": "2026-08-30T17:07:23.836451+00:00",
+    "loan_id": "LN-08301942-10004",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47973,
+      "row_number": 5,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "ad08d1bbe9cc743e33e4dada92677357b1c963f66d31873e8331039c4b9ba09b",
+    "event_hash": "3c8a21b49758e558b1f8f4aafe2f38440c5b8de9099d54cf0119130ffe2a4663"
+  },
+  {
+    "event_id": "84afd3e3-4a92-4ed9-9dbb-8c0d04dd79d2",
+    "timestamp": "2026-08-30T17:07:23.836516+00:00",
+    "loan_id": "LN-08301942-10005",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47974,
+      "row_number": 6,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "3c8a21b49758e558b1f8f4aafe2f38440c5b8de9099d54cf0119130ffe2a4663",
+    "event_hash": "86c66a35960e3d6ba5b114c8ff515c4c5e923ba14a375a29466c6425bedcbcec"
+  },
+  {
+    "event_id": "7b7758a1-45b7-4e27-882e-794d299b2e9b",
+    "timestamp": "2026-08-30T17:07:23.836577+00:00",
+    "loan_id": "LN-08301942-10006",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47975,
+      "row_number": 7,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "86c66a35960e3d6ba5b114c8ff515c4c5e923ba14a375a29466c6425bedcbcec",
+    "event_hash": "bde16ddb160fed07b757b6620fdd55769732494a5f3d7419b25f57467ba83a09"
+  },
+  {
+    "event_id": "e31daf06-152b-41cb-8cb9-222392ebea04",
+    "timestamp": "2026-08-30T17:07:23.836636+00:00",
+    "loan_id": "LN-08301942-10007",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47976,
+      "row_number": 8,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "bde16ddb160fed07b757b6620fdd55769732494a5f3d7419b25f57467ba83a09",
+    "event_hash": "4c5b71b03e789611a7e2c4d1dbe893add4eb62c053b62caef0a364decff32106"
+  },
+  {
+    "event_id": "56534dfe-bdea-48ef-b1dc-ce9f1c790a99",
+    "timestamp": "2026-08-30T17:07:23.836692+00:00",
+    "loan_id": "LN-08301942-10008",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47977,
+      "row_number": 9,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "4c5b71b03e789611a7e2c4d1dbe893add4eb62c053b62caef0a364decff32106",
+    "event_hash": "cb0f68947316a47f2451606013e295c3df45957d2683d4d103ec5ffd77c1c9c0"
+  },
+  {
+    "event_id": "c6d0fc07-6dec-4a0c-8f7c-b508010984d4",
+    "timestamp": "2026-08-30T17:07:23.836750+00:00",
+    "loan_id": "LN-08301942-10009",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47978,
+      "row_number": 10,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "cb0f68947316a47f2451606013e295c3df45957d2683d4d103ec5ffd77c1c9c0",
+    "event_hash": "af6569d38650c6a4bd2e76f29eda31bfd2456a674236223158a9265830da11d3"
+  },
+  {
+    "event_id": "efbd37db-bf59-4451-a551-7063d9ff43e1",
+    "timestamp": "2026-08-30T17:07:23.836851+00:00",
+    "loan_id": "LN-08301942-10010",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47979,
+      "row_number": 11,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "af6569d38650c6a4bd2e76f29eda31bfd2456a674236223158a9265830da11d3",
+    "event_hash": "10bc1aa35cb0b936205ade74182c4d9b04c624d461b44e99ce373bfcc9648a49"
+  },
+  {
+    "event_id": "2d5c32d9-ec8d-4019-92c1-5486e4503423",
+    "timestamp": "2026-08-30T17:07:23.836922+00:00",
+    "loan_id": "LN-08301942-10011",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47980,
+      "row_number": 12,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "10bc1aa35cb0b936205ade74182c4d9b04c624d461b44e99ce373bfcc9648a49",
+    "event_hash": "9d07e70c5299c7f9a24d989745580ba5108f39d73c7fe5575e8728749424130d"
+  },
+  {
+    "event_id": "a12a4cbf-dd08-48d1-bd29-b2625c73300a",
+    "timestamp": "2026-08-30T17:07:23.837048+00:00",
+    "loan_id": "LN-08301942-10012",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47981,
+      "row_number": 13,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "9d07e70c5299c7f9a24d989745580ba5108f39d73c7fe5575e8728749424130d",
+    "event_hash": "df4420757f5cc8985e55fe8ef2c0ea8549f511d13cd1d1a1bd8c645b31f2eba5"
+  },
+  {
+    "event_id": "d6d49d18-4927-4216-abfc-e667a501fa35",
+    "timestamp": "2026-08-30T17:07:23.837133+00:00",
+    "loan_id": "LN-08301942-10013",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47982,
+      "row_number": 14,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "df4420757f5cc8985e55fe8ef2c0ea8549f511d13cd1d1a1bd8c645b31f2eba5",
+    "event_hash": "833d536603f42526a3057133dacb001ca403c63f3d54f011ed7cb37fbfd9592e"
+  },
+  {
+    "event_id": "6317744e-4748-4197-85d5-9c81dfbab85d",
+    "timestamp": "2026-08-30T17:07:23.837222+00:00",
+    "loan_id": "LN-08301942-10014",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47983,
+      "row_number": 15,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "833d536603f42526a3057133dacb001ca403c63f3d54f011ed7cb37fbfd9592e",
+    "event_hash": "e9566b91ab181e80368aee1f40e2103b8540cfe5770cc0b5d9835c24e89c3b17"
+  },
+  {
+    "event_id": "8832a351-74af-4e4e-a2f3-9ca79081f21c",
+    "timestamp": "2026-08-30T17:07:23.837287+00:00",
+    "loan_id": "LN-08301942-10015",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47984,
+      "row_number": 16,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "e9566b91ab181e80368aee1f40e2103b8540cfe5770cc0b5d9835c24e89c3b17",
+    "event_hash": "1847e836a4c13023d6ef5719c672a7e75ff3e16a5989fdb44f476200a115da2d"
+  },
+  {
+    "event_id": "04788773-712e-4f65-9cb9-ae01a8b70af8",
+    "timestamp": "2026-08-30T17:07:23.837352+00:00",
+    "loan_id": "LN-08301942-10016",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47985,
+      "row_number": 17,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "1847e836a4c13023d6ef5719c672a7e75ff3e16a5989fdb44f476200a115da2d",
+    "event_hash": "f81533175088fb8641a4095a0590ab72aeeedee802c297f3353342eb9c86d175"
+  },
+  {
+    "event_id": "055cefa9-a737-4e17-ad53-2c3ca11ffb6e",
+    "timestamp": "2026-08-30T17:07:23.837444+00:00",
+    "loan_id": "LN-08301942-10017",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47986,
+      "row_number": 18,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "f81533175088fb8641a4095a0590ab72aeeedee802c297f3353342eb9c86d175",
+    "event_hash": "20ac2c68f383acd61ecea0216fa93410bbd025e246fe63ec3300e57f3fcf2923"
+  },
+  {
+    "event_id": "a00db7e0-1bfa-4e85-ba4b-d0eb2552fbf4",
+    "timestamp": "2026-08-30T17:07:23.837521+00:00",
+    "loan_id": "LN-08301942-10018",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47987,
+      "row_number": 19,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "20ac2c68f383acd61ecea0216fa93410bbd025e246fe63ec3300e57f3fcf2923",
+    "event_hash": "ef876696848cca93ff5487ac0d9a27fa2df20eee3957a76da0ff117b7429c2fb"
+  },
+  {
+    "event_id": "8a932a6b-0b7f-4208-a49f-0f736c75890c",
+    "timestamp": "2026-08-30T17:07:23.837597+00:00",
+    "loan_id": "LN-08301942-10019",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47988,
+      "row_number": 20,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "ef876696848cca93ff5487ac0d9a27fa2df20eee3957a76da0ff117b7429c2fb",
+    "event_hash": "51b36d973610458118d66e9b37eb3d026f02777120155c42c4f898493dae0713"
+  },
+  {
+    "event_id": "b46a4553-30b8-416a-99ae-d028564e47e0",
+    "timestamp": "2026-08-30T17:07:23.837673+00:00",
+    "loan_id": "LN-08301942-10020",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47989,
+      "row_number": 21,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "51b36d973610458118d66e9b37eb3d026f02777120155c42c4f898493dae0713",
+    "event_hash": "ce26407f57c55b6631130bba42f3adfab3ffa784d47cdb69a9ba379ce411c1b4"
+  },
+  {
+    "event_id": "bf7ec006-16fd-4ce2-88a0-b21adc6eed67",
+    "timestamp": "2026-08-30T17:07:23.837761+00:00",
+    "loan_id": "LN-08301942-10021",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47990,
+      "row_number": 22,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "ce26407f57c55b6631130bba42f3adfab3ffa784d47cdb69a9ba379ce411c1b4",
+    "event_hash": "8929007fbed7f1733b0f8b269cfc2b301dd8c1a27471b585c767a9542827fab2"
+  },
+  {
+    "event_id": "6891015a-2804-4196-958d-c5118c2b45a4",
+    "timestamp": "2026-08-30T17:07:23.837825+00:00",
+    "loan_id": "LN-08301942-10022",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47991,
+      "row_number": 23,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "8929007fbed7f1733b0f8b269cfc2b301dd8c1a27471b585c767a9542827fab2",
+    "event_hash": "aaf00d67fe701055e89aec2465312af10c0ff1dae16382d87fc443f6a35eff80"
+  },
+  {
+    "event_id": "c3f81fd3-9b76-40fa-8b6b-7ab6bbab865b",
+    "timestamp": "2026-08-30T17:07:23.837888+00:00",
+    "loan_id": "LN-08301942-10023",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47992,
+      "row_number": 24,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "aaf00d67fe701055e89aec2465312af10c0ff1dae16382d87fc443f6a35eff80",
+    "event_hash": "9b4689e859782da54d69ed624e7fb02042c6dc1ab98a42d99d470b0291a8d463"
+  },
+  {
+    "event_id": "c4396aed-5f92-4e2f-a975-add0168587cb",
+    "timestamp": "2026-08-30T17:07:23.837954+00:00",
+    "loan_id": "LN-08301942-10024",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47993,
+      "row_number": 25,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "9b4689e859782da54d69ed624e7fb02042c6dc1ab98a42d99d470b0291a8d463",
+    "event_hash": "13fe38b0cf3056bd5f2d130f0c4770744c18201cd55377eb4fdcf3848bb3f754"
+  },
+  {
+    "event_id": "d0772a6d-4e15-410d-8849-b4a00f228950",
+    "timestamp": "2026-08-30T17:07:23.838113+00:00",
+    "loan_id": "LN-08301942-10025",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47994,
+      "row_number": 26,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "13fe38b0cf3056bd5f2d130f0c4770744c18201cd55377eb4fdcf3848bb3f754",
+    "event_hash": "cc8f2cbb52e908f81bde49f61c67526e0d49899fb62541c6d55bc3cc39f56e9a"
+  },
+  {
+    "event_id": "b3575124-76c2-4b19-afce-7f5a1882fed4",
+    "timestamp": "2026-08-30T17:07:23.838226+00:00",
+    "loan_id": "LN-08301942-10026",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47995,
+      "row_number": 27,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "cc8f2cbb52e908f81bde49f61c67526e0d49899fb62541c6d55bc3cc39f56e9a",
+    "event_hash": "691a9641bde78e1c8079c81fb06288ee88c982b14219040630c4150cffaa450b"
+  },
+  {
+    "event_id": "6064d5d8-d178-479c-a796-8c2ef77e9cb4",
+    "timestamp": "2026-08-30T17:07:23.838345+00:00",
+    "loan_id": "LN-08301942-10027",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47996,
+      "row_number": 28,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "691a9641bde78e1c8079c81fb06288ee88c982b14219040630c4150cffaa450b",
+    "event_hash": "f8a6de7d773b9e624534ce9b2d4f41af48623142c11c06c157b759729bfe3d4c"
+  },
+  {
+    "event_id": "a2dbea84-dca2-4320-b2b1-c5b5c6f17466",
+    "timestamp": "2026-08-30T17:07:23.838707+00:00",
+    "loan_id": "LN-08301942-10028",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47997,
+      "row_number": 29,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "f8a6de7d773b9e624534ce9b2d4f41af48623142c11c06c157b759729bfe3d4c",
+    "event_hash": "6142ebc74e567e7a65f2d0c8daa73aa43a15123242607278a83f1994b66c5b32"
+  },
+  {
+    "event_id": "8b935656-ae9f-4767-8461-903007c25641",
+    "timestamp": "2026-08-30T17:07:23.838793+00:00",
+    "loan_id": "LN-08301942-10029",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47998,
+      "row_number": 30,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "6142ebc74e567e7a65f2d0c8daa73aa43a15123242607278a83f1994b66c5b32",
+    "event_hash": "97251599feb14fe49a7e913557584409463e376aa0eb633445e1d10a538e1f4e"
+  },
+  {
+    "event_id": "4905ab7d-a9a9-484e-a384-4606251caaaf",
+    "timestamp": "2026-08-30T17:07:23.838881+00:00",
+    "loan_id": "LN-08301942-10030",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 47999,
+      "row_number": 31,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "97251599feb14fe49a7e913557584409463e376aa0eb633445e1d10a538e1f4e",
+    "event_hash": "94a007aa8edcc3b7a9a1b97b74fdda4517a0654f5557c05ce3fd4d42e89baced"
+  },
+  {
+    "event_id": "7e3ab2d7-d56c-4b56-b950-aaf33320c0d1",
+    "timestamp": "2026-08-30T17:07:23.838942+00:00",
+    "loan_id": "LN-08301942-10031",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48000,
+      "row_number": 32,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "94a007aa8edcc3b7a9a1b97b74fdda4517a0654f5557c05ce3fd4d42e89baced",
+    "event_hash": "304cc4d4c89b6d88b5d713f07b2b042f717a3de631f073652ab57485424b9c89"
+  },
+  {
+    "event_id": "50a162e8-e9c2-4523-ba6d-a58381b016fe",
+    "timestamp": "2026-08-30T17:07:23.839045+00:00",
+    "loan_id": "LN-08301942-10032",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48001,
+      "row_number": 33,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "304cc4d4c89b6d88b5d713f07b2b042f717a3de631f073652ab57485424b9c89",
+    "event_hash": "20b7bbb20f5289d2cbce2e82b65ddbf07b3c9fcb4dd32f17f4275321ff4bc5bb"
+  },
+  {
+    "event_id": "5ee492bc-fde3-4db2-83a1-84b84f0b2e16",
+    "timestamp": "2026-08-30T17:07:23.839111+00:00",
+    "loan_id": "LN-08301942-10033",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48002,
+      "row_number": 34,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "20b7bbb20f5289d2cbce2e82b65ddbf07b3c9fcb4dd32f17f4275321ff4bc5bb",
+    "event_hash": "1cc62d60afd09eb2fa91b3a46125c3ccbd7664591acb70a3ded5284f1a343d1b"
+  },
+  {
+    "event_id": "4af963aa-7c9f-4f86-966f-16fe07149b5c",
+    "timestamp": "2026-08-30T17:07:23.839170+00:00",
+    "loan_id": "LN-08301942-10034",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48003,
+      "row_number": 35,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "1cc62d60afd09eb2fa91b3a46125c3ccbd7664591acb70a3ded5284f1a343d1b",
+    "event_hash": "e9dba19fb889814d3e93069dbd082a80a9db7d1c4478cf51baba40cb7e3b3c46"
+  },
+  {
+    "event_id": "12622167-d2b0-43a3-81cc-5ae6bba906d3",
+    "timestamp": "2026-08-30T17:07:23.839226+00:00",
+    "loan_id": "LN-08301942-10035",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48004,
+      "row_number": 36,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "e9dba19fb889814d3e93069dbd082a80a9db7d1c4478cf51baba40cb7e3b3c46",
+    "event_hash": "54f1b060413621d39e30a40f4e961b62b8812977261c3559962f545a2feaee43"
+  },
+  {
+    "event_id": "a0c4a089-f58b-4c81-84cb-c0ab1f1ca1bd",
+    "timestamp": "2026-08-30T17:07:23.839283+00:00",
+    "loan_id": "LN-08301942-10036",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48005,
+      "row_number": 37,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "54f1b060413621d39e30a40f4e961b62b8812977261c3559962f545a2feaee43",
+    "event_hash": "caf7fb36743a96e6c42ce6363f2c46dbb3c8ca860add3e2d7d98b65df00df597"
+  },
+  {
+    "event_id": "21fda9ac-7f2d-452d-920b-bf91014aab33",
+    "timestamp": "2026-08-30T17:07:23.839339+00:00",
+    "loan_id": "LN-08301942-10037",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48006,
+      "row_number": 38,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "caf7fb36743a96e6c42ce6363f2c46dbb3c8ca860add3e2d7d98b65df00df597",
+    "event_hash": "d29ba1f9b59a6cf5cccf61da40be94597f2dc12b5e8ffc3f1e20c34e5378f40d"
+  },
+  {
+    "event_id": "29a5a466-423a-4b2f-859c-48bcc8368fc8",
+    "timestamp": "2026-08-30T17:07:23.839418+00:00",
+    "loan_id": "LN-08301942-10038",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48007,
+      "row_number": 39,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "d29ba1f9b59a6cf5cccf61da40be94597f2dc12b5e8ffc3f1e20c34e5378f40d",
+    "event_hash": "fb5b91b359e328b0bc5e9a413e3088410d1ef8f732cf0176697ef8b5bfcb811c"
+  },
+  {
+    "event_id": "c308983d-3aaa-405e-8282-72dd0b58b599",
+    "timestamp": "2026-08-30T17:07:23.839637+00:00",
+    "loan_id": "LN-08301942-10039",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48008,
+      "row_number": 40,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "fb5b91b359e328b0bc5e9a413e3088410d1ef8f732cf0176697ef8b5bfcb811c",
+    "event_hash": "1f9c5ecf047e487df77b29c8463343575fedf2082d86fd84b9ecc95b06d59cc3"
+  },
+  {
+    "event_id": "ee73a37a-7e40-441b-b53d-69347cd70f2f",
+    "timestamp": "2026-08-30T17:07:23.839722+00:00",
+    "loan_id": "LN-08301942-10040",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48009,
+      "row_number": 41,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "1f9c5ecf047e487df77b29c8463343575fedf2082d86fd84b9ecc95b06d59cc3",
+    "event_hash": "9c3de66cfa06b8cd5dac45873aa44c0bc754cd61e91cb1943b2e832f65055113"
+  },
+  {
+    "event_id": "5803b47c-5e7e-47c7-bf13-4e88649c82ea",
+    "timestamp": "2026-08-30T17:07:23.839809+00:00",
+    "loan_id": "LN-08301942-10041",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48010,
+      "row_number": 42,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "9c3de66cfa06b8cd5dac45873aa44c0bc754cd61e91cb1943b2e832f65055113",
+    "event_hash": "0a9f5f78af7ae440cee0d73871d18d79ecef808b46b430ecc188efad38e7c572"
+  },
+  {
+    "event_id": "3fb10c68-8c0a-40a6-86be-a8256d0155b9",
+    "timestamp": "2026-08-30T17:07:23.839874+00:00",
+    "loan_id": "LN-08301942-10042",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48011,
+      "row_number": 43,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "0a9f5f78af7ae440cee0d73871d18d79ecef808b46b430ecc188efad38e7c572",
+    "event_hash": "12e4832791d044f247d35f2236b7e60b96004fc117e0efc8a13cc0007f8303f3"
+  },
+  {
+    "event_id": "e8a7420f-7656-4d00-8d99-905e4ed6f4f8",
+    "timestamp": "2026-08-30T17:07:23.839939+00:00",
+    "loan_id": "LN-08301942-10043",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48012,
+      "row_number": 44,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "12e4832791d044f247d35f2236b7e60b96004fc117e0efc8a13cc0007f8303f3",
+    "event_hash": "88734a326f824529202759ff5a7b2de0736b8f380a0f8ec22ca2bf2c58304058"
+  },
+  {
+    "event_id": "366abee4-28e6-4f18-b542-535f3e3d9ab7",
+    "timestamp": "2026-08-30T17:07:23.840003+00:00",
+    "loan_id": "LN-08301942-10044",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48013,
+      "row_number": 45,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "88734a326f824529202759ff5a7b2de0736b8f380a0f8ec22ca2bf2c58304058",
+    "event_hash": "ccdd758b28756acf297ff43e15379e679190b63e5a853b50f1a451aafd250ea6"
+  },
+  {
+    "event_id": "c43a7e6f-389b-4a02-91f6-2ec5ed2091e1",
+    "timestamp": "2026-08-30T17:07:23.840462+00:00",
+    "loan_id": "LN-08301942-10045",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48014,
+      "row_number": 46,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "ccdd758b28756acf297ff43e15379e679190b63e5a853b50f1a451aafd250ea6",
+    "event_hash": "c3277c9162ae33cd2c2e12ebcd83a5c5e584c75e8e02fd962a2be94ac6226ead"
+  },
+  {
+    "event_id": "d9cd5a6d-8a99-4565-98f1-d8babf24647f",
+    "timestamp": "2026-08-30T17:07:23.840784+00:00",
+    "loan_id": "LN-08301942-10046",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48015,
+      "row_number": 47,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "c3277c9162ae33cd2c2e12ebcd83a5c5e584c75e8e02fd962a2be94ac6226ead",
+    "event_hash": "5d3ac31f6165c6f84987163e9950fd051e3f6baac01cbc6c5d89fc401b699230"
+  },
+  {
+    "event_id": "0a8f56f4-7b5e-476c-94ae-65a16797d229",
+    "timestamp": "2026-08-30T17:07:23.840926+00:00",
+    "loan_id": "LN-08301942-10047",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48016,
+      "row_number": 48,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "5d3ac31f6165c6f84987163e9950fd051e3f6baac01cbc6c5d89fc401b699230",
+    "event_hash": "80f9aad3e64848a35d3dc32034793ebc9506300f466c2d93b1f9e59419990486"
+  },
+  {
+    "event_id": "ce0947b3-db2f-4aa3-8a1b-68628673690d",
+    "timestamp": "2026-08-30T17:07:23.841049+00:00",
+    "loan_id": "LN-08301942-10048",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48017,
+      "row_number": 49,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "80f9aad3e64848a35d3dc32034793ebc9506300f466c2d93b1f9e59419990486",
+    "event_hash": "18dff76249492a359eab834307eee5557207dac0f63bdc677ff775701081238d"
+  },
+  {
+    "event_id": "7930a175-ecfc-4141-aa12-9d74e05a3590",
+    "timestamp": "2026-08-30T17:07:23.841180+00:00",
+    "loan_id": "LN-08301942-10049",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48018,
+      "row_number": 50,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "18dff76249492a359eab834307eee5557207dac0f63bdc677ff775701081238d",
+    "event_hash": "c4e7e058cd9e9c9a052e94e1c8605fa4b9c11440a3c0779022184d798c2debcd"
+  },
+  {
+    "event_id": "1b9bc408-aef7-4b6b-bc31-5f8361f43ef6",
+    "timestamp": "2026-08-30T17:07:23.841292+00:00",
+    "loan_id": "LN-08301942-10050",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48019,
+      "row_number": 51,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "c4e7e058cd9e9c9a052e94e1c8605fa4b9c11440a3c0779022184d798c2debcd",
+    "event_hash": "98c9a3eb0fb4f9572a340d49b9eaf0b18612200b1c7e202f2b88a9590c806909"
+  },
+  {
+    "event_id": "d410a207-6ca7-49ea-addf-eed20cdbd574",
+    "timestamp": "2026-08-30T17:07:23.841506+00:00",
+    "loan_id": "LN-08301942-10051",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48020,
+      "row_number": 52,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "98c9a3eb0fb4f9572a340d49b9eaf0b18612200b1c7e202f2b88a9590c806909",
+    "event_hash": "f9d38dfea149c4dfa0efdd371f051c9850314e44dfc45bad9b7db3685d45adcd"
+  },
+  {
+    "event_id": "2be0d6ab-db71-4fa1-951d-c0cda6f8962d",
+    "timestamp": "2026-08-30T17:07:23.841623+00:00",
+    "loan_id": "LN-08301942-10052",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48021,
+      "row_number": 53,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "f9d38dfea149c4dfa0efdd371f051c9850314e44dfc45bad9b7db3685d45adcd",
+    "event_hash": "9fce9f4a9d5ff90616a569653604972303a1ae9e56a6a5c636e30b1cfe640389"
+  },
+  {
+    "event_id": "662e5059-06be-4561-b900-bab3b8385eb4",
+    "timestamp": "2026-08-30T17:07:23.841729+00:00",
+    "loan_id": "LN-08301942-10053",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48022,
+      "row_number": 54,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "9fce9f4a9d5ff90616a569653604972303a1ae9e56a6a5c636e30b1cfe640389",
+    "event_hash": "a782fcb0ed1bfe5c278179e96ed053c018d5f03f65246d64841da9c937ae0d0a"
+  },
+  {
+    "event_id": "4928e8e4-cef0-43da-8086-7cfb3ba555c8",
+    "timestamp": "2026-08-30T17:07:23.841823+00:00",
+    "loan_id": "LN-08301942-10054",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48023,
+      "row_number": 55,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "a782fcb0ed1bfe5c278179e96ed053c018d5f03f65246d64841da9c937ae0d0a",
+    "event_hash": "f83504901b91317aec67e22e29af19f6b0081bec0d2496e49a04b570a4cec0b1"
+  },
+  {
+    "event_id": "f7e26bf9-bb38-48fd-9846-e6c1eeb8b320",
+    "timestamp": "2026-08-30T17:07:23.841902+00:00",
+    "loan_id": "LN-08301942-10055",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48024,
+      "row_number": 56,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "f83504901b91317aec67e22e29af19f6b0081bec0d2496e49a04b570a4cec0b1",
+    "event_hash": "8b23e9222d2f9b8d79bfa419269620bccf54c559cb98a7d2734256c8c0aae330"
+  },
+  {
+    "event_id": "32b69a38-f7d4-44d6-a687-b8b71a3334f6",
+    "timestamp": "2026-08-30T17:07:23.841977+00:00",
+    "loan_id": "LN-08301942-10056",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48025,
+      "row_number": 57,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "8b23e9222d2f9b8d79bfa419269620bccf54c559cb98a7d2734256c8c0aae330",
+    "event_hash": "76072053cea8e4a4444272719fa2d18687ba78f77c3a0c7213621499c73b3523"
+  },
+  {
+    "event_id": "cca92ce6-298d-4302-b8a2-061516701a77",
+    "timestamp": "2026-08-30T17:07:23.842053+00:00",
+    "loan_id": "LN-08301942-10057",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48026,
+      "row_number": 58,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "76072053cea8e4a4444272719fa2d18687ba78f77c3a0c7213621499c73b3523",
+    "event_hash": "36cb2e9690103da324909f2bc2083c34a6771cfe277fac5e11bbb78208b7dbbc"
+  },
+  {
+    "event_id": "d1fd9e0b-dcc8-461e-961e-b4cc80e2dc25",
+    "timestamp": "2026-08-30T17:07:23.842161+00:00",
+    "loan_id": "LN-08301942-10058",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48027,
+      "row_number": 59,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "36cb2e9690103da324909f2bc2083c34a6771cfe277fac5e11bbb78208b7dbbc",
+    "event_hash": "fa3558f201e99ec442920c2ece9c20af6fe45115d28ec4b12522ac508d71a74b"
+  },
+  {
+    "event_id": "bf69e919-5862-412c-8796-81bd8be2d355",
+    "timestamp": "2026-08-30T17:07:23.842244+00:00",
+    "loan_id": "LN-08301942-10059",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48028,
+      "row_number": 60,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "fa3558f201e99ec442920c2ece9c20af6fe45115d28ec4b12522ac508d71a74b",
+    "event_hash": "77817b1d9b3eb0667697e04cb0ffa3e814aaa0c3ac1e1cb44953ea5e092e88b6"
+  },
+  {
+    "event_id": "ee06b946-0451-44d9-8523-88db5611b25d",
+    "timestamp": "2026-08-30T17:07:23.842338+00:00",
+    "loan_id": "LN-08301942-10060",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48029,
+      "row_number": 61,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "77817b1d9b3eb0667697e04cb0ffa3e814aaa0c3ac1e1cb44953ea5e092e88b6",
+    "event_hash": "45dfa154a8c34e0973a24424024e2a2ae8a93bc41e1931dfea9c1b801ff0b12b"
+  },
+  {
+    "event_id": "5996aae3-c8d4-44ef-9f9f-2ea33b010487",
+    "timestamp": "2026-08-30T17:07:23.842661+00:00",
+    "loan_id": "LN-08301942-10061",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48030,
+      "row_number": 62,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "45dfa154a8c34e0973a24424024e2a2ae8a93bc41e1931dfea9c1b801ff0b12b",
+    "event_hash": "22edeeef21b1d84e454412c430a8c4a0d555f9a26c6e53e8f0bf2185a869db8f"
+  },
+  {
+    "event_id": "aefdf624-d99a-44d7-a6af-1d3ef1eaecfd",
+    "timestamp": "2026-08-30T17:07:23.842822+00:00",
+    "loan_id": "LN-08301942-10062",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48031,
+      "row_number": 63,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "22edeeef21b1d84e454412c430a8c4a0d555f9a26c6e53e8f0bf2185a869db8f",
+    "event_hash": "295201f0f51744ab1a6d52e14bc20cb1e35b21ef16795027dfd6521eed3dcd64"
+  },
+  {
+    "event_id": "a2b01a50-7457-4ce9-90d8-355ab47b658c",
+    "timestamp": "2026-08-30T17:07:23.842926+00:00",
+    "loan_id": "LN-08301942-10063",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48032,
+      "row_number": 64,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "295201f0f51744ab1a6d52e14bc20cb1e35b21ef16795027dfd6521eed3dcd64",
+    "event_hash": "1f4bbda2b507fd93357d40c4859c236b1119fdf59db55a0d59cbf7a06c470a2b"
+  },
+  {
+    "event_id": "8ecaadd9-cb19-4dfe-aa59-dab217702338",
+    "timestamp": "2026-08-30T17:07:23.843014+00:00",
+    "loan_id": "LN-08301942-10064",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48033,
+      "row_number": 65,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "1f4bbda2b507fd93357d40c4859c236b1119fdf59db55a0d59cbf7a06c470a2b",
+    "event_hash": "3339aca8a8e1f8ae4ca60a2fed94e199714c9552b00eceda28ee9d875f6252fc"
+  },
+  {
+    "event_id": "f231b0c3-e331-48af-8865-8094b41b306c",
+    "timestamp": "2026-08-30T17:07:23.843109+00:00",
+    "loan_id": "LN-08301942-10065",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48034,
+      "row_number": 66,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "3339aca8a8e1f8ae4ca60a2fed94e199714c9552b00eceda28ee9d875f6252fc",
+    "event_hash": "a6f59cf9f828b6f4d9af4bc02cb85bd1aa02c93c9b5cea78847b09dd5804c83b"
+  },
+  {
+    "event_id": "fe2aad03-e468-49dd-8096-d4375bb90d12",
+    "timestamp": "2026-08-30T17:07:23.843226+00:00",
+    "loan_id": "LN-08301942-10066",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48035,
+      "row_number": 67,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "a6f59cf9f828b6f4d9af4bc02cb85bd1aa02c93c9b5cea78847b09dd5804c83b",
+    "event_hash": "23ea8923335cf68d24254df1c98ef2d75a4a64c001fa1046ab8218ecb950da84"
+  },
+  {
+    "event_id": "be405956-b375-4f7d-8d6c-f49f0f700e79",
+    "timestamp": "2026-08-30T17:07:23.843325+00:00",
+    "loan_id": "LN-08301942-10067",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48036,
+      "row_number": 68,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "23ea8923335cf68d24254df1c98ef2d75a4a64c001fa1046ab8218ecb950da84",
+    "event_hash": "24e0c6d56f87ee3170a48d94ade4b58820d7bf98632db3c81929dcc950f98f71"
+  },
+  {
+    "event_id": "a1019d4f-94b7-4216-bfa8-e0149318da11",
+    "timestamp": "2026-08-30T17:07:23.843401+00:00",
+    "loan_id": "LN-08301942-10068",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48037,
+      "row_number": 69,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "24e0c6d56f87ee3170a48d94ade4b58820d7bf98632db3c81929dcc950f98f71",
+    "event_hash": "2a96e1a558ededdfd4544cb1e7fd67cb2ced95b2d004c9ecf0af6027330bc1b0"
+  },
+  {
+    "event_id": "b5615035-020b-40eb-b1e1-37877a656230",
+    "timestamp": "2026-08-30T17:07:23.843474+00:00",
+    "loan_id": "LN-08301942-10069",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48038,
+      "row_number": 70,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "2a96e1a558ededdfd4544cb1e7fd67cb2ced95b2d004c9ecf0af6027330bc1b0",
+    "event_hash": "8d7d61cedaddb5c6fdf80a526cdb4ea274aed861637decd07d2307ab8541b5d2"
+  },
+  {
+    "event_id": "a910d14d-6afa-494f-a571-8afd58f0f1eb",
+    "timestamp": "2026-08-30T17:07:23.843545+00:00",
+    "loan_id": "LN-08301942-10070",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48039,
+      "row_number": 71,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "8d7d61cedaddb5c6fdf80a526cdb4ea274aed861637decd07d2307ab8541b5d2",
+    "event_hash": "f868e3714f45c6d63970d7fc82101e9ffc63067b46d0820c496ff4778c082ed2"
+  },
+  {
+    "event_id": "57711674-abdc-4386-b8ef-40530713a130",
+    "timestamp": "2026-08-30T17:07:23.843629+00:00",
+    "loan_id": "LN-08301942-10071",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48040,
+      "row_number": 72,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "f868e3714f45c6d63970d7fc82101e9ffc63067b46d0820c496ff4778c082ed2",
+    "event_hash": "e799e29042a93553d7ed99ff3fd3ac373c4344c4ae54010701d3d01393570ae6"
+  },
+  {
+    "event_id": "e301c2a5-a98b-454a-9b9b-17b3b2ba4565",
+    "timestamp": "2026-08-30T17:07:23.843751+00:00",
+    "loan_id": "LN-08301942-10072",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48041,
+      "row_number": 73,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "e799e29042a93553d7ed99ff3fd3ac373c4344c4ae54010701d3d01393570ae6",
+    "event_hash": "176e82a1521bc15927362a865cff8414ce43fad537fae973991ee97702d4ae20"
+  },
+  {
+    "event_id": "9d28dd75-1b91-4b37-a557-f66a95a2ed0a",
+    "timestamp": "2026-08-30T17:07:23.843856+00:00",
+    "loan_id": "LN-08301942-10073",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48042,
+      "row_number": 74,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "176e82a1521bc15927362a865cff8414ce43fad537fae973991ee97702d4ae20",
+    "event_hash": "461bfbbace643d422b99fe2cd45ddbbf32aa86e21636df5cf6838662fdf9282f"
+  },
+  {
+    "event_id": "607733b7-2fa8-4a61-90b4-4224769cf212",
+    "timestamp": "2026-08-30T17:07:23.843926+00:00",
+    "loan_id": "LN-08301942-10074",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48043,
+      "row_number": 75,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "461bfbbace643d422b99fe2cd45ddbbf32aa86e21636df5cf6838662fdf9282f",
+    "event_hash": "d349dc717547d456ea4de9872e8d13fd4c725f4427ffb63b9ede405186085dbd"
+  },
+  {
+    "event_id": "46a4a782-61f6-444e-8a36-913fd779c3b7",
+    "timestamp": "2026-08-30T17:07:23.843998+00:00",
+    "loan_id": "LN-08301942-10075",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48044,
+      "row_number": 76,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "d349dc717547d456ea4de9872e8d13fd4c725f4427ffb63b9ede405186085dbd",
+    "event_hash": "be35bd716e4a27f5ef5af5595ba4dc3d34d36f66da43107a269888961d8fc617"
+  },
+  {
+    "event_id": "68b03c32-2935-4b6b-8d25-7eb87d498bae",
+    "timestamp": "2026-08-30T17:07:23.844113+00:00",
+    "loan_id": "LN-08301942-10076",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48045,
+      "row_number": 77,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "be35bd716e4a27f5ef5af5595ba4dc3d34d36f66da43107a269888961d8fc617",
+    "event_hash": "50ded3060dc45393b1a65fc54a427ecf57ccae1d35b3c9d89fb4a8acf8bb955b"
+  },
+  {
+    "event_id": "c12eb0e7-07e2-49a7-bdc4-61a80078dbe8",
+    "timestamp": "2026-08-30T17:07:23.844205+00:00",
+    "loan_id": "LN-08301942-10077",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48046,
+      "row_number": 78,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "50ded3060dc45393b1a65fc54a427ecf57ccae1d35b3c9d89fb4a8acf8bb955b",
+    "event_hash": "58cbb86fa7f998522869a1d94dc46138bad25e3d3872b72cb7e7a346381b9d74"
+  },
+  {
+    "event_id": "798d398d-f7c8-4e8a-b869-55e7448eee0f",
+    "timestamp": "2026-08-30T17:07:23.844277+00:00",
+    "loan_id": "LN-08301942-10078",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48047,
+      "row_number": 79,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "58cbb86fa7f998522869a1d94dc46138bad25e3d3872b72cb7e7a346381b9d74",
+    "event_hash": "bf355e6395ba6be76d23766a417ee04440e8de761ee17fbf0e348a3655e0bcfe"
+  },
+  {
+    "event_id": "144278a5-9535-4f43-ae2c-533d5c7bb427",
+    "timestamp": "2026-08-30T17:07:23.844383+00:00",
+    "loan_id": "LN-08301942-10079",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48048,
+      "row_number": 80,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "bf355e6395ba6be76d23766a417ee04440e8de761ee17fbf0e348a3655e0bcfe",
+    "event_hash": "5b55ffa3aa5c11ef9fd2cd657f5f7366aecb9a51759b07a780494ef8339c7c98"
+  },
+  {
+    "event_id": "59e8da0f-8770-41f7-b76b-29c3aabf57ab",
+    "timestamp": "2026-08-30T17:07:23.844481+00:00",
+    "loan_id": "",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48049,
+      "row_number": 81,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "5b55ffa3aa5c11ef9fd2cd657f5f7366aecb9a51759b07a780494ef8339c7c98",
+    "event_hash": "741659d747b73a260b527025bd84878b78fd7845bb6214470bd98e79388b166b"
+  },
+  {
+    "event_id": "8afa1482-b185-42cd-a07f-ed4764a5eaa6",
+    "timestamp": "2026-08-30T17:07:23.844556+00:00",
+    "loan_id": "LN-08301942-10081",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48050,
+      "row_number": 82,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "741659d747b73a260b527025bd84878b78fd7845bb6214470bd98e79388b166b",
+    "event_hash": "840085e5a797b73b0a420f1db2d7c4526740c2257d9e4077fd4a1927a4ae9749"
+  },
+  {
+    "event_id": "1c1cd8b4-6ce3-4226-9f37-eaa1b1bd2a3a",
+    "timestamp": "2026-08-30T17:07:23.844626+00:00",
+    "loan_id": "LN-08301942-10082",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48051,
+      "row_number": 83,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "840085e5a797b73b0a420f1db2d7c4526740c2257d9e4077fd4a1927a4ae9749",
+    "event_hash": "5941ece631eb902f1666a48a28ac1a6bd0ccf83107fc50d311074c9ff690696f"
+  },
+  {
+    "event_id": "e7ddea4e-a38c-45f1-84df-f6a1dcb108e1",
+    "timestamp": "2026-08-30T17:07:23.844698+00:00",
+    "loan_id": "LN-08301942-10083",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48052,
+      "row_number": 84,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "5941ece631eb902f1666a48a28ac1a6bd0ccf83107fc50d311074c9ff690696f",
+    "event_hash": "a95877d24ff1da60e2b16800aa559d7540f3853e7fa8926e5db82ebccb1fa005"
+  },
+  {
+    "event_id": "4c21d187-f9da-4055-9b8e-28b1ac72f1ea",
+    "timestamp": "2026-08-30T17:07:23.844811+00:00",
+    "loan_id": "LN-08301942-10084",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48053,
+      "row_number": 85,
+      "source_system": "ORIGINATION_API"
+    },
+    "prev_hash": "a95877d24ff1da60e2b16800aa559d7540f3853e7fa8926e5db82ebccb1fa005",
+    "event_hash": "2cc2a1267707bd445359a274bd7c2c0d6b8f0b2fed0dc5cd6d3d1d12f4cb3c0c"
+  },
+  {
+    "event_id": "fa52abc8-5818-4090-9fd0-3357af0e5956",
+    "timestamp": "2026-08-30T17:07:23.844906+00:00",
+    "loan_id": "LN-08301942-10085",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48054,
+      "row_number": 86,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "2cc2a1267707bd445359a274bd7c2c0d6b8f0b2fed0dc5cd6d3d1d12f4cb3c0c",
+    "event_hash": "40dafc0c4b5a2dce4bd321a069c6a73ca0f214cf2472a6a9f93fe9d8776ec4e5"
+  },
+  {
+    "event_id": "8770e5ab-8a48-4078-85be-d4f6d055f36e",
+    "timestamp": "2026-08-30T17:07:23.844981+00:00",
+    "loan_id": "LN-08301942-10086",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48055,
+      "row_number": 87,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "40dafc0c4b5a2dce4bd321a069c6a73ca0f214cf2472a6a9f93fe9d8776ec4e5",
+    "event_hash": "c7b97a56ad58e88bd4d17fba92bfe44e379c5a9080e623244bf87cf896adc7a7"
+  },
+  {
+    "event_id": "e02dd99a-3192-4dda-b922-bc2940103508",
+    "timestamp": "2026-08-30T17:07:23.845052+00:00",
+    "loan_id": "LN-08301942-10087",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48056,
+      "row_number": 88,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "c7b97a56ad58e88bd4d17fba92bfe44e379c5a9080e623244bf87cf896adc7a7",
+    "event_hash": "0ad44e5209ec0e671e596c907b113f5312645b1f4afe6ef679f47bbc8b5dc36c"
+  },
+  {
+    "event_id": "c3f9468b-6f1c-463b-9e12-b1da808c6cce",
+    "timestamp": "2026-08-30T17:07:23.845140+00:00",
+    "loan_id": "LN-08301942-10088",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48057,
+      "row_number": 89,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "0ad44e5209ec0e671e596c907b113f5312645b1f4afe6ef679f47bbc8b5dc36c",
+    "event_hash": "01d022852c80a658d8d7aff209ac242247242b77970c08f600d82a976b3c94ad"
+  },
+  {
+    "event_id": "3912cfde-b3f5-4df4-8702-060224e916ee",
+    "timestamp": "2026-08-30T17:07:23.845287+00:00",
+    "loan_id": "LN-08301942-10089",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48058,
+      "row_number": 90,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "01d022852c80a658d8d7aff209ac242247242b77970c08f600d82a976b3c94ad",
+    "event_hash": "9c6edda220e0629f036ac7ce0ccfd2df9725d9ca5c3c60511bbeff6a3740a54c"
+  },
+  {
+    "event_id": "8618a656-7651-4df5-b595-fe3492c13e08",
+    "timestamp": "2026-08-30T17:07:23.845427+00:00",
+    "loan_id": "LN-08301942-10090",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48059,
+      "row_number": 91,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "9c6edda220e0629f036ac7ce0ccfd2df9725d9ca5c3c60511bbeff6a3740a54c",
+    "event_hash": "7c0e5f794198a81f58e8f39a9a33252525cf31295853617ea2ee8fa33bd6c99a"
+  },
+  {
+    "event_id": "5338bad4-a2bb-4f9f-abe7-b80a8986178c",
+    "timestamp": "2026-08-30T17:07:23.845522+00:00",
+    "loan_id": "LN-08301942-10091",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48060,
+      "row_number": 92,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "7c0e5f794198a81f58e8f39a9a33252525cf31295853617ea2ee8fa33bd6c99a",
+    "event_hash": "5cc1e1cd211ee35f9e08fac7531b3f9f90de3961f009693b1e77567c77d868ec"
+  },
+  {
+    "event_id": "6481289f-c417-4ad0-8ef8-6d1b5abcd14a",
+    "timestamp": "2026-08-30T17:07:23.845616+00:00",
+    "loan_id": "LN-08301942-10092",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48061,
+      "row_number": 93,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "5cc1e1cd211ee35f9e08fac7531b3f9f90de3961f009693b1e77567c77d868ec",
+    "event_hash": "19c7d1ee882ff8551b74a27877f426529a7782c462ccb9312b824d0157daf49d"
+  },
+  {
+    "event_id": "0571f5d1-1556-49d1-8e70-4a3040c69975",
+    "timestamp": "2026-08-30T17:07:23.845712+00:00",
+    "loan_id": "LN-08301942-10093",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48062,
+      "row_number": 94,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "19c7d1ee882ff8551b74a27877f426529a7782c462ccb9312b824d0157daf49d",
+    "event_hash": "a2819af48874ad3c7dae525f76d760cb1c22bcaa55bef0c179fa26e1501b94b5"
+  },
+  {
+    "event_id": "1f812d49-62d7-403a-9b82-0d98a8823e93",
+    "timestamp": "2026-08-30T17:07:23.845786+00:00",
+    "loan_id": "LN-08301942-10094",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48063,
+      "row_number": 95,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "a2819af48874ad3c7dae525f76d760cb1c22bcaa55bef0c179fa26e1501b94b5",
+    "event_hash": "6a33432d78ee0f659cc717378d00e7a3cfeb4f8c6b574d17c390a96644c4c3a6"
+  },
+  {
+    "event_id": "5e1becd7-3300-4238-9ef0-828303db241c",
+    "timestamp": "2026-08-30T17:07:23.845888+00:00",
+    "loan_id": "LN-08301942-10095",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48064,
+      "row_number": 96,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "6a33432d78ee0f659cc717378d00e7a3cfeb4f8c6b574d17c390a96644c4c3a6",
+    "event_hash": "678e19f6d840b82d5160bb7033fa41ee1a7bf8b3efb96ad3475b898167080f1f"
+  },
+  {
+    "event_id": "9072007b-08c7-437b-8a97-7c393a0a7b33",
+    "timestamp": "2026-08-30T17:07:23.845981+00:00",
+    "loan_id": "LN-08301942-10096",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48065,
+      "row_number": 97,
+      "source_system": "LOS_ALPHA"
+    },
+    "prev_hash": "678e19f6d840b82d5160bb7033fa41ee1a7bf8b3efb96ad3475b898167080f1f",
+    "event_hash": "39e333c8014da5e45d490346a53d80df5ee97bd1a31aa01d44115419153cc0a5"
+  },
+  {
+    "event_id": "9587a606-51a0-42f9-b762-667e48c12978",
+    "timestamp": "2026-08-30T17:07:23.846049+00:00",
+    "loan_id": "LN-08301942-10097",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48066,
+      "row_number": 98,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "39e333c8014da5e45d490346a53d80df5ee97bd1a31aa01d44115419153cc0a5",
+    "event_hash": "d9731d96e574524ef5b8533e4f70ca5f296e4ae85ba094d2630f03516b4bbbd5"
+  },
+  {
+    "event_id": "12985607-7733-4672-91fc-0b958699c8d2",
+    "timestamp": "2026-08-30T17:07:23.846116+00:00",
+    "loan_id": "LN-08301942-10098",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48067,
+      "row_number": 99,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "d9731d96e574524ef5b8533e4f70ca5f296e4ae85ba094d2630f03516b4bbbd5",
+    "event_hash": "286da25f25d556b13c0e1e746a32a337cc6407f530be29cd53ce58eba9353df0"
+  },
+  {
+    "event_id": "c8f6fc61-4d39-408d-bf35-a13dea51c37f",
+    "timestamp": "2026-08-30T17:07:23.846186+00:00",
+    "loan_id": "LN-08301942-10099",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48068,
+      "row_number": 100,
+      "source_system": "MANUAL_EXCEL"
+    },
+    "prev_hash": "286da25f25d556b13c0e1e746a32a337cc6407f530be29cd53ce58eba9353df0",
+    "event_hash": "d365f00e2322696e156b0033834e0a639318fcb961cc8ee4fa29e7f8df9e2b43"
+  },
+  {
+    "event_id": "a7ab43d2-2082-406c-ba11-02d9dbc2297f",
+    "timestamp": "2026-08-30T17:07:23.846256+00:00",
+    "loan_id": "LN-08301942-10100",
+    "batch_id": 112,
+    "actor_username": "op_murugan",
+    "actor_role": "Data Operator",
+    "event_type": "LOAN_RECORD_IMPORTED",
+    "payload": {
+      "raw_record_id": 48069,
+      "row_number": 101,
+      "source_system": "SERVICER_CSV"
+    },
+    "prev_hash": "d365f00e2322696e156b0033834e0a639318fcb961cc8ee4fa29e7f8df9e2b43",
+    "event_hash": "54e5db9685640f32391c2da1fe63edc1dd8e5f029a3e5325ebf466641d1593ed"
+  }
+]
