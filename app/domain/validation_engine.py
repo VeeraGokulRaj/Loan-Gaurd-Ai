@@ -949,7 +949,9 @@ class GenericExpressionRule(BaseValidationRule):
 
         value = record_data.get(field_name)
         parameters = db_rule.parameters or {}
-        operator = str(parameters.get("operator", "IS_NULL")).upper()
+        operator = str(parameters.get("operator", "IS_NULL")).strip().upper()
+        if operator == "=":
+            operator = "=="
         target_value = parameters.get("target_value")
 
         is_failing = False

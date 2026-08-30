@@ -16,6 +16,11 @@ environ.Env.read_env(BASE_DIR / ".env")
 SECRET_KEY = env("SECRET_KEY", default="django-insecure-loanguard-ai-default-secret-key")
 DEBUG = env.bool("DJANGO_DEBUG", default=True)
 SITE_URL = env("SITE_URL", default="http://localhost:8000")
+GEMINI_API_KEY = env("GEMINI_API_KEY", default="GENERATE_GEMINI_API_KEY")
+ZEN_API_KEY = env("ZEN_API_KEY", default=env("OPENCODE_ZEN_API_KEY", default=""))
+ZEN_BASE_URL = env("ZEN_BASE_URL", default="https://opencode.ai/zen/v1")
+ZEN_MODEL_NAME = env("ZEN_MODEL_NAME", default="ling-3.0-flash-fin-free")
+OPENAI_API_KEY = env("OPENAI_API_KEY", default="")
 
 # Application definition
 DJANGO_APPS = [

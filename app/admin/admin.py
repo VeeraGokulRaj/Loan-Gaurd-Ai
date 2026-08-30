@@ -659,12 +659,12 @@ class AIRecommendationAdmin(admin.ModelAdmin):
     def get_model_name_badge(self, obj: AIRecommendation) -> str:
         """Returns badge for LLM Model Provider choice."""
         colors = {
-            AIRecommendation.ModelProvider.GEMINI_2_5_FLASH: "#059669",  # Emerald
+            AIRecommendation.ModelProvider.GEMINI: "#059669",  # Emerald
             AIRecommendation.ModelProvider.CHATGPT: "#2563eb",  # Blue
             AIRecommendation.ModelProvider.OTHERS: "#6b7280",  # Gray
         }
         color = colors.get(obj.model_name, "#6b7280")
-        label = obj.get_model_name_display() if obj.model_name else "Gemini 2.5 Flash"
+        label = obj.get_model_name_display() if obj.model_name else "Gemini"
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
             color,
