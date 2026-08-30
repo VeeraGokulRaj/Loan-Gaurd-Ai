@@ -18,7 +18,13 @@
         </div>
         <div class="flex justify-between items-center">
             <span class="text-slate-400 font-medium">Reviewer Account:</span>
-            <span class="font-semibold text-white">{{ user.get_full_name|default:user.first_name|default:user.username }}</span>
+            <span class="font-semibold text-white">
+                {% if user and user.is_authenticated %}
+                    {{ user.get_full_name|default:user.username }}
+                {% else %}
+                    System
+                {% endif %}
+            </span>
         </div>
         <div class="flex justify-between items-center">
             <span class="text-slate-400 font-medium">Audit Ledger Entry:</span>
