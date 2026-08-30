@@ -196,6 +196,18 @@ def apply_exception_resolution(
         loan_exception.reviewer_comment = comment.strip()
     loan_exception.save()
 
+    # Automatically check if all exceptions for this loan are resolved, and create VerifiedLoanRecord if eligible
+    from app.domain.verified_service import sync_verified_record_for_loan
+
+    if loan_exception.raw_record and status in (
+        LoanException.ExceptionStatus.RESOLVED_ACCEPTED,
+        LoanException.ExceptionStatus.RESOLVED_EDITED,
+    ):
+        sync_verified_record_for_loan(
+            raw_record=loan_exception.raw_record,
+            actor=actor,
+        )
+
 
 @transaction.atomic
 def resolve_exception_decision(
