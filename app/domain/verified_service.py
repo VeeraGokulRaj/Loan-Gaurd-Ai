@@ -124,10 +124,13 @@ def get_primary_record(raw_record: RawLoanRecord | None) -> RawLoanRecord | None
         return None
 
     if raw_record.batch and raw_record.batch.source_type != UploadBatch.SourceType.LOAN_TAPE:
+        loan_id = raw_record.loan_id
+        if not loan_id:
+            return None
         primary_record = (
             RawLoanRecord.objects.filter(
                 batch__source_type=UploadBatch.SourceType.LOAN_TAPE,
-                loan_id=raw_record.loan_id,
+                raw_data__loan_id=loan_id,
             )
             .order_by("-created", "-id")
             .first()
@@ -149,7 +152,10 @@ def validate_loan_eligibility_for_verification(
     if not raw_record:
         return False, "RawLoanRecord instance is None."
 
-    if hasattr(raw_record, "verified_record") and raw_record.verified_record:
+    if not raw_record.loan_id:
+        return False, "RawLoanRecord has no valid loan_id."
+
+    if VerifiedLoanRecord.objects.filter(loan_id=raw_record.loan_id).exists():
         return False, f"Loan '{raw_record.loan_id}' is already verified."
 
     # Single DB query to inspect exception status set for this raw record
@@ -292,11 +298,15 @@ def process_clean_records_for_batch(batch: UploadBatch) -> int:
         LoanException.objects.filter(batch=batch).values_list("raw_record_id", flat=True)
     )
 
+    existing_verified_loan_ids = VerifiedLoanRecord.objects.values_list("loan_id", flat=True)
+
     clean_raw_records = list(
         RawLoanRecord.objects.filter(
             batch=batch,
             verified_record__isnull=True,
-        ).exclude(id__in=flagged_record_ids)
+        )
+        .exclude(id__in=flagged_record_ids)
+        .exclude(raw_data__loan_id__in=existing_verified_loan_ids)
     )
 
     if not clean_raw_records:
