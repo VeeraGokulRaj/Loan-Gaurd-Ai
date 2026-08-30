@@ -1,0 +1,44 @@
+<!-- Enterprise Modal Success Screen: Decision Recorded & Section 9 Audit Log Updated -->
+<div id="ai-modal-content" class="p-8 text-center space-y-6">
+    <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/10">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+    </div>
+    <div class="space-y-1.5">
+        <h3 class="text-lg font-bold text-white tracking-tight">Reviewer Decision Recorded & Audit Verified</h3>
+        <p class="text-xs text-slate-300 max-w-md mx-auto leading-relaxed">
+            {{ message|default:"AI recommendation decision recorded and audit log entry created successfully." }}
+        </p>
+    </div>
+    <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800 text-xs space-y-2.5 max-w-md mx-auto text-left shadow-inner">
+        <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-medium">Decision Status:</span>
+            <span class="font-mono font-bold text-emerald-400 uppercase tracking-wider">{{ ai_rec.get_status_display }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-medium">Reviewer Account:</span>
+            <span class="font-semibold text-white">{{ user.get_full_name|default:user.first_name|default:user.username }}</span>
+        </div>
+        <div class="flex justify-between items-center">
+            <span class="text-slate-400 font-medium">Audit Ledger Entry:</span>
+            <span class="font-mono text-indigo-300">LOGGED #REC-{{ ai_rec.id }}</span>
+        </div>
+        {% if ai_rec.reviewer_comment %}
+            <div class="pt-2 border-t border-slate-800 text-slate-400 italic">"{{ ai_rec.reviewer_comment }}"</div>
+        {% endif %}
+    </div>
+    <div class="pt-2">
+        <button type="button"
+                onclick="document.getElementById('modal-container').innerHTML = ''; location.reload();"
+                class="px-8 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-indigo-500/20 inline-flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-200"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Done & Refresh View
+        </button>
+    </div>
+</div>

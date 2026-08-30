@@ -18,7 +18,11 @@ from app.views.data_operator import (
 from app.views.reviewer import (
     ExceptionActionHistoryView,
     ExceptionLoanDetailView,
+    GenerateAIRecommendationView,
+    GenerateAIRuleView,
     LoanExceptionListView,
+    OpenAICopilotModalView,
+    ProcessAIRecommendationView,
     ReviewerDashboardView,
 )
 
@@ -50,6 +54,31 @@ urlpatterns = [
         "reviewer/exceptions/<int:pk>/history/",
         ExceptionActionHistoryView.as_view(),
         name="exception_action_history",
+    ),
+    path(
+        "reviewer/ai/modal/",
+        OpenAICopilotModalView.as_view(),
+        name="open_ai_copilot_modal_general",
+    ),
+    path(
+        "reviewer/exceptions/<int:pk>/ai/modal/",
+        OpenAICopilotModalView.as_view(),
+        name="open_ai_copilot_modal",
+    ),
+    path(
+        "reviewer/exceptions/<int:pk>/ai/generate/",
+        GenerateAIRecommendationView.as_view(),
+        name="generate_ai_recommendation",
+    ),
+    path(
+        "reviewer/ai/rules/generate/",
+        GenerateAIRuleView.as_view(),
+        name="generate_ai_rule",
+    ),
+    path(
+        "reviewer/ai/<int:pk>/decision/",
+        ProcessAIRecommendationView.as_view(),
+        name="process_ai_recommendation",
     ),
 ]
 

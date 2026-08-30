@@ -48,8 +48,20 @@
             {% block content %}
             {% endblock content %}
         </div>
+        <!-- Global Modal Container for Overlay Dialogs -->
+        <div id="modal-container"></div>
         <!-- Preline UI JS -->
         <script src="https://cdn.jsdelivr.net/npm/preline/dist/preline.js" defer></script>
+        <script>
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    const modal = document.getElementById('modal-container');
+                    if (modal && modal.children.length > 0) {
+                        modal.innerHTML = '';
+                    }
+                }
+            });
+        </script>
         {% block extrascript %}
         {% endblock extrascript %}
     </body>

@@ -1,0 +1,255 @@
+<!-- Enterprise AI Copilot Response & Section 9 Governance Panel -->
+<div id="ai-modal-content"
+     class="p-6 space-y-6 overflow-y-auto flex-1 max-h-[calc(85vh-90px)] min-h-[300px]">
+    <!-- Modal Header: Title, Confidence Pill & Model Chip -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+        <div class="space-y-1">
+            <div class="flex items-center gap-2">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono">
+                    {% if ai_rec.recommendation_type == 2 %}
+                        Rule Generation
+                    {% else %}
+                        Exception Fix Analysis
+                    {% endif %}
+                </span>
+                <span class="text-[11px] font-mono text-slate-500">ID #REC-{{ ai_rec.id }}</span>
+            </div>
+            <h3 class="text-base font-bold text-white tracking-tight">AI Diagnostic Analysis & Recommendation</h3>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <!-- Confidence Pill -->
+            {% if ai_rec.confidence_score >= 0.8 %}
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono flex items-center gap-1.5 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    {{ ai_rec.confidence_percentage }} Confidence
+                </span>
+            {% else %}
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 border border-amber-500/30 text-amber-400 font-mono flex items-center gap-1.5 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    {{ ai_rec.confidence_percentage }} Confidence
+                </span>
+            {% endif %}
+            <!-- Model Badge -->
+            <span class="px-3 py-1 rounded-xl text-xs font-bold bg-slate-950 text-slate-300 border border-slate-800 font-mono">
+                {{ ai_rec.get_model_name_display }}
+            </span>
+        </div>
+    </div>
+    <!-- CORE RECOMMENDATION HIGHLIGHT CARD -->
+    {% if ai_rec.recommendation_type == 1 %}
+        <!-- Exception Fix Correction Diff Banner -->
+        <div class="p-5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-4 shadow-xl">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Target Field Correction Proposal:</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <!-- Target Field -->
+                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800/80 space-y-1">
+                    <span class="text-[10px] font-medium text-slate-400 block uppercase tracking-wider">Target Field</span>
+                    <span class="font-mono font-bold text-indigo-400 text-sm block truncate">{{ target_field_name|default:"general" }}</span>
+                </div>
+                <!-- Tape Record Value -->
+                <div class="p-3.5 rounded-xl bg-slate-900 border border-slate-800/80 space-y-1">
+                    <span class="text-[10px] font-medium text-slate-400 block uppercase tracking-wider">Current Record Data</span>
+                    <span class="font-mono font-semibold text-slate-300 text-sm block truncate">{{ current_target_value|default:"(Blank / Invalid)" }}</span>
+                </div>
+                <!-- Proposed Fix -->
+                <div class="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-500/40 space-y-1 shadow-lg shadow-emerald-500/5">
+                    <span class="text-[10px] font-bold text-emerald-400 block uppercase tracking-wider">AI Suggested Value</span>
+                    <span class="font-mono font-bold text-emerald-300 text-sm block truncate">{{ ai_rec.suggested_value }}</span>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    <!-- EXECUTIVE DIAGNOSIS & EXPLANATION CARD -->
+    <div class="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 space-y-2 text-xs">
+        <div class="flex items-center gap-2 font-bold uppercase tracking-wider text-slate-300 text-[10px]">
+            <svg class="w-4 h-4 text-indigo-400"
+                 fill="none"
+                 stroke="currentColor"
+                 viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Executive Conflict Diagnosis
+        </div>
+        <p class="text-slate-200 leading-relaxed font-sans text-xs pt-1">{{ ai_rec.explanation }}</p>
+    </div>
+    <!-- COLLAPSIBLE REASONING & METADATA -->
+    <details class="group rounded-xl border border-slate-800 bg-slate-950/40 p-4 transition-all">
+        <summary class="cursor-pointer text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-indigo-400 group-open:rotate-90 transition-transform"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                Step-by-Step Reasoning Logic & Audit Logs
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">Verified</span>
+        </summary>
+        <div class="mt-3 pt-3 border-t border-slate-800 space-y-3 text-xs">
+            {% if ai_rec.reasoning %}
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reasoning Logic:</span>
+                    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 font-mono text-[11px] leading-relaxed whitespace-pre-line">
+                        {{ ai_rec.reasoning }}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-[11px] pt-1">
+                <div>
+                    <span class="text-slate-500">Triggered By:</span>
+                    <div class="font-semibold text-white">
+                        {{ ai_rec.created_by.get_full_name|default:ai_rec.created_by.first_name|default:ai_rec.created_by.username|default:user.get_full_name|default:user.first_name|default:user.username }}
+                    </div>
+                </div>
+                <div>
+                    <span class="text-slate-500">Timestamp:</span>
+                    <div class="font-semibold text-slate-200">{{ ai_rec.created|date:"M d, Y H:i:s" }}</div>
+                </div>
+                <div>
+                    <span class="text-slate-500">Governance Mode:</span>
+                    <div class="font-bold text-indigo-400">Section 9 Human-in-the-Loop</div>
+                </div>
+            </div>
+        </div>
+    </details>
+    <!-- SECTION 9 HUMAN OVERSIGHT UNIFIED GOVERNANCE ACTION FORM -->
+    <form hx-post="{% url 'process_ai_recommendation' ai_rec.id %}"
+          hx-target="#ai-modal-content"
+          hx-swap="outerHTML"
+          hx-indicator="#ai-modal-spinner"
+          data-original-value="{% if ai_rec.recommendation_type == 1 %}{{ ai_rec.suggested_value }}{% else %}{{ rule_data.rule_code|default:ai_rec.suggested_value }}{% endif %}"
+          class="pt-4 border-t border-slate-800 space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="decision_action_input" value="accept">
+        <!-- TYPE SPECIFIC EDITABLE INPUT BOX -->
+        {% if ai_rec.recommendation_type == 1 %}
+            <!-- Exception Fix: Editable Field Value Input -->
+            <div class="p-4 rounded-xl bg-slate-950 border border-indigo-500/30 space-y-3">
+                <div class="flex items-center justify-between text-xs border-b border-slate-800/80 pb-2">
+                    <span class="font-bold text-white uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
+                        <svg class="w-4 h-4 text-emerald-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Human Oversight Action
+                    </span>
+                    <span class="font-mono text-[11px] text-indigo-300">
+                        Field Being Modified: <strong class="text-white bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/30">{{ target_field_name|default:"general" }}</strong>
+                    </span>
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-300">
+                        Final Value to Commit to Field <code class="font-mono text-indigo-300">{{ target_field_name|default:"general" }}</code>:
+                    </label>
+                    <input type="text"
+                           name="edited_value"
+                           id="final_field_value_input"
+                           value="{{ ai_rec.suggested_value }}"
+                           required
+                           placeholder="Enter value to commit..."
+                           class="w-full px-3.5 py-2.5 rounded-lg bg-slate-900 border border-indigo-500/50 text-xs font-mono font-bold text-emerald-300 focus:outline-none focus:border-emerald-400 shadow-inner">
+                    <p class="text-[10px] text-slate-400 italic">
+                        💡 Pre-filled with AI suggestion <strong class="text-emerald-300 font-mono">{{ ai_rec.suggested_value }}</strong>. You can modify this value before approving.
+                    </p>
+                </div>
+            </div>
+        {% else %}
+            <!-- Rule Generation: Full Editable JSON Schema Code Editor Textarea -->
+            <div class="p-5 rounded-2xl bg-slate-950/80 border border-purple-500/40 space-y-3 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400 font-mono block">Generated Rule Schema (Editable JSON)</span>
+                        <h4 class="text-xs text-slate-300 font-medium">Review or edit rule properties before committing to database:</h4>
+                    </div>
+                    <span class="font-mono text-xs font-bold text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-lg">
+                        Rule Code: {{ rule_data.rule_code|default:ai_rec.suggested_value }}
+                    </span>
+                </div>
+                {% if json_error %}
+                    <div class="p-3.5 rounded-xl bg-rose-950/60 border border-rose-500/40 text-xs text-rose-200 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-rose-400 shrink-0"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span><strong>JSON Syntax Error:</strong> {{ json_error }}</span>
+                    </div>
+                {% endif %}
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">ValidationRule Schema JSON:</label>
+                    <textarea name="rule_json_raw"
+                              id="rule_json_raw_input"
+                              rows="10"
+                              required
+                              spellcheck="false"
+                              placeholder="Enter rule JSON schema..."
+                              class="w-full p-4 rounded-xl bg-slate-950 border border-purple-500/40 font-mono text-xs text-purple-200 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-500 shadow-inner leading-relaxed cursor-text resize-y relative z-10 block">{{ rule_json_pretty }}</textarea>
+                    <p class="text-[10px] text-slate-400 italic">
+                        💡 Staff feature: Edit JSON keys directly (rule_code, rule_name, field_name, severity, strategy_key, parameters).
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+        <!-- Optional Reviewer Notes -->
+        <div>
+            <input type="text"
+                   name="reviewer_comment"
+                   placeholder="Enter optional reviewer audit notes..."
+                   class="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+        </div>
+        <!-- Action Buttons Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button type="submit"
+                    onclick="prepareDecisionSubmit(event, 'accept')"
+                    class="py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs transition-all shadow-lg hover:shadow-emerald-500/25 flex items-center justify-center gap-2">
+                <svg class="w-4 h-4 text-emerald-100"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                {% if ai_rec.recommendation_type == 2 %}
+                    Approve & Commit Validation Rule
+                {% else %}
+                    Approve & Commit Value
+                {% endif %}
+            </button>
+            <button type="submit"
+                    onclick="prepareDecisionSubmit(event, 'reject')"
+                    class="py-3 px-4 rounded-xl bg-slate-800 hover:bg-rose-600/90 text-slate-300 hover:text-white font-semibold text-xs border border-slate-700 hover:border-rose-500 transition-all flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Reject Suggestion
+            </button>
+        </div>
+    </form>
+</div>
+<script>
+function prepareDecisionSubmit(event, defaultAction) {
+    const form = event.target.closest('form');
+    if (!form) return;
+
+    const actionInput = document.getElementById('decision_action_input');
+    if (!actionInput) return;
+
+    if (defaultAction === 'reject') {
+        actionInput.value = 'reject';
+        return;
+    }
+
+    const origVal = form.dataset.originalValue || '';
+    const editedInput = document.getElementById('final_field_value_input') || document.getElementById('rule_json_raw_input');
+    const currentVal = editedInput ? editedInput.value.trim() : '';
+
+    if (origVal && currentVal && currentVal !== origVal.trim()) {
+        actionInput.value = 'edit';
+    } else {
+        actionInput.value = 'accept';
+    }
+}
+</script>

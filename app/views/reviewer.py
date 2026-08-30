@@ -6,6 +6,7 @@ Split into ReviewerDashboardView (main workspace index) and LoanExceptionListVie
 Supports HTMX pagination, filtering, search, severity badges, and AI recommendation controls.
 """
 
+import json
 from typing import Any
 
 from django.contrib import messages
@@ -17,10 +18,16 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import View
 
+from app.domain.ai_assistant import (
+    LLMProviderRegistry,
+    generate_ai_rule_recommendation,
+    generate_exception_ai_recommendation,
+    process_ai_recommendation_decision,
+)
 from app.domain.roles import AppPermission
 from app.filters.reviewer import LoanExceptionFilter
 from app.mixins import AnyPermissionRequiredMixin
-from app.models import AuditEvent, LoanException, ValidationSeverity
+from app.models import AIRecommendation, AuditEvent, LoanException, ValidationSeverity
 
 ALLOWED_FIELDS = [
     "loan_id",
@@ -217,10 +224,23 @@ class ExceptionLoanDetailView(LoginRequiredMixin, AnyPermissionRequiredMixin, Vi
             .order_by("-severity")
         )
 
+        ai_rec = (
+            loan_exception.ai_recommendations.filter(
+                recommendation_type=AIRecommendation.RecommendationType.EXCEPTION_REVIEW
+            )
+            .order_by("-created")
+            .first()
+        )
+        current_target_value = (
+            raw_data.get(loan_exception.field_name, "") if loan_exception.field_name else ""
+        )
+
         context = {
             "title": f"Loan Exception - #EXP-{loan_exception.id}",
             "exc": loan_exception,
+            "ai_rec": ai_rec,
             "raw_data": raw_data,
+            "current_target_value": current_target_value,
             "field_list": field_list,
             "related_exceptions": related_exceptions,
             "user": request.user,
@@ -280,3 +300,290 @@ class ExceptionActionHistoryView(LoginRequiredMixin, AnyPermissionRequiredMixin,
             "user": request.user,
         }
         return render(request, "dashboard/reviewer/detail/exception_history.html", context)
+
+
+class OpenAICopilotModalView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for rendering the initial AI Copilot Overlay Modal (`/reviewer/ai/modal/` or `/reviewer/exceptions/<int:pk>/ai/modal/`).
+    Checks if a pending AIRecommendation already exists for the exception.
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def get(
+        self, request: HttpRequest, pk: int | None = None, *args: Any, **kwargs: Any
+    ) -> HttpResponse:
+        loan_exception = None
+        if pk:
+            loan_exception = LoanException.objects.filter(pk=pk).first()
+
+        pending_ai_rec = None
+        if loan_exception:
+            pending_ai_rec = (
+                loan_exception.ai_recommendations.filter(
+                    status=AIRecommendation.RecommendationStatus.PENDING
+                )
+                .order_by("-created")
+                .first()
+            )
+
+        if pending_ai_rec:
+            raw_data = (
+                loan_exception.raw_record.raw_data
+                if (
+                    loan_exception
+                    and loan_exception.raw_record
+                    and loan_exception.raw_record.raw_data
+                )
+                else {}
+            )
+            current_target_value = (
+                raw_data.get(loan_exception.field_name, "")
+                if (loan_exception and loan_exception.field_name)
+                else ""
+            )
+            target_field_name = (
+                loan_exception.field_name
+                if (loan_exception and loan_exception.field_name)
+                else (
+                    pending_ai_rec.exception.field_name
+                    if (
+                        pending_ai_rec
+                        and pending_ai_rec.exception
+                        and pending_ai_rec.exception.field_name
+                    )
+                    else "general"
+                )
+            )
+            rule_json_pretty = (
+                json.dumps(pending_ai_rec.suggested_rule_data or {}, indent=2)
+                if (pending_ai_rec and pending_ai_rec.suggested_rule_data)
+                else ""
+            )
+            context = {
+                "exc": loan_exception,
+                "ai_rec": pending_ai_rec,
+                "raw_data": raw_data,
+                "current_target_value": current_target_value,
+                "is_pending_review_notice": True,
+                "user": request.user,
+                "target_field_name": target_field_name,
+                "rule_data": pending_ai_rec.suggested_rule_data or {},
+                "rule_json_pretty": rule_json_pretty,
+            }
+            return render(
+                request, "dashboard/reviewer/ai_modal/ai_modal_pending_wrapper.html", context
+            )
+
+        providers = LLMProviderRegistry.list_available_providers()
+        context = {
+            "exc": loan_exception,
+            "providers": providers,
+            "user": request.user,
+        }
+        return render(request, "dashboard/reviewer/ai_modal/ai_modal_initial.html", context)
+
+
+class GenerateAIRuleView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for generating AI Validation Rules from natural language (`/reviewer/ai/rules/generate/`).
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def post(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        prompt_text = request.POST.get("prompt_text", "").strip()
+        exception_id = request.POST.get("exception_id", "")
+        model_choice_raw = request.POST.get("model_choice", "")
+
+        try:
+            model_choice = (
+                int(model_choice_raw)
+                if model_choice_raw
+                else AIRecommendation.ModelProvider.OPENCODE_ZEN
+            )
+        except ValueError:
+            model_choice = AIRecommendation.ModelProvider.OPENCODE_ZEN
+
+        if not prompt_text:
+            prompt_text = "Validate loan record for missing fields, inconsistent balances, or invalid payment statuses."
+
+        ai_rec = generate_ai_rule_recommendation(
+            prompt_text=prompt_text,
+            user=request.user,
+            model_choice=model_choice,
+        )
+
+        loan_exception = None
+        if exception_id and exception_id.isdigit():
+            loan_exception = LoanException.objects.filter(pk=int(exception_id)).first()
+
+        rule_data = ai_rec.suggested_rule_data or {}
+        rule_json_pretty = json.dumps(rule_data, indent=2)
+        target_field_name = (
+            loan_exception.field_name
+            if loan_exception
+            else (
+                rule_data.get("field_name")
+                if isinstance(rule_data, dict) and rule_data.get("field_name")
+                else "general"
+            )
+        )
+
+        context = {
+            "ai_rec": ai_rec,
+            "exc": loan_exception,
+            "user": request.user,
+            "rule_data": rule_data,
+            "rule_json_pretty": rule_json_pretty,
+            "target_field_name": target_field_name,
+        }
+        return render(request, "dashboard/reviewer/ai_modal/ai_modal_response.html", context)
+
+
+class GenerateAIRecommendationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for generating AI recommendations on a Loan Exception (`/reviewer/exceptions/<int:pk>/ai/generate/`).
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def post(self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        loan_exception = get_object_or_404(
+            LoanException.objects.select_related("batch", "raw_record", "rule", "resolved_by"),
+            pk=pk,
+        )
+
+        model_choice_raw = request.POST.get("model_choice", "")
+        try:
+            model_choice = (
+                int(model_choice_raw)
+                if model_choice_raw
+                else AIRecommendation.ModelProvider.OPENCODE_ZEN
+            )
+        except ValueError:
+            model_choice = AIRecommendation.ModelProvider.OPENCODE_ZEN
+
+        ai_rec = generate_exception_ai_recommendation(
+            loan_exception=loan_exception,
+            user=request.user,
+            model_choice=model_choice,
+        )
+
+        raw_data = (
+            loan_exception.raw_record.raw_data
+            if (loan_exception.raw_record and loan_exception.raw_record.raw_data)
+            else {}
+        )
+        current_target_value = (
+            raw_data.get(loan_exception.field_name, "") if loan_exception.field_name else ""
+        )
+        target_field_name = (
+            loan_exception.field_name
+            if (loan_exception and loan_exception.field_name)
+            else "general"
+        )
+
+        context = {
+            "exc": loan_exception,
+            "ai_rec": ai_rec,
+            "raw_data": raw_data,
+            "current_target_value": current_target_value,
+            "user": request.user,
+            "target_field_name": target_field_name,
+        }
+
+        if request.headers.get("HX-Request") or getattr(request, "htmx", False):
+            return render(request, "dashboard/reviewer/ai_modal/ai_modal_response.html", context)
+
+        return redirect("exception_loan_detail", pk=loan_exception.id)
+
+
+class ProcessAIRecommendationView(LoginRequiredMixin, AnyPermissionRequiredMixin, View):
+    """
+    Class-Based View for processing reviewer decision (Accept, Edit, Reject) on AI Recommendation (`/reviewer/ai/<int:pk>/decision/`).
+    Automates redirection to current page without manual save/refresh prompts.
+    """
+
+    permissions_required = [AppPermission.REVIEWER_CAN_INSPECT_EXCEPTIONS]
+
+    def post(self, request: HttpRequest, pk: int, *args: Any, **kwargs: Any) -> HttpResponse:
+        ai_rec = get_object_or_404(
+            AIRecommendation.objects.select_related("exception", "rule"),
+            pk=pk,
+        )
+        loan_exception = ai_rec.exception
+
+        action = request.POST.get("action", "").strip().lower()
+        comment = request.POST.get("reviewer_comment", "").strip()
+        edited_value = request.POST.get("edited_value", "").strip()
+
+        edited_rule_data = None
+        rule_json_raw = request.POST.get("rule_json_raw", "").strip()
+
+        if ai_rec.recommendation_type == AIRecommendation.RecommendationType.RULE_GENERATION:
+            if rule_json_raw:
+                try:
+                    parsed_payload = json.loads(rule_json_raw)
+                    if isinstance(parsed_payload, dict):
+                        edited_rule_data = parsed_payload
+                        orig_data = ai_rec.suggested_rule_data or {}
+                        if edited_rule_data != orig_data and action in ("accept", "edit"):
+                            action = "edit"
+                except json.JSONDecodeError as exc_json:
+                    rule_data = ai_rec.suggested_rule_data or {}
+                    context = {
+                        "ai_rec": ai_rec,
+                        "exc": loan_exception,
+                        "user": request.user,
+                        "rule_data": rule_data,
+                        "rule_json_pretty": rule_json_raw,
+                        "json_error": f"Invalid JSON syntax: {exc_json}",
+                        "target_field_name": "general",
+                    }
+                    return render(
+                        request, "dashboard/reviewer/ai_modal/ai_modal_response.html", context
+                    )
+            elif action == "edit":
+                rule_code = request.POST.get("rule_code", "").strip()
+                rule_name = request.POST.get("rule_name", "").strip()
+                field_name = request.POST.get("field_name", "").strip()
+                severity = request.POST.get("severity", "2").strip()
+                strategy_key = request.POST.get("strategy_key", "").strip()
+
+                edited_rule_data = {
+                    "rule_code": rule_code,
+                    "rule_name": rule_name,
+                    "field_name": field_name,
+                    "severity": int(severity) if severity.isdigit() else 2,
+                    "strategy_key": strategy_key,
+                }
+
+        success, message = process_ai_recommendation_decision(
+            recommendation=ai_rec,
+            action=action,
+            actor=request.user,
+            comment=comment,
+            edited_value=edited_value,
+            edited_rule_data=edited_rule_data,
+        )
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        referer = request.META.get("HTTP_REFERER", "")
+        if loan_exception and not referer:
+            redirect_url = f"/reviewer/exceptions/{loan_exception.id}/detail/"
+        elif referer:
+            redirect_url = referer
+        else:
+            redirect_url = "/reviewer/"
+
+        if request.headers.get("HX-Request") or getattr(request, "htmx", False):
+            response = HttpResponse(status=204)
+            response["HX-Redirect"] = redirect_url
+            return response
+
+        return redirect(redirect_url)
