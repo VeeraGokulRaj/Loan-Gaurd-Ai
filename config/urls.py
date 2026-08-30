@@ -119,6 +119,8 @@ urlpatterns = [
         ExportVerifiedLoansView.as_view(),
         name="verified_loan_export",
     ),
+    # --- Module H: Verified Records API Routes ---
+    path("api/v1/", include("app.api.v1.urls")),
 ]
 
 if settings.DEBUG:
