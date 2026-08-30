@@ -317,4 +317,27 @@ class VerifiedLoanRecord(BaseModel):
             if reviewers:
                 record.participating_reviewers.set(reviewers)
 
+        from app.models.audit import AuditEvent
+
+        audit_events = [
+            {
+                "event_type": "VERIFIED_RECORD_CREATED",
+                "actor": record.verified_by,
+                "actor_role": AuditEvent.ActorRole.REVIEWER
+                if record.verified_by
+                else AuditEvent.ActorRole.SYSTEM,
+                "loan_id": record.loan_id,
+                "batch_id": getattr(record.raw_record, "batch_id", None),
+                "payload": {
+                    "verified_record_id": record.id,
+                    "loan_id": record.loan_id,
+                    "record_hash": record.record_hash,
+                    "validation_status": record.validation_status,
+                    "reviewer_decision": record.reviewer_decision,
+                },
+            }
+            for record in created_records
+        ]
+        AuditEvent.log_events_bulk(audit_events, batch_size=batch_size)
+
         return created_records
