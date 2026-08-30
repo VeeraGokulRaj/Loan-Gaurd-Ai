@@ -207,6 +207,118 @@ class TestProcessSingleFile:
         assert event.payload["total_rows"] == 1
         assert event.payload["status"] == "Ingested"
 
+    # ── LOAN_RECORD_IMPORTED audit events ──
+
+    def test_creates_loan_record_imported_audit_event_per_row(self):
+        """Each successfully created raw record should produce a LOAN_RECORD_IMPORTED audit event."""
+        rows = [
+            LOAN_TAPE_ROW,
+            LOAN_TAPE_ROW.replace("LG-0001", "LG-0002"),
+            LOAN_TAPE_ROW.replace("LG-0001", "LG-0003"),
+        ]
+        file_obj = IngestionFactory.loan_tape_file(rows=rows)
+        result = IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        events = AuditEvent.objects.filter(
+            event_type="LOAN_RECORD_IMPORTED", batch_id=result["batch_id"]
+        )
+        assert events.count() == 3
+
+    def test_loan_record_imported_audit_event_fields(self):
+        """The LOAN_RECORD_IMPORTED event should carry correct actor, role, loan_id and payload."""
+        file_obj = IngestionFactory.loan_tape_file()
+        result = IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        event = AuditEvent.objects.get(event_type="LOAN_RECORD_IMPORTED")
+        raw = RawLoanRecord.objects.get(batch__id=result["batch_id"])
+
+        assert event.actor == self.user
+        assert event.actor_role == AuditEvent.ActorRole.DATA_OPERATOR
+        assert event.loan_id == "LG-0001"
+        assert event.batch_id == result["batch_id"]
+        assert event.payload["raw_record_id"] == raw.id
+        assert event.payload["row_number"] == raw.row_number
+        assert event.payload["source_system"] == "LOAN_TAPE"
+
+    def test_loan_record_imported_uses_row_source_system(self):
+        """The audit payload source_system should reflect the overridden row source_system."""
+        row = LOAN_TAPE_ROW.replace("LOAN_TAPE", "CUSTOM_SOURCE")
+        file_obj = IngestionFactory.loan_tape_file(rows=[row])
+        IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        event = AuditEvent.objects.get(event_type="LOAN_RECORD_IMPORTED")
+        assert event.payload["source_system"] == "CUSTOM_SOURCE"
+        assert event.loan_id == "LG-0001"
+
+    def test_no_loan_record_imported_events_on_all_failed(self):
+        """When every row fails, no raw records and thus no LOAN_RECORD_IMPORTED events are created."""
+        file_obj = IngestionFactory.loan_tape_file(rows=[",,,,,,,", ",,,,,,,"])
+        IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        assert AuditEvent.objects.filter(event_type="LOAN_RECORD_IMPORTED").count() == 0
+        assert RawLoanRecord.objects.count() == 0
+
+    def test_no_loan_record_imported_events_on_empty_file(self):
+        """An empty file with zero raw records should produce no LOAN_RECORD_IMPORTED events."""
+        file_obj = IngestionFactory.make_file("", name="empty.csv")
+        IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        assert AuditEvent.objects.filter(event_type="LOAN_RECORD_IMPORTED").count() == 0
+
+    def test_partial_success_creates_events_only_for_valid_rows(self):
+        """Only successfully parsed rows should receive a LOAN_RECORD_IMPORTED audit event."""
+        rows = [
+            LOAN_TAPE_ROW,
+            ",,,,,,,",
+            LOAN_TAPE_ROW.replace("LG-0001", "LG-0002"),
+        ]
+        file_obj = IngestionFactory.loan_tape_file(rows=rows)
+        IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        events = AuditEvent.objects.filter(event_type="LOAN_RECORD_IMPORTED")
+        assert events.count() == 2
+        assert set(events.values_list("loan_id", flat=True)) == {"LG-0001", "LG-0002"}
+
+    def test_loan_record_imported_events_have_nonempty_hashes(self):
+        """Bulk-created LOAN_RECORD_IMPORTED events should carry non-empty event hashes."""
+        rows = [
+            LOAN_TAPE_ROW,
+            LOAN_TAPE_ROW.replace("LG-0001", "LG-0002"),
+        ]
+        file_obj = IngestionFactory.loan_tape_file(rows=rows)
+        IngestionService.process_single_file(
+            file_obj, self.user, UploadBatch.SourceType.LOAN_TAPE, "LOAN_TAPE"
+        )
+        events = AuditEvent.objects.filter(event_type="LOAN_RECORD_IMPORTED")
+        for event in events:
+            assert event.event_hash
+            assert event.prev_hash
+            assert len(event.event_hash) == 64
+
+    def test_servicer_and_manifest_rows_also_log_import_events(self):
+        """Servicer and Document Manifest ingestion should log LOAN_RECORD_IMPORTED events for valid rows."""
+        IngestionService.process_single_file(
+            IngestionFactory.servicer_update_file(),
+            self.user,
+            UploadBatch.SourceType.SERVICER_UPDATE,
+            "SERVICER_UPDATE",
+        )
+        IngestionService.process_single_file(
+            IngestionFactory.document_manifest_file(),
+            self.user,
+            UploadBatch.SourceType.DOCUMENT_MANIFEST,
+            "DOCUMENT_MANIFEST",
+        )
+        events = AuditEvent.objects.filter(event_type="LOAN_RECORD_IMPORTED")
+        # 1 servicer row + 1 manifest row
+        assert events.count() == 2
+
     def test_empty_file_marks_batch_failed(self):
         """An empty/zero-byte file should create a FAILED batch with one failed row."""
         file_obj = IngestionFactory.make_file("", name="empty.csv")

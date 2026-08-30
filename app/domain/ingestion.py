@@ -249,7 +249,25 @@ class IngestionService:
 
         # 3. Bulk create DB objects for high performance
         if raw_records_to_create:
-            RawLoanRecord.objects.bulk_create(raw_records_to_create, batch_size=1000)
+            created_raw_records = RawLoanRecord.objects.bulk_create(
+                raw_records_to_create, batch_size=1000
+            )
+            audit_events_data = [
+                {
+                    "event_type": "LOAN_RECORD_IMPORTED",
+                    "actor": user,
+                    "actor_role": AuditEvent.ActorRole.DATA_OPERATOR,
+                    "loan_id": rec.loan_id,
+                    "batch_id": batch.id,
+                    "payload": {
+                        "raw_record_id": rec.id,
+                        "row_number": rec.row_number,
+                        "source_system": rec.source_system,
+                    },
+                }
+                for rec in created_raw_records
+            ]
+            AuditEvent.log_events_bulk(audit_events_data, batch_size=500)
 
         if failed_rows_to_create:
             FailedImportRow.objects.bulk_create(failed_rows_to_create, batch_size=1000)

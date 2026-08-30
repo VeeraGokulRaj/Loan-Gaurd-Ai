@@ -724,3 +724,76 @@ class TestExportVerifiedLoansView:
     def test_json_empty_database_returns_empty_array(self):
         response = self._auth_client().get(self.url, {"format": "json"})
         assert json.loads(response.content) == []
+
+    # ── VERIFIED_RECORD_EXPORTED audit events ──
+
+    def test_csv_export_logs_verified_record_exported_event(self):
+        """CSV export should log a VERIFIED_RECORD_EXPORTED audit event per returned record."""
+        _verified("LG-EXA1")
+        _verified("LG-EXA2")
+        self._auth_client().get(self.url)
+        events = AuditEvent.objects.filter(event_type="VERIFIED_RECORD_EXPORTED")
+        assert events.count() == 2
+
+    def test_json_export_logs_verified_record_exported_event(self):
+        """JSON export should log a VERIFIED_RECORD_EXPORTED audit event per returned record."""
+        _verified("LG-EXA3")
+        self._auth_client().get(self.url, {"format": "json"})
+        events = AuditEvent.objects.filter(event_type="VERIFIED_RECORD_EXPORTED")
+        assert events.count() == 1
+
+    def test_verified_record_exported_event_fields(self):
+        """The VERIFIED_RECORD_EXPORTED event should carry correct actor, role, loan_id, batch and payload."""
+        batch = _consumer_batch()
+        record = _verified("LG-EXA4", batch=batch)
+        self._auth_client().get(self.url)
+        event = AuditEvent.objects.get(event_type="VERIFIED_RECORD_EXPORTED")
+
+        assert event.actor == self.consumer
+        assert event.actor_role == AuditEvent.ActorRole.DATA_CONSUMER
+        assert event.loan_id == "LG-EXA4"
+        assert event.batch_id == batch.id
+        assert event.payload["verified_record_id"] == record.id
+        assert event.payload["format"] == "csv"
+        assert event.payload["record_hash"] == record.record_hash
+        assert event.payload["validation_status"] == "Passed Validation Cleanly"
+
+    def test_verified_record_exported_event_format_json(self):
+        """A JSON export should record 'json' in the audit payload format field."""
+        _verified("LG-EXA5")
+        self._auth_client().get(self.url, {"format": "json"})
+        event = AuditEvent.objects.get(event_type="VERIFIED_RECORD_EXPORTED")
+        assert event.payload["format"] == "json"
+
+    def test_verified_record_exported_event_batch_id_from_raw_record(self):
+        """The event batch_id should derive from the record's raw record batch."""
+        batch = _consumer_batch()
+        record = _verified("LG-EXA6", batch=batch)
+        self._auth_client().get(self.url)
+        event = AuditEvent.objects.get(event_type="VERIFIED_RECORD_EXPORTED")
+        assert event.batch_id == record.raw_record.batch_id == batch.id
+
+    def test_verified_record_exported_event_validation_status_display(self):
+        """The event validation_status should be the human-readable display value."""
+        _verified(
+            "LG-EXA7", validation_status=VerifiedLoanRecord.ValidationStatus.RESOLVED_EXCEPTION
+        )
+        self._auth_client().get(self.url)
+        event = AuditEvent.objects.get(event_type="VERIFIED_RECORD_EXPORTED")
+        assert event.payload["validation_status"] == "Resolved Exception"
+
+    def test_export_empty_database_logs_no_events(self):
+        """Exporting an empty database should create zero VERIFIED_RECORD_EXPORTED events."""
+        self._auth_client().get(self.url)
+        assert AuditEvent.objects.filter(event_type="VERIFIED_RECORD_EXPORTED").count() == 0
+
+    def test_export_with_filter_logs_only_matching_events(self):
+        """Export audit events should be logged only for records matched by the current filters."""
+        _verified("LG-EXA8", validation_status=VerifiedLoanRecord.ValidationStatus.PASSED_CLEAN)
+        _verified(
+            "LG-EXA9", validation_status=VerifiedLoanRecord.ValidationStatus.RESOLVED_EXCEPTION
+        )
+        self._auth_client().get(self.url, {"validation_status": "RESOLVED_EXCEPTION"})
+        events = AuditEvent.objects.filter(event_type="VERIFIED_RECORD_EXPORTED")
+        assert events.count() == 1
+        assert events.get().loan_id == "LG-EXA9"

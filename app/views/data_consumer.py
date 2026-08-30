@@ -209,7 +209,27 @@ class ExportVerifiedLoansView(LoginRequiredMixin, AnyPermissionRequiredMixin, Vi
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         export_format = request.GET.get("format", "csv").lower()
         filterset = VerifiedLoanRecordFilter(request.GET, queryset=VerifiedLoanRecord.objects.all())
-        records = filterset.qs.select_related("raw_record", "verified_by")
+        records = list(filterset.qs.select_related("raw_record", "verified_by"))
+
+        # Bulk log audit trail events for all exported verified record rows
+        audit_events = [
+            {
+                "event_type": "VERIFIED_RECORD_EXPORTED",
+                "actor": request.user,
+                "actor_role": AuditEvent.ActorRole.DATA_CONSUMER,
+                "loan_id": rec.loan_id,
+                "batch_id": getattr(rec.raw_record, "batch_id", None),
+                "payload": {
+                    "verified_record_id": rec.id,
+                    "format": export_format,
+                    "record_hash": rec.record_hash,
+                    "validation_status": rec.get_validation_status_display(),
+                },
+            }
+            for rec in records
+        ]
+        if audit_events:
+            AuditEvent.log_events_bulk(audit_events, batch_size=500)
 
         if export_format == "json":
             data = [
