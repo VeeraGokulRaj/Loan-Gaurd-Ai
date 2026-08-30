@@ -374,3 +374,100 @@ class TestVerifiedLoanRecordModel:
     def test_bulk_create_without_raw_record_raises(self):
         with pytest.raises(IntegrityError):
             VerifiedLoanRecord.create_records_bulk([{"canonical_data": {"loan_id": "LG-NULL"}}])
+
+
+@pytest.mark.django_db
+class TestCreateRecordsBulkAuditLogging:
+    """Tests for the AuditEvent.log_events_bulk integration inside VerifiedLoanRecord.create_records_bulk."""
+
+    def _bulk(self, records_data, **kwargs):
+        return VerifiedLoanRecord.create_records_bulk(records_data, **kwargs)
+
+    def test_bulk_creates_one_audit_event_per_record(self):
+        raw1 = VerifiedLoanRecordFactory.create_raw_record(row_number=1)
+        raw2 = VerifiedLoanRecordFactory.create_raw_record(row_number=2)
+        self._bulk(
+            [
+                {"raw_record": raw1, "canonical_data": {"loan_id": "LG-AB1"}},
+                {"raw_record": raw2, "canonical_data": {"loan_id": "LG-AB2"}},
+            ]
+        )
+        events = AuditEvent.objects.filter(event_type="VERIFIED_RECORD_CREATED")
+        assert events.count() == 2
+
+    def test_bulk_event_system_role_metadata_and_payload(self):
+        raw = VerifiedLoanRecordFactory.create_raw_record(row_number=1)
+        self._bulk([{"raw_record": raw, "canonical_data": {"loan_id": "LG-ABM1"}}])
+        rec = VerifiedLoanRecord.objects.get(loan_id="LG-ABM1")
+        event = AuditEvent.objects.get(loan_id="LG-ABM1")
+        assert event.event_type == "VERIFIED_RECORD_CREATED"
+        assert event.actor is None
+        assert event.actor_role == AuditEvent.ActorRole.SYSTEM
+        assert event.batch_id == raw.batch_id
+        assert event.payload["verified_record_id"] == rec.id
+        assert event.payload["loan_id"] == "LG-ABM1"
+        assert event.payload["record_hash"] == rec.record_hash
+        assert (
+            event.payload["validation_status"] == VerifiedLoanRecord.ValidationStatus.PASSED_CLEAN
+        )
+        assert event.payload["reviewer_decision"] == VerifiedLoanRecord.ReviewerDecision.AUTO_PASSED
+
+    def test_bulk_event_reviewer_role_when_verified_by_present(self):
+        reviewer = UserFactory.create_reviewer()
+        raw = VerifiedLoanRecordFactory.create_raw_record(row_number=1)
+        self._bulk(
+            [
+                {
+                    "raw_record": raw,
+                    "canonical_data": {"loan_id": "LG-ABR1"},
+                    "verified_by": reviewer,
+                }
+            ]
+        )
+        event = AuditEvent.objects.get(loan_id="LG-ABR1")
+        assert event.actor == reviewer
+        assert event.actor_role == AuditEvent.ActorRole.REVIEWER
+
+    def test_bulk_audit_events_form_an_unbroken_hash_chain(self):
+        raws = [VerifiedLoanRecordFactory.create_raw_record(row_number=i) for i in range(1, 4)]
+        self._bulk(
+            [
+                {"raw_record": raw, "canonical_data": {"loan_id": f"LG-ABC{i}"}}
+                for i, raw in enumerate(raws, start=1)
+            ]
+        )
+        events = list(AuditEvent.objects.filter(event_type="VERIFIED_RECORD_CREATED"))
+        assert len(events) == 3
+        by_prev_hash = {event.prev_hash: event for event in events}
+        first = by_prev_hash.get("0" * 64)
+        assert first is not None
+        chain = []
+        cursor = first
+        while cursor is not None and len(chain) <= len(events):
+            chain.append(cursor)
+            cursor = by_prev_hash.get(cursor.event_hash)
+        assert len(chain) == len(events)
+        assert {e.id for e in chain} == {e.id for e in events}
+
+    def test_bulk_events_link_into_existing_audit_trail(self):
+        earlier = AuditEvent.objects.create(
+            event_type="EARLIER",
+            actor_role=AuditEvent.ActorRole.SYSTEM,
+            event_hash="e" * 64,
+        )
+        raw = VerifiedLoanRecordFactory.create_raw_record(row_number=1)
+        self._bulk([{"raw_record": raw, "canonical_data": {"loan_id": "LG-ABL1"}}])
+        event = AuditEvent.objects.get(loan_id="LG-ABL1")
+        assert event.prev_hash == earlier.event_hash
+
+    def test_bulk_event_hashes_match_record_integrity(self):
+        raw = VerifiedLoanRecordFactory.create_raw_record(row_number=1)
+        self._bulk([{"raw_record": raw, "canonical_data": {"loan_id": "LG-ABI1", "amount": 100.0}}])
+        rec = VerifiedLoanRecord.objects.get(loan_id="LG-ABI1")
+        event = AuditEvent.objects.get(loan_id="LG-ABI1")
+        assert rec.verify_integrity() is True
+        assert event.payload["record_hash"] == rec.record_hash
+
+    def test_empty_bulk_logs_no_audit_events(self):
+        assert self._bulk([]) == []
+        assert AuditEvent.objects.filter(event_type="VERIFIED_RECORD_CREATED").count() == 0
