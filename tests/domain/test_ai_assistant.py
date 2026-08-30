@@ -744,15 +744,29 @@ class TestLLMProviderRegistry:
     """Test cases for LLMProviderRegistry provider resolution."""
 
     def test_get_provider_by_key(self):
-        provider = LLMProviderRegistry.get_provider("opencode_zen")
+        # Mock is_configured so resolution does not depend on runtime API keys.
+        with mock.patch.object(
+            OpenCodeZenProvider, "is_configured", new_callable=mock.PropertyMock, return_value=True
+        ):
+            provider = LLMProviderRegistry.get_provider("opencode_zen")
         assert isinstance(provider, OpenCodeZenProvider)
 
     def test_get_provider_by_id(self):
-        provider = LLMProviderRegistry.get_provider(AIRecommendation.ModelProvider.OPENCODE_ZEN)
+        with mock.patch.object(
+            OpenCodeZenProvider, "is_configured", new_callable=mock.PropertyMock, return_value=True
+        ):
+            provider = LLMProviderRegistry.get_provider(AIRecommendation.ModelProvider.OPENCODE_ZEN)
         assert isinstance(provider, OpenCodeZenProvider)
 
     def test_get_provider_by_int_id(self):
-        provider = LLMProviderRegistry.get_provider(AIRecommendation.ModelProvider.GEMINI)
+        # get_provider only returns the requested class if it is configured
+        # (has a real API key). Mock is_configured so the test is deterministic
+        # regardless of whether GEMINI_API_KEY is set in the environment (local
+        # vs CI differ).
+        with mock.patch.object(
+            GeminiProvider, "is_configured", new_callable=mock.PropertyMock, return_value=True
+        ):
+            provider = LLMProviderRegistry.get_provider(AIRecommendation.ModelProvider.GEMINI)
         assert isinstance(provider, GeminiProvider)
 
     def test_get_provider_unknown_choice_falls_back(self):
