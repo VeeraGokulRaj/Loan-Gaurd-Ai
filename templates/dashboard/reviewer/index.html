@@ -68,5 +68,15 @@
             activeHeaderNav.classList.remove('text-slate-400', 'border-transparent');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        if (tabParam === 'recent' || tabParam === 'recentDecisionsTab') {
+            switchTab('recentDecisionsTab');
+        } else if (tabParam === 'exceptions' || tabParam === 'exceptionsTab') {
+            switchTab('exceptionsTab');
+        }
+    });
     </script>
 {% endblock content %}

@@ -114,7 +114,11 @@
                                 </td>
                                 <td class="px-4 py-3.5 text-xs">
                                     <div class="font-semibold text-slate-200">
-                                        {{ exc.resolved_by.first_name|default:exc.resolved_by.username|default:"System" }}
+                                        {% if exc.resolved_by %}
+                                            {{ exc.resolved_by.first_name|default:exc.resolved_by.username }}
+                                        {% else %}
+                                            System
+                                        {% endif %}
                                     </div>
                                     {% if exc.resolved_by %}<div class="text-[10px] text-slate-500">@{{ exc.resolved_by.username }}</div>{% endif %}
                                 </td>

@@ -52,6 +52,7 @@
         <div id="modal-container"></div>
         <!-- Preline UI JS -->
         <script src="https://cdn.jsdelivr.net/npm/preline/dist/preline.js" defer></script>
+        <!-- Global Popover & Modal Scripts -->
         <script>
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' || e.keyCode === 27) {
@@ -59,6 +60,56 @@
                     if (modal && modal.children.length > 0) {
                         modal.innerHTML = '';
                     }
+                    document.querySelectorAll('.info-popover-menu').forEach(menu => {
+                        menu.classList.add('hidden');
+                    });
+                }
+            });
+
+            window.toggleLoanInfoPopover = function(event, menuId) {
+                if (event) {
+                    event.stopPropagation();
+                    event.preventDefault();
+                }
+                const targetMenu = document.getElementById(menuId);
+                if (!targetMenu) return;
+
+                const isHidden = targetMenu.classList.contains('hidden');
+                document.querySelectorAll('.info-popover-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+
+                if (isHidden) {
+                    targetMenu.classList.remove('hidden');
+                }
+            };
+
+            window.copyPopoverText = function(elementId, btnElement) {
+                const targetElem = document.getElementById(elementId);
+                if (!targetElem) return;
+                const textToCopy = targetElem.innerText.trim();
+                if (!textToCopy || textToCopy === 'N/A') return;
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    const defaultIcon = btnElement.querySelector('.copy-default');
+                    const successIcon = btnElement.querySelector('.copy-success');
+                    if (defaultIcon) defaultIcon.classList.add('hidden');
+                    if (successIcon) successIcon.classList.remove('hidden');
+
+                    setTimeout(() => {
+                        if (defaultIcon) defaultIcon.classList.remove('hidden');
+                        if (successIcon) successIcon.classList.add('hidden');
+                    }, 1500);
+                }).catch(err => {
+                    console.error('Clipboard copy failed:', err);
+                });
+            };
+
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.info-popover-container')) {
+                    document.querySelectorAll('.info-popover-menu').forEach(menu => {
+                        menu.classList.add('hidden');
+                    });
                 }
             });
         </script>
