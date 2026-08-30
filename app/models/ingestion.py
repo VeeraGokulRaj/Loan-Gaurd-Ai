@@ -130,6 +130,20 @@ class RawLoanRecord(BaseModel):
         help_text=_("Source system or file discriminator for audit lineage tracking."),
     )
 
+    @property
+    def loan_id(self) -> str:
+        """Returns the primary Loan ID identifier from raw_data if available."""
+        if self.raw_data and isinstance(self.raw_data, dict):
+            return str(self.raw_data.get("loan_id", "") or "").strip()
+        return ""
+
+    @property
+    def borrower_id(self) -> str:
+        """Returns the primary Borrower ID identifier from raw_data if available."""
+        if self.raw_data and isinstance(self.raw_data, dict):
+            return str(self.raw_data.get("borrower_id", "") or "").strip()
+        return ""
+
     class Meta:
         verbose_name = _("Raw Loan Record")
         verbose_name_plural = _("Raw Loan Records")

@@ -1189,4 +1189,9 @@ class ValidationEngine:
             ]
             AuditEvent.log_events_bulk(audit_events_data, batch_size=500)
 
+        # Auto-create VerifiedLoanRecords for records in batch that passed validation cleanly with 0 exceptions
+        from app.domain.verified_service import process_clean_records_for_batch
+
+        process_clean_records_for_batch(batch)
+
         return exceptions_to_create
