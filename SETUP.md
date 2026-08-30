@@ -78,12 +78,12 @@ Copy-Item .env.example .env
 
 | Environment Variable | Default / Example Value | Description & Purpose |
 | :--- | :--- | :--- |
-| `SECRET_KEY` | `21a728a$7s8v5%g^*isfvs-jl&dewix5@tm0@tq0+j4_yl-7` | Django secret key for cryptographic signing. |
+| `SECRET_KEY` | `django-insecure-loanguard-ai-development-key` | Django secret key for cryptographic signing. |
 | `DJANGO_DEBUG` | `True` | Debug flag (`True` for local dev tools & static files). |
 | `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Hostnames allowed to serve requests. |
 | `SITE_URL` | `http://localhost:8000` | Application base URL. |
-| `GEMINI_API_KEY` | `AQ.Ab8RN6KinFcdESnbdAahJu4XakRbfn3lDPtA-JMSp3QoXZ9p8w` | Google Gemini SDK API Key. |
-| `ZEN_API_KEY` | `sk-BhPstlXVyNG2we5hLBMf9NBHmNxdJwZ5msRS411QzmXMJUUEtz2sqMS5ckYQnLw1` | OpenCode Zen AI API Key. |
+| `GEMINI_API_KEY` | `YOUR_GEMINI_API_KEY_HERE` | Google Gemini SDK API Key. |
+| `ZEN_API_KEY` | `YOUR_ZEN_API_KEY_HERE` | OpenCode Zen AI API Key. |
 | `ZEN_BASE_URL` | `https://opencode.ai/zen/v1` | OpenCode Zen API base endpoint. |
 | `ZEN_MODEL_NAME` | `ling-3.0-flash-fin-free` | Active free-tier LLM model name. |
 

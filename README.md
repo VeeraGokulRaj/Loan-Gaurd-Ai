@@ -1,6 +1,6 @@
 # LoanGuard AI — Loan Data Verification Copilot
 
-> 📖 **Technical Installation & Operating Guide**: For step-by-step environment setup, `.env` environment variables configuration, pre-seeded user credentials, database migrations, management commands, and running unit tests, please refer directly to **[SETUP.md](SETUP.md)**.
+> 📖 **Technical Installation & Operating Guide**: For step-by-step environment setup, pre-seeded user credentials, database migrations, management commands, and running unit tests, please refer directly to **[SETUP.md](SETUP.md)**.
 
 ---
 
