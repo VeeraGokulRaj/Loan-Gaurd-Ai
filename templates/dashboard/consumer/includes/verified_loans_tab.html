@@ -1,0 +1,125 @@
+{% load humanize %}
+<!-- VERIFIED LOAN RECORDS TABLE WITH HTMX SEARCH, FILTERS & PAGINATION -->
+<div id="verifiedLoansTab" class="tab-content block">
+    <div id="verifiedLoansTableContainer"
+         class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-xl space-y-4">
+        <!-- Search & Filter Controls Header Form -->
+        <form hx-get="{% url 'verified_loan_list' %}"
+              hx-target="#verifiedLoansTab"
+              hx-swap="outerHTML"
+              hx-trigger="submit, change from:select, keyup changed delay:300ms from:#consumerSearchInput"
+              class="space-y-3 border-b border-slate-800 pb-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                            </path>
+                        </svg>
+                        Verified Loan Record Dataset
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-0.5">
+                        Canonical secondary-market dataset with cryptographic SHA-256 integrity verification.
+                    </p>
+                </div>
+                {% if filter.data.q or filter.data.validation_status or filter.data.reviewer_decision %}
+                    <a href="{% url 'verified_loan_list' %}"
+                       class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Clear Filters
+                    </a>
+                {% endif %}
+            </div>
+            <!-- Search & Filter Controls Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                <!-- Reusable Searchbar Widget Component with HTMX Loading Spinner -->
+                <div class="sm:col-span-6">
+                    {% include "includes/searchbar.html" with id="consumerSearchInput" name="q" value=filter.data.q placeholder="Search Loan ID, Borrower ID, Hash..." accent_color="emerald" extra_classes="w-full" %}
+                </div>
+                <!-- Reusable Validation Status Filter Dropdown Widget -->
+                <div class="sm:col-span-3">
+                    {% include "includes/dropdown.html" with name="validation_status" id="validationStatusFilter" options=validation_status_choices selected_value=filter.data.validation_status default_label="All Validation Outcomes" accent_color="emerald" extra_classes="w-full" %}
+                </div>
+                <!-- Reusable Reviewer Decision Filter Dropdown Widget -->
+                <div class="sm:col-span-3">
+                    {% include "includes/dropdown.html" with name="reviewer_decision" id="reviewerDecisionFilter" options=reviewer_decision_choices selected_value=filter.data.reviewer_decision default_label="All Reviewer Decisions" accent_color="emerald" extra_classes="w-full" %}
+                </div>
+            </div>
+        </form>
+        <!-- Verified Loans Table -->
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+                <thead class="text-xs uppercase bg-slate-950/80 text-slate-400 border-b border-slate-800">
+                    <tr>
+                        <th class="px-4 py-3 font-semibold">Loan ID</th>
+                        <th class="px-4 py-3 font-semibold">Borrower ID</th>
+                        <th class="px-4 py-3 font-semibold">Validation Status</th>
+                        <th class="px-4 py-3 font-semibold">Reviewer Decision</th>
+                        <th class="px-4 py-3 font-semibold">Verified At</th>
+                        <th class="px-4 py-3 font-semibold">SHA-256 Fingerprint</th>
+                        <th class="px-4 py-3 font-semibold text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60">
+                    {% if verified_records %}
+                        {% for record in verified_records %}
+                            <tr class="hover:bg-slate-800/40 transition-colors">
+                                <td class="px-4 py-3.5 font-mono text-xs font-bold text-emerald-400">
+                                    <a href="{% url 'verified_loan_detail' record.id %}"
+                                       class="hover:underline">{{ record.loan_id }}</a>
+                                </td>
+                                <td class="px-4 py-3.5 font-mono text-xs text-slate-400">{{ record.borrower_id|default:"-" }}</td>
+                                <td class="px-4 py-3.5">
+                                    {% if record.validation_status == 'PASSED_CLEAN' %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                            PASSED CLEAN
+                                        </span>
+                                    {% else %}
+                                        <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-teal-500/10 text-teal-400 border border-teal-500/20">
+                                            RESOLVED EXCEPTION
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3.5">
+                                    <span class="px-2.5 py-1 text-[10px] font-semibold rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                                        {{ record.get_reviewer_decision_display }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 text-xs text-slate-400">{{ record.verified_at|date:"Y-m-d H:i" }}</td>
+                                <td class="px-4 py-3.5 font-mono text-[10px]">
+                                    <span class="px-2 py-0.5 rounded bg-slate-950 border border-slate-800 text-emerald-400/90"
+                                          title="{{ record.record_hash }}">
+                                        {{ record.record_hash|slice:":16" }}...
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 text-right">{% include "includes/action_dropdown.html" with record=record %}</td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="px-4 py-12 text-center text-slate-500 text-sm">
+                                <div class="w-12 h-12 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <span>No verified loan records found matching your filter criteria.</span>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <!-- Reusable HTMX Pagination Widget Component with Page Jump Input & HTMX Loading Indicator -->
+        {% include "includes/pagination.html" with page_obj=page_obj target_id="#verifiedLoansTab" url_name="verified_loan_list" search_query=filter.data.q param1_name="validation_status" param1_value=filter.data.validation_status param2_name="reviewer_decision" param2_value=filter.data.reviewer_decision accent_color="emerald" item_label="records" %}
+    </div>
+</div>

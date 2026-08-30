@@ -9,6 +9,14 @@ from django.urls import include, path
 
 from app.views.auth import LoginView, LogoutView
 from app.views.dashboard import dashboard_view
+from app.views.data_consumer import (
+    DataConsumerDashboardView,
+    ExportVerifiedLoansView,
+    VerifiedLoanAuditTrailView,
+    VerifiedLoanDetailView,
+    VerifiedLoanHistoryView,
+    VerifiedLoanListView,
+)
 from app.views.data_operator import (
     BatchListView,
     ExecuteValidationView,
@@ -79,6 +87,37 @@ urlpatterns = [
         "reviewer/ai/<int:pk>/decision/",
         ProcessAIRecommendationView.as_view(),
         name="process_ai_recommendation",
+    ),
+    # --- Data Consumer Workspace Routes ---
+    path(
+        "consumer/",
+        DataConsumerDashboardView.as_view(),
+        name="consumer_dashboard",
+    ),
+    path(
+        "consumer/verified-loans/",
+        VerifiedLoanListView.as_view(),
+        name="verified_loan_list",
+    ),
+    path(
+        "consumer/verified-loans/<int:pk>/detail/",
+        VerifiedLoanDetailView.as_view(),
+        name="verified_loan_detail",
+    ),
+    path(
+        "consumer/verified-loans/<int:pk>/history/",
+        VerifiedLoanHistoryView.as_view(),
+        name="verified_loan_history",
+    ),
+    path(
+        "consumer/verified-loans/<int:pk>/audit/",
+        VerifiedLoanAuditTrailView.as_view(),
+        name="verified_loan_audit",
+    ),
+    path(
+        "consumer/verified-loans/export/",
+        ExportVerifiedLoansView.as_view(),
+        name="verified_loan_export",
     ),
 ]
 

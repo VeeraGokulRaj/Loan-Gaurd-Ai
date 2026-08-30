@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Audit Trail Ledger - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Include Header Component -->
+        {% include "dashboard/consumer/header.html" %}
+        <!-- Main Workspace Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Messages Banner -->
+            {% include "includes/messages.html" %}
+            <!-- Top Header -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'verified_loan_detail' pk=verified_record.pk %}"
+                       class="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-white tracking-tight">
+                            Audit Trail Ledger: Loan #<span class="font-mono text-emerald-400">{{ verified_record.loan_id }}</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 mt-0.5">Immutable, SHA-256 hash-chained event audit log ledger</p>
+                    </div>
+                </div>
+                <a href="{% url 'verified_loan_history' pk=verified_record.pk %}"
+                   class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-teal-300 transition-colors inline-flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                        </path>
+                    </svg>
+                    Verification Lineage
+                </a>
+            </div>
+            <!-- Audit Trail Timeline Container -->
+            <div class="rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl overflow-hidden backdrop-blur-md">
+                <div class="px-6 py-4 bg-slate-800/60 border-b border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Immutable Event Ledger</h3>
+                        <p class="text-xs text-slate-400">Cryptographically linked audit event stream</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                        {{ audit_events|length }} Audit Event{{ audit_events|pluralize }}
+                    </span>
+                </div>
+                <div class="p-6">
+                    <div class="relative border-l-2 border-slate-800 ml-4 space-y-6">
+                        {% for event in audit_events %}
+                            <div class="relative pl-6">
+                                <!-- Timeline Node Circle -->
+                                <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-slate-950 border-2 border-emerald-500 flex items-center justify-center">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                                </div>
+                                <!-- Event Content Box -->
+                                <div class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3 shadow-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span class="px-2.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                                                {{ event.event_type }}
+                                            </span>
+                                            <span class="text-xs font-medium text-slate-300">
+                                                By {{ event.actor.username|default:"System" }} ({{ event.get_actor_role_display }})
+                                            </span>
+                                        </div>
+                                        <span class="text-[11px] text-slate-400 font-mono">{{ event.timestamp|date:"Y-m-d H:i:s" }}</span>
+                                    </div>
+                                    <!-- Event Payload -->
+                                    <div class="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono overflow-x-auto">
+                                        <pre class="text-[11px] leading-relaxed text-slate-300">{{ event.payload|pprint }}</pre>
+                                    </div>
+                                    <!-- Hash Chain Proof -->
+                                    <div class="text-[10px] font-mono text-slate-400 grid grid-cols-1 md:grid-cols-2 gap-2 pt-2 border-t border-slate-900">
+                                        <div>
+                                            <strong class="text-slate-500">Prev Hash:</strong> {{ event.prev_hash|slice:":24" }}...
+                                        </div>
+                                        <div>
+                                            <strong class="text-slate-500">Event Hash:</strong> {{ event.event_hash|slice:":24" }}...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="text-center py-8 text-slate-400 text-xs">No audit events logged for this loan record yet.</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div>LoanGuard AI © 2026. Data Consumer Workspace.</div>
+            </div>
+        </footer>
+    </div>
+{% endblock content %}
