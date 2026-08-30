@@ -29,6 +29,7 @@ from app.models.ingestion import (
     UploadBatch,
 )
 from app.models.validation import LoanException, ValidationRule, ValidationSeverity
+from app.models.verified import VerifiedLoanRecord
 
 
 @admin.register(UploadBatch)
@@ -708,3 +709,90 @@ class AIRecommendationAdmin(admin.ModelAdmin):
         )
 
     get_status_badge.short_description = _("Status")
+
+
+@admin.register(VerifiedLoanRecord)
+class VerifiedLoanRecordAdmin(admin.ModelAdmin):
+    """Admin configuration for VerifiedLoanRecord with query optimizations & autocomplete fields."""
+
+    list_display = (
+        "id",
+        "loan_id",
+        "borrower_id",
+        "get_validation_status_badge",
+        "get_reviewer_decision_badge",
+        "get_integrity_badge",
+        "verified_by",
+        "verified_at",
+    )
+    list_filter = (
+        "validation_status",
+        "reviewer_decision",
+        "verified_at",
+    )
+    search_fields = (
+        "loan_id",
+        "borrower_id",
+        "record_hash",
+        "raw_record__loan_id",
+    )
+    ordering = ("-verified_at", "-id")
+    readonly_fields = (
+        "record_hash",
+        "verified_at",
+    )
+    autocomplete_fields = (
+        "raw_record",
+        "verified_by",
+    )
+
+    def get_queryset(self, request):
+        """Optimizes QuerySet using with_lineage() manager helper for zero N+1 queries."""
+        return VerifiedLoanRecord.objects.with_lineage()
+
+    def get_validation_status_badge(self, obj: VerifiedLoanRecord) -> str:
+        """Returns badge for Validation Status."""
+        colors = {
+            VerifiedLoanRecord.ValidationStatus.PASSED_CLEAN: "#059669",  # Emerald
+            VerifiedLoanRecord.ValidationStatus.RESOLVED_EXCEPTION: "#0284c7",  # Sky Blue
+        }
+        color = colors.get(obj.validation_status, "#6b7280")
+        label = obj.get_validation_status_display() if obj.validation_status else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_validation_status_badge.short_description = _("Validation Outcome")
+
+    def get_reviewer_decision_badge(self, obj: VerifiedLoanRecord) -> str:
+        """Returns badge for Reviewer Decision."""
+        colors = {
+            VerifiedLoanRecord.ReviewerDecision.AUTO_PASSED: "#6b7280",  # Gray
+            VerifiedLoanRecord.ReviewerDecision.APPROVED: "#059669",  # Emerald
+            VerifiedLoanRecord.ReviewerDecision.EDITED: "#d97706",  # Amber
+            VerifiedLoanRecord.ReviewerDecision.AI_ACCEPTED: "#7c3aed",  # Purple
+            VerifiedLoanRecord.ReviewerDecision.AI_EDITED: "#2563eb",  # Blue
+        }
+        color = colors.get(obj.reviewer_decision, "#6b7280")
+        label = obj.get_reviewer_decision_display() if obj.reviewer_decision else "Unknown"
+        return format_html(
+            '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">{}</span>',
+            color,
+            label,
+        )
+
+    get_reviewer_decision_badge.short_description = _("Reviewer Decision")
+
+    def get_integrity_badge(self, obj: VerifiedLoanRecord) -> str:
+        """Returns badge indicating SHA-256 integrity check status."""
+        if obj.verify_integrity():
+            return format_html(
+                '<span style="background-color: #059669; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">✓ VALID HASH</span>'
+            )
+        return format_html(
+            '<span style="background-color: #dc2626; color: white; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">⚠ TAMPERED</span>'
+        )
+
+    get_integrity_badge.short_description = _("Data Integrity")
