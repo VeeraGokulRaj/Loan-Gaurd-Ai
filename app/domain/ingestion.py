@@ -180,15 +180,18 @@ class IngestionService:
             data_row_count += 1
             raw_line_text = str(row)
 
-            # Structural Validation: Check for empty or incomplete rows with detailed field logging
-            null_fields = [k for k, v in row.items() if v is None or str(v).strip() == ""]
-            if null_fields:
-                if len(null_fields) == 1:
-                    reason_msg = f"Field '{null_fields[0]}' is null or empty."
-                else:
-                    fields_str = ", ".join(null_fields)
-                    reason_msg = f"Fields '{fields_str}' are null or empty."
-
+            # Structural Validation: Check if row has more than 5 null/empty values
+            null_fields = [
+                k
+                for k, v in row.items()
+                if v is None or str(v).strip() in ("", "NULL", "None", "null", "none", "NaN", "nan")
+            ]
+            if len(null_fields) > 5:
+                fields_str = ", ".join(null_fields)
+                reason_msg = (
+                    f"Row has {len(null_fields)} null or empty values "
+                    f"(exceeds maximum threshold of 5). Null fields: {fields_str}"
+                )
                 failed_rows_to_create.append(
                     FailedImportRow(
                         batch=batch,

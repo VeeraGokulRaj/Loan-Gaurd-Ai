@@ -417,8 +417,8 @@ class TestProcessSingleFile:
         assert rec.servicer_as_of_date == date(2025, 6, 30)
 
     def test_servicer_update_with_missing_values_defaults(self):
-        """Missing servicer column values should mark the row as failed, not create a record."""
-        row = "LG-0001,,,,,"
+        """More than 5 missing servicer column values should mark the row as failed."""
+        row = ",,,,,,"
         file_obj = IngestionFactory.servicer_update_file(rows=[row])
         result = IngestionService.process_single_file(
             file_obj,
@@ -452,25 +452,25 @@ class TestProcessSingleFile:
         assert rec.income_verification_present is True
         assert rec.document_verification_status == "COMPLETE"
 
-    def test_document_manifest_missing_flags_default_false(self):
-        """Missing document columns should mark the row as failed, not create a record."""
-        row = "LG-0099,,,,"
-        file_obj = IngestionFactory.document_manifest_file(rows=[row])
+    def test_row_with_more_than_five_null_fields_fails_ingestion(self):
+        """A row with more than 5 null or empty fields should fail ingestion and log a FailedImportRow."""
+        row = ",,,,,,,"  # 8 empty fields
+        file_obj = IngestionFactory.loan_tape_file(rows=[row])
         result = IngestionService.process_single_file(
             file_obj,
             self.user,
-            UploadBatch.SourceType.DOCUMENT_MANIFEST,
-            "DOCUMENT_MANIFEST",
+            UploadBatch.SourceType.LOAN_TAPE,
+            "LOAN_TAPE",
         )
         assert result["status"] == UploadBatch.BatchStatus.FAILED
         assert result["successful_records"] == 0
         assert result["failed_records"] == 1
 
         batch = UploadBatch.objects.get(id=result["batch_id"])
-        assert DocumentManifestRecord.objects.filter(batch=batch).count() == 0
+        assert RawLoanRecord.objects.filter(batch=batch).count() == 0
         failed_row = FailedImportRow.objects.filter(batch=batch).first()
         assert failed_row is not None
-        assert "null or empty" in failed_row.failure_reason
+        assert "exceeds maximum threshold of 5" in failed_row.failure_reason
 
     def test_loan_tape_creates_no_specialized_records(self):
         """Loan tape ingestion should not create servicer or document records."""

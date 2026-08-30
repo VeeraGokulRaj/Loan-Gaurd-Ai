@@ -26,7 +26,7 @@
         </button>
         <!-- Action Dropdown Menu Card -->
         <div id="action-menu-{{ exc.id }}"
-             class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
+             class="action-dropdown-menu hidden absolute right-0 top-7 z-[9999] w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-2xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
              role="menu"
              aria-orientation="vertical">
             <div class="flex flex-col text-left">
@@ -48,7 +48,7 @@
                         </svg>
                         Ask AI Assistant
                     </span>
-                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">Gemini</span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">{{ active_ai_model_name|default:"Zen" }}</span>
                 </button>
                 <div class="my-1 border-t border-slate-800/80"></div>
                 <a href="{% url 'exception_action_history' exc.id %}"
@@ -86,7 +86,7 @@
         </button>
         <!-- Action Dropdown Menu Card -->
         <div id="action-menu-v-{{ record.id }}"
-             class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-52 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
+             class="action-dropdown-menu hidden absolute right-0 top-7 z-[9999] w-52 bg-slate-900 border border-slate-800 rounded-lg shadow-2xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
              role="menu"
              aria-orientation="vertical">
             <div class="flex flex-col text-left">
@@ -113,6 +113,17 @@ if (typeof window.toggleActionDropdown === 'undefined') {
         event.stopPropagation();
         const targetMenu = document.getElementById(menuId);
         const allActionMenus = document.querySelectorAll('.action-dropdown-menu');
+        const allContainers = document.querySelectorAll('.action-dropdown-container');
+        const allTrs = document.querySelectorAll('tr');
+
+        allContainers.forEach(c => c.style.zIndex = '');
+        allTrs.forEach(tr => {
+            if (tr.dataset.dropdownOpen === 'true') {
+                tr.style.zIndex = '';
+                tr.style.position = '';
+                delete tr.dataset.dropdownOpen;
+            }
+        });
 
         allActionMenus.forEach(menu => {
             if (menu.id !== menuId) {
@@ -121,7 +132,22 @@ if (typeof window.toggleActionDropdown === 'undefined') {
         });
 
         if (targetMenu) {
+            const isOpening = targetMenu.classList.contains('hidden');
             targetMenu.classList.toggle('hidden');
+
+            if (isOpening) {
+                const container = targetMenu.closest('.action-dropdown-container');
+                if (container) {
+                    container.style.zIndex = '9999';
+                    container.style.position = 'relative';
+                }
+                const tr = targetMenu.closest('tr');
+                if (tr) {
+                    tr.style.zIndex = '9999';
+                    tr.style.position = 'relative';
+                    tr.dataset.dropdownOpen = 'true';
+                }
+            }
         }
     };
 
@@ -129,6 +155,14 @@ if (typeof window.toggleActionDropdown === 'undefined') {
         if (!e.target.closest('.action-dropdown-container')) {
             document.querySelectorAll('.action-dropdown-menu').forEach(menu => {
                 menu.classList.add('hidden');
+            });
+            document.querySelectorAll('.action-dropdown-container').forEach(c => c.style.zIndex = '');
+            document.querySelectorAll('tr').forEach(tr => {
+                if (tr.dataset.dropdownOpen === 'true') {
+                    tr.style.zIndex = '';
+                    tr.style.position = '';
+                    delete tr.dataset.dropdownOpen;
+                }
             });
         }
     });

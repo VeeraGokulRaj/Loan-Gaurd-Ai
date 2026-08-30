@@ -149,6 +149,44 @@
         }
     }
 
+    function handleSlotDragOver(evt, slotKey) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        const card = document.getElementById('slot_' + slotKey);
+        if (card) {
+            card.classList.add('border-indigo-400', 'bg-indigo-950/40', 'scale-[1.01]');
+        }
+    }
+
+    function handleSlotDragLeave(evt, slotKey) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        const card = document.getElementById('slot_' + slotKey);
+        if (card) {
+            card.classList.remove('border-indigo-400', 'bg-indigo-950/40', 'scale-[1.01]');
+        }
+    }
+
+    function handleSlotDrop(evt, slotKey) {
+        evt.preventDefault();
+        evt.stopPropagation();
+        const card = document.getElementById('slot_' + slotKey);
+        if (card) {
+            card.classList.remove('border-indigo-400', 'bg-indigo-950/40', 'scale-[1.01]');
+        }
+
+        if (evt.dataTransfer && evt.dataTransfer.files && evt.dataTransfer.files.length > 0) {
+            const file = evt.dataTransfer.files[0];
+            const input = document.getElementById('file_' + slotKey);
+            if (input) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                input.files = dataTransfer.files;
+                onFileSlotChange(slotKey, input);
+            }
+        }
+    }
+
     function updateFileSlotLabel(slotKey, input) {
         onFileSlotChange(slotKey, input);
     }

@@ -270,13 +270,18 @@ class SampleDatasetGenerator:
         curr_balance = round(orig_principal * random.uniform(0.15, 0.85), 2)
         interest_rate = round(random.uniform(4.5, 18.5), 2)
         borrower_state = random.choice(VALID_US_STATES)
-        payment_status = random.choice(PAYMENT_STATUSES)
+        # Default clean domain attributes for non-mutated records
+        payment_status = "CURRENT" if not assigned_issue else random.choice(PAYMENT_STATUSES)
         days_past_due = self._compute_consistent_days_past_due(payment_status)
 
         servicer_name = random.choice(SERVICER_NAMES)
         last_pmt_date_str = (orig_date_dt + timedelta(days=60)).strftime("%Y-%m-%d")
         last_updated_str = self.today_date.strftime("%Y-%m-%d")
-        doc_status = "VERIFIED" if payment_status == "CURRENT" else "PENDING"
+        doc_status = (
+            "VERIFIED"
+            if (not assigned_issue or payment_status in ("CURRENT", "CLOSED"))
+            else "PENDING"
+        )
         source_sys = random.choice(SOURCE_SYSTEMS)
 
         # Generate unmapped extra column payloads
@@ -502,7 +507,7 @@ class SampleDatasetGenerator:
     def _assign_intentional_issues(self) -> dict[int, str]:
         issue_assignments: dict[int, str] = {}
         for idx in range(1, self.target_row_count + 1):
-            if random.random() < 0.20:
+            if random.random() < 0.15:
                 issue_assignments[idx] = random.choice(INTENTIONAL_ISSUES)
         return issue_assignments
 
