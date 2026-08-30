@@ -309,6 +309,15 @@ def process_clean_records_for_batch(batch: UploadBatch) -> int:
         .exclude(raw_data__loan_id__in=existing_verified_loan_ids)
     )
 
+    seen_loan_ids = set()
+    deduped_records = set()
+    for raw_rec in clean_raw_records:
+        lid = raw_rec.loan_id
+        if lid and lid not in seen_loan_ids:
+            seen_loan_ids.add(lid)
+            deduped_records.add(raw_rec)
+    clean_raw_records = list(deduped_records)
+
     if not clean_raw_records:
         return 0
 

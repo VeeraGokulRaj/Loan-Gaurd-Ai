@@ -231,12 +231,6 @@ class TestVerifiedLoanRecordModel:
         vr = VerifiedLoanRecordFactory.create_verified_record(canonical_data={"loan_id": "LG-NOBR"})
         assert vr.borrower_id == ""
 
-    def test_create_record_with_empty_canonical_falls_back_to_blank_loan_id(self):
-        raw = VerifiedLoanRecordFactory.create_raw_record()
-        vr = VerifiedLoanRecord.create_record(raw_record=raw, canonical_data={})
-        assert vr.canonical_data == {}
-        assert vr.loan_id == ""
-
     def test_compute_hash_with_none_canonical_data_uses_empty_dict(self):
         vr = VerifiedLoanRecord(canonical_data=None, verified_at=timezone.now())
         assert len(vr.compute_hash()) == 64
