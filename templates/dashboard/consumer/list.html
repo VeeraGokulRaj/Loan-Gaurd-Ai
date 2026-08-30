@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Verified Loan Dataset - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Include Header Component -->
+        {% include "dashboard/consumer/header.html" %}
+        <!-- Main Workspace Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Messages Banner -->
+            {% include "includes/messages.html" %}
+            <!-- Top Page Header & Export Action -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <h1 class="text-2xl font-bold text-white tracking-tight">Verified Loan Dataset</h1>
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            {{ total_count }} Record{{ total_count|pluralize }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Secondary market canonical dataset with cryptographic SHA-256 integrity verification
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'verified_loan_export' %}?format=csv{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                       class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-slate-200 transition-colors inline-flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0-12l-3 3m3-3l3 3m5 5v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2">
+                            </path>
+                        </svg>
+                        Export CSV
+                    </a>
+                    <a href="{% url 'verified_loan_export' %}?format=json{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                       class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-slate-200 transition-colors inline-flex items-center gap-2">
+                        <svg class="w-4 h-4 text-teal-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0-12l-3 3m3-3l3 3m5 5v2a2 2 0 01-2 2H5a2 2 0 01-2-2v-2">
+                            </path>
+                        </svg>
+                        Export JSON
+                    </a>
+                </div>
+            </div>
+            <!-- HTMX Verified Loans Tab Component (Search, Reusable Dropdown Filters, Table & Pagination) -->
+            {% include "dashboard/consumer/includes/verified_loans_tab.html" %}
+        </main>
+        <!-- Footer -->
+        <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div>LoanGuard AI © 2026. Data Consumer Workspace.</div>
+            </div>
+        </footer>
+    </div>
+{% endblock content %}

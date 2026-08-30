@@ -1,0 +1,34 @@
+{% if is_paginated %}
+    <div class="px-6 py-4 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between">
+        <!-- Items Counter -->
+        <div class="text-xs text-slate-400">
+            Showing <span class="font-semibold text-slate-200">{{ page_obj.start_index }}</span> to <span class="font-semibold text-slate-200">{{ page_obj.end_index }}</span> of <span class="font-semibold text-slate-200">{{ paginator.count }}</span> verified records (10 per page)
+        </div>
+        <!-- Pagination Controls -->
+        <div class="flex items-center gap-1.5">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                   class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                    &laquo; First
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                   class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                    Previous
+                </a>
+            {% endif %}
+            <span class="px-3 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-400">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                   class="px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                    Next
+                </a>
+                <a href="?page={{ paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.validation_status %}&validation_status={{ request.GET.validation_status }}{% endif %}{% if request.GET.reviewer_decision %}&reviewer_decision={{ request.GET.reviewer_decision }}{% endif %}"
+                   class="px-2.5 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                    Last &raquo;
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

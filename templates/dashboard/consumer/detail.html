@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% load static humanize %}
+{% block title %}
+    {{ title|default:"Verified Loan Detail - LoanGuard AI" }}
+{% endblock title %}
+{% block content %}
+    <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+        <!-- Include Header Component -->
+        {% include "dashboard/consumer/header.html" %}
+        <!-- Main Workspace Container -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            <!-- Messages Banner -->
+            {% include "includes/messages.html" %}
+            <!-- Top Header & Navigation Back -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <a href="{% url 'verified_loan_list' %}"
+                           class="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                            </svg>
+                        </a>
+                        <div>
+                            <h1 class="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                                Verified Loan #<span class="font-mono text-emerald-400">{{ verified_record.loan_id }}</span>
+                            </h1>
+                            <p class="text-xs text-slate-400 mt-0.5">Canonical dataset payload & cryptographic SHA-256 integrity status</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{% url 'verified_loan_history' pk=verified_record.pk %}"
+                       class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-teal-300 transition-colors inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                        Verification History
+                    </a>
+                    <a href="{% url 'verified_loan_audit' pk=verified_record.pk %}"
+                       class="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs font-semibold text-cyan-300 transition-colors inline-flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        Audit Ledger
+                    </a>
+                </div>
+            </div>
+            <!-- SHA-256 Integrity Verification Status Banner -->
+            <div class="p-5 rounded-2xl border shadow-xl backdrop-blur-md {% if is_tampered %}bg-rose-950/40 border-rose-800/80 text-rose-200{% else %}bg-emerald-950/30 border-emerald-800/60 text-emerald-200{% endif %}">
+                <div class="flex items-start gap-4">
+                    <div class="p-2.5 rounded-xl {% if is_tampered %}bg-rose-500/10 text-rose-400{% else %}bg-emerald-500/10 text-emerald-400{% endif %}">
+                        {% if is_tampered %}
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                </path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                                </path>
+                            </svg>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold tracking-tight">
+                                {% if is_tampered %}
+                                    ⚠️ Cryptographic Tampering Detected!
+                                {% else %}
+                                    ✓ Cryptographic SHA-256 Fingerprint Verified
+                                {% endif %}
+                            </h3>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded {% if is_tampered %}bg-rose-900/60 text-rose-300{% else %}bg-emerald-900/60 text-emerald-300{% endif %}">
+                                SHA-256
+                            </span>
+                        </div>
+                        <p class="text-xs opacity-90 leading-relaxed">
+                            {% if is_tampered %}
+                                Computed payload hash does not match stored hash fingerprint! The database record may have been altered outside the verification engine.
+                            {% else %}
+                                This canonical loan payload has been cryptographically validated. The database SHA-256 fingerprint matches computed payload hash perfectly.
+                            {% endif %}
+                        </p>
+                        <div class="pt-2 text-[11px] font-mono opacity-80 break-all">
+                            <div>
+                                <strong class="text-slate-400">Stored Record Hash:</strong> {{ verified_record.record_hash }}
+                            </div>
+                            <div>
+                                <strong class="text-slate-400">Computed Live Hash:</strong> {{ computed_hash }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Metadata Grid Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs text-slate-400">Validation Status</div>
+                    <div class="text-sm font-bold text-white mt-1">{{ verified_record.get_validation_status_display }}</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs text-slate-400">Reviewer Decision</div>
+                    <div class="text-sm font-bold text-emerald-400 mt-1">{{ verified_record.get_reviewer_decision_display }}</div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs text-slate-400">Verified By</div>
+                    <div class="text-sm font-bold text-slate-200 mt-1">
+                        {{ verified_record.verified_by.username|default:"System Auto-Passed" }}
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800">
+                    <div class="text-xs text-slate-400">Verification Timestamp</div>
+                    <div class="text-sm font-bold text-slate-300 mt-1">{{ verified_record.verified_at|date:"Y-m-d H:i:s" }}</div>
+                </div>
+            </div>
+            <!-- Standardized Canonical Data Payload Section -->
+            <div class="rounded-2xl bg-slate-900/90 border border-slate-800 shadow-xl overflow-hidden backdrop-blur-md">
+                <div class="px-6 py-4 bg-slate-800/60 border-b border-slate-800 flex items-center justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white">Canonical Loan JSON Payload</h3>
+                        <p class="text-xs text-slate-400">Secondary-market standardized JSON format</p>
+                    </div>
+                    <button type="button"
+                            id="copyJsonBtn"
+                            onclick="copyJsonPayload()"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-emerald-400 transition-colors inline-flex items-center gap-1.5">
+                        <svg id="copyIcon"
+                             class="w-4 h-4"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <span id="copyText">Copy JSON</span>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <pre id="jsonPayloadPre"
+                         class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-emerald-300 overflow-x-auto leading-relaxed">{{ verified_record.canonical_data|pprint }}</pre>
+                </div>
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer class="bg-slate-900/60 border-t border-slate-800/80 py-4 text-xs text-slate-400 mt-auto">
+            <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
+                <div>LoanGuard AI © 2026. Data Consumer Workspace.</div>
+            </div>
+        </footer>
+    </div>
+    <script>
+    function copyJsonPayload() {
+        const pre = document.getElementById('jsonPayloadPre');
+        if (!pre) return;
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const copyText = document.getElementById('copyText');
+            const copyBtn = document.getElementById('copyJsonBtn');
+            if (copyText) copyText.innerText = 'Copied!';
+            if (copyBtn) copyBtn.classList.add('bg-emerald-500/20', 'border-emerald-500/40');
+            setTimeout(() => {
+                if (copyText) copyText.innerText = 'Copy JSON';
+                if (copyBtn) copyBtn.classList.remove('bg-emerald-500/20', 'border-emerald-500/40');
+            }, 2000);
+        });
+    }
+    </script>
+{% endblock content %}

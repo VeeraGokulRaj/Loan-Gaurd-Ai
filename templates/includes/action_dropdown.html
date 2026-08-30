@@ -1,62 +1,112 @@
-<!-- Reusable Action Dropdown Widget Component for Exception Queue Items -->
-<div class="relative inline-flex items-center action-dropdown-container"
-     id="action-wrapper-{{ exc.id }}">
-    <!-- 3-Dots Action Dropdown Trigger Button -->
-    <button id="action-btn-{{ exc.id }}"
-            type="button"
-            onclick="toggleActionDropdown(event, 'action-menu-{{ exc.id }}')"
-            class="hover:cursor-pointer inline-flex items-center justify-center size-6 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors focus:outline-none"
-            aria-haspopup="menu"
-            aria-expanded="false"
-            aria-label="Action Options Menu"
-            title="Actions">
-        <svg class="shrink-0 size-3"
-             xmlns="http://www.w3.org/2000/svg"
-             viewBox="0 0 24 24"
-             fill="none"
-             stroke="currentColor"
-             stroke-width="2"
-             stroke-linecap="round"
-             stroke-linejoin="round">
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="12" cy="5" r="1"></circle>
-            <circle cx="12" cy="19" r="1"></circle>
-        </svg>
-    </button>
-    <!-- Action Dropdown Menu Card -->
-    <div id="action-menu-{{ exc.id }}"
-         class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
-         role="menu"
-         aria-orientation="vertical">
-        <div class="flex flex-col text-left">
-            <a href="{% url 'exception_loan_detail' exc.id %}"
-               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
-                Open Loan Detail View
-            </a>
-            <button type="button"
-                    hx-get="{% url 'open_ai_copilot_modal' exc.id %}"
-                    hx-target="#modal-container"
-                    hx-swap="innerHTML"
-                    class="w-full flex items-center justify-between py-2 px-3 rounded text-indigo-300 hover:text-white hover:bg-indigo-950/60 transition-colors font-semibold text-left">
-                <span class="flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-indigo-400"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Ask AI Assistant
-                </span>
-                <span class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">Gemini</span>
-            </button>
-            <div class="my-1 border-t border-slate-800/80"></div>
-            <a href="{% url 'exception_action_history' exc.id %}"
-               class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
-                Track Action History
-            </a>
+{% if exc %}
+    <!-- Reusable Action Dropdown Widget Component for Exception Queue Items -->
+    <div class="relative inline-flex items-center action-dropdown-container"
+         id="action-wrapper-{{ exc.id }}">
+        <!-- 3-Dots Action Dropdown Trigger Button -->
+        <button id="action-btn-{{ exc.id }}"
+                type="button"
+                onclick="toggleActionDropdown(event, 'action-menu-{{ exc.id }}')"
+                class="hover:cursor-pointer inline-flex items-center justify-center size-6 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors focus:outline-none"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-label="Action Options Menu"
+                title="Actions">
+            <svg class="shrink-0 size-3"
+                 xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+        </button>
+        <!-- Action Dropdown Menu Card -->
+        <div id="action-menu-{{ exc.id }}"
+             class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-48 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
+             role="menu"
+             aria-orientation="vertical">
+            <div class="flex flex-col text-left">
+                <a href="{% url 'exception_loan_detail' exc.id %}"
+                   class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                    Open Loan Detail View
+                </a>
+                <button type="button"
+                        hx-get="{% url 'open_ai_copilot_modal' exc.id %}"
+                        hx-target="#modal-container"
+                        hx-swap="innerHTML"
+                        class="w-full flex items-center justify-between py-2 px-3 rounded text-indigo-300 hover:text-white hover:bg-indigo-950/60 transition-colors font-semibold text-left">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-indigo-400"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Ask AI Assistant
+                    </span>
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono">Gemini</span>
+                </button>
+                <div class="my-1 border-t border-slate-800/80"></div>
+                <a href="{% url 'exception_action_history' exc.id %}"
+                   class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                    Track Action History
+                </a>
+            </div>
         </div>
     </div>
-</div>
+{% elif record %}
+    <!-- Reusable Action Dropdown Widget Component for Verified Loan Records -->
+    <div class="relative inline-flex items-center action-dropdown-container"
+         id="action-wrapper-v-{{ record.id }}">
+        <!-- 3-Dots Action Dropdown Trigger Button -->
+        <button id="action-btn-v-{{ record.id }}"
+                type="button"
+                onclick="toggleActionDropdown(event, 'action-menu-v-{{ record.id }}')"
+                class="hover:cursor-pointer inline-flex items-center justify-center size-6 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors focus:outline-none"
+                aria-haspopup="menu"
+                aria-expanded="false"
+                aria-label="Action Options Menu"
+                title="Actions">
+            <svg class="shrink-0 size-3"
+                 xmlns="http://www.w3.org/2000/svg"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="12" cy="5" r="1"></circle>
+                <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+        </button>
+        <!-- Action Dropdown Menu Card -->
+        <div id="action-menu-v-{{ record.id }}"
+             class="action-dropdown-menu hidden absolute right-0 top-7 z-50 w-52 bg-slate-900 border border-slate-800 rounded-lg shadow-xl backdrop-blur-xl p-1.5 text-[11px] text-slate-300 focus:outline-none"
+             role="menu"
+             aria-orientation="vertical">
+            <div class="flex flex-col text-left">
+                <a href="{% url 'verified_loan_detail' record.id %}"
+                   class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                    View Canonical Payload
+                </a>
+                <a href="{% url 'verified_loan_history' record.id %}"
+                   class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                    Verification Lineage
+                </a>
+                <div class="my-1 border-t border-slate-800/80"></div>
+                <a href="{% url 'verified_loan_audit' record.id %}"
+                   class="w-full flex items-center py-2 px-3 rounded text-slate-300 hover:text-white hover:bg-slate-800/80 transition-colors">
+                    Audit Trail Ledger
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
 <script>
 if (typeof window.toggleActionDropdown === 'undefined') {
     window.toggleActionDropdown = function(event, menuId) {
